@@ -1,0 +1,31 @@
+app:
+  name: "Novia Telegram - Marin Kitagawa"
+  log_level: "INFO"
+
+ai:
+  model: "gemma3:12b" 
+  base_url: "http://localhost:11434"
+  temperature: 0.8
+  system_prompt_file: "ai/prompts.py"
+
+tts:
+  enabled: true
+  engine: "qwen-tts" # Cambiado a qwen-tts para voz personalizada
+  voice: "es-MX-DaliaNeural" # Usado si el engine es edge-tts
+  # Configuración Qwen-TTS (Personalizado)
+  qwen:
+    model_id: "Qwen/Qwen3-TTS-12Hz-0.6B-Base"
+    device: "cpu" # Forzado a CPU para no competir con Ollama (GT 1030 2GB)
+    ref_audio: "audio/YotsubaAudio.wav"
+    ref_text: "Yo soy la única que todavia no ha madurado. ¿Aún no entiendes porque siempre estoy apoyandote? Es porque me gustas. Tonto!"
+    language: "Spanish"
+  # Parámetros para edge-tts
+  rate: "-10%"   # Un poco más lento para procesar mejor la entonación
+  pitch: "+2Hz"   # Un pelín más agudo para sonar más juvenil y menos plano
+  # Piper settings (guardados por si acaso)
+  piper_path: "C:/ProjectMEKA/piper/piper.exe"
+  model_path: "C:/ProjectMEKA/piper/modelos/es_MX-claude-high.onnx"
+
+telegram:
+  # El token se carga desde .env por seguridad
+  request_timeout: 30

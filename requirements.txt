@@ -1,0 +1,12 @@
+python-telegram-bot==20.*
+ollama
+python-dotenv
+PyYAML
+colorama
+openai-whisper
+pydub
+edge-tts
+pymupdf
+python-docx
+pandas
+openpyxl

@@ -1,0 +1,33 @@
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+ENV/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+temp_audio/
+config_local.yml
+memory.json
+logs/
+*.log
+
+# Models (if downloaded locally in project)
+models/
+*.onnx
+*.gguf
