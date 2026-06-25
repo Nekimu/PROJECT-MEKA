@@ -6,6 +6,7 @@ colorama
 openai-whisper
 pydub
 edge-tts
+soundfile
 pymupdf
 python-docx
 pandas

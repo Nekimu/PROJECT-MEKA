@@ -22,6 +22,8 @@ ENV/
 
 # Project specific
 temp_audio/
+temp_media/
+temp_voice*.ogg
 config_local.yml
 memory.json
 logs/

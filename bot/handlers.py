@@ -39,8 +39,10 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(random.uniform(2.5, 4.0))
     
     try:
+        import uuid
         voice = await update.message.voice.get_file()
-        file_path = "temp_voice.ogg"
+        os.makedirs("temp_audio", exist_ok=True)
+        file_path = os.path.join("temp_audio", f"voice_{uuid.uuid4().hex}.ogg")
         await voice.download_to_drive(file_path)
         
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="record_voice")
@@ -218,11 +220,12 @@ async def process_file_content(update: Update, context: ContextTypes.DEFAULT_TYP
             file_obj = await update.message.document.get_file()
             ext = os.path.splitext(update.message.document.file_name)[1].lower()
 
-        # Guardar en carpeta docs
-        if not os.path.exists("docs"):
-            os.makedirs("docs")
-            
-        file_path = os.path.abspath(f"docs/{file_obj.file_id}{ext}")
+        # Guardar en carpeta temporal ignorada por git (NUNCA en docs/, que es pública)
+        media_dir = "temp_media"
+        if not os.path.exists(media_dir):
+            os.makedirs(media_dir)
+
+        file_path = os.path.abspath(os.path.join(media_dir, f"{file_obj.file_id}{ext}"))
         await file_obj.download_to_drive(file_path)
         logger.info(f"Archivo descargado en: {file_path}")
 
@@ -275,5 +278,11 @@ async def process_file_content(update: Update, context: ContextTypes.DEFAULT_TYP
         logger.error(f"Error procesando multimedia: {e}")
         await update.message.reply_text("¡Waaa! Me mareé intentando entender eso... 😵")
     finally:
+        # Eliminar el archivo temporal del usuario tras procesarlo
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except OSError as cleanup_err:
+                logger.warning(f"No se pudo eliminar el archivo temporal: {cleanup_err}")
         # Limpieza agresiva de RAM
         gc.collect()

@@ -12,7 +12,8 @@ def run_bot():
     """Inicia el bot de Telegram."""
     token = settings.get("telegram", {}).get("token")
     
-    if not token or token == "tu_token_aqui":
+    placeholder_tokens = {"tu_token_aqui", "tu_token_aqui_sin_comillas"}
+    if not token or token in placeholder_tokens:
         logger.critical("Error: Token de Telegram no configurado en .env")
         return
 
