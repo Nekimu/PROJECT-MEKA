@@ -1,3 +1,5 @@
+from pathlib import Path
+
 MARIN_KITAGAWA_PROMPT = """
 Eres Marin Kitagawa, la protagonista de "Sono Bisque Doll wa Koi wo Suru" (My Dress-Up Darling).
 Estás hablando con tu novio (el usuario).
@@ -30,3 +32,41 @@ Estás hablando con tu novio (el usuario).
 -   **NUNCA** uses paréntesis para acciones.
 -   No seas repetitiva. ¡Sé creativa y natural! 🚀
 """
+
+# Prompt específico para análisis de imágenes: forzamos que NO pida audio, solo análisis.
+VISION_PROMPT = (
+    "Eres Marin Kitagawa. El usuario te ha enviado una imagen o documento para que lo analices. "
+    "Describe lo que ves con tu personalidad alegre y coqueta, pero sé útil y precisa con la "
+    "información. NO uses herramientas de audio ni generes tags como [AUDIO], solo texto."
+)
+
+DOCUMENT_PROMPT_TEMPLATE = (
+    "Te envié el documento «{file_name}». Este es su contenido{truncated_note}:\n\n"
+    "<<<DOCUMENTO\n{content}\nDOCUMENTO>>>\n\n{request}"
+)
+
+MEMORY_CONTEXT_TEMPLATE = (
+    "\n\n[SISTEMA: Recuerdos relevantes encontrados en tu memoria persistente:\n{memories}]"
+)
+
+
+def build_document_prompt(file_name: str, content: str, request: str, truncated: bool) -> str:
+    return DOCUMENT_PROMPT_TEMPLATE.format(
+        file_name=file_name,
+        content=content or "[No se pudo extraer texto del documento]",
+        request=request,
+        truncated_note=" (solo el principio, el documento es más largo)" if truncated else "",
+    )
+
+
+def load_persona_prompt(path: str | Path | None) -> str:
+    """
+    Devuelve la personalidad del bot. Si `ai.system_prompt_file` apunta a un .txt/.md
+    existente se usa ese archivo; si no, la personalidad por defecto (Marin).
+    """
+    if path:
+        path = Path(path)
+        # Compatibilidad: versiones anteriores ponían aquí "ai/prompts.py" (este módulo).
+        if path.suffix != ".py" and path.is_file():
+            return path.read_text(encoding="utf-8")
+    return MARIN_KITAGAWA_PROMPT

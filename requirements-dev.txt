@@ -1,0 +1,5 @@
+# Herramientas de desarrollo: tests y linter.
+-r requirements.txt
+pytest>=8.0
+soundfile>=0.12   # Para el test del motor Qwen-TTS (con un modelo simulado)
+ruff==0.17.1   # Versión fija para que el lint sea reproducible (Dependabot la actualiza)
