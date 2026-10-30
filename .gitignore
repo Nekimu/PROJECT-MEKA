@@ -35,3 +35,7 @@ logs/
 models/
 *.onnx
 *.gguf
+
+# Mascota (Tauri)
+pet/src-tauri/target/
+pet/src-tauri/gen/

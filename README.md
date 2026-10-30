@@ -25,6 +25,9 @@
 
 **Project MEKA** es un bot de Telegram que convierte un LLM local en una compañera virtual con personalidad propia: **Marin Kitagawa** (*Sono Bisque Doll wa Koi wo Suru*). Usa [Ollama](https://ollama.com) para pensar, [Whisper](https://github.com/openai/whisper) para escuchar y [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) para hablar con voz clonada. La inferencia se ejecuta en tu propio equipo, así que tus conversaciones no se envían a ningún servicio de IA externo.
 
+> [!TIP]
+> **Próximamente, una mascota que vive en tu escritorio.** Prueba el [prototipo](pet/README.md) (abre `pet/web/index.html`) y lee la [visión del proyecto](docs/VISION.md).
+
 > [!NOTE]
 > Proyecto personal con fines educativos y de entretenimiento. No está afiliado a los autores ni a los titulares de la obra original.
 
@@ -235,10 +238,11 @@ PROJECT-MEKA/
 ├── bot/                    # Telegram: arranque, filtros de acceso y manejadores
 ├── ai/                     # LLM, STT, TTS, prompts y utilidades de texto
 ├── core/                   # Configuración, logging, memoria y documentos
+├── pet/                    # Mascota de escritorio (web + Tauri), prototipo
 ├── scripts/                # Herramientas de diagnóstico
 ├── tests/                  # Tests automatizados (pytest)
 ├── audio/                  # Audios de referencia para clonar voz
-├── docs/                   # Auditoría técnica, imágenes y capturas
+├── docs/                   # Visión, auditoría técnica, imágenes y capturas
 ├── config.yml              # Configuración general
 ├── .env.example            # Plantilla de secretos
 └── requirements*.txt       # Dependencias: base, Qwen3-TTS y desarrollo
@@ -308,14 +312,15 @@ python -m scripts.list_edge_voices es-MX   # Voces disponibles en edge-tts
 - [x] IA local con Ollama, voz (STT/TTS), visión y documentos
 - [x] Memoria persistente por usuario y control de acceso
 - [x] Tests automatizados, CI y auditoría técnica ([v1.1.0](CHANGELOG.md))
+- [x] Prototipo de **mascota de escritorio** tipo Tamagotchi ([`pet/`](pet/README.md))
+- [ ] MEKA Core como servicio: API local de eventos y cerebro intercambiable (Claude, Gemini, Ollama)
+- [ ] Gestionar carpetas autorizadas desde el móvil, con confirmación y git
+- [ ] Tamagotchi completo: logros, disfraces y rutinas
+- [ ] App móvil: Android con burbuja flotante, iOS con widget
 - [ ] Transcripción más rápida con [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
 - [ ] Memoria semántica: recordar por significado (SQLite + embeddings)
-- [ ] Evaluar Gemma 4 como modelo por defecto
-- [ ] Voz de respaldo 100 % local con Piper
-- [ ] Avatar Live2D con VTube Studio
-- [ ] Capturas y GIF de demostración
 
-Las prioridades y alternativas evaluadas están en la [auditoría técnica](docs/AUDITORIA.md).
+Hacia dónde va el proyecto está en la [visión](docs/VISION.md), y las alternativas técnicas evaluadas, en la [auditoría](docs/AUDITORIA.md).
 
 ## 🧪 Desarrollo
 

@@ -2,6 +2,16 @@
 
 Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Sin publicar]
+
+### Añadido
+- **Prototipo de mascota de escritorio** (`pet/`): máquina de estados con 9 estados animados, Tamagotchi no punitivo (energía, saciedad, ánimo, afecto) con progreso offline, menú contextual, chat, personajes desbloqueables, vista previa en pixel art y cliente WebSocket del contrato de eventos de MEKA Core.
+- Envoltorio de escritorio con **Tauri 2**: ventana transparente, sin bordes y siempre visible.
+- 4 personajes a partir de arte original: MEKA, Nekimu, Espadachina y Kitsune.
+- `pet/tools/stickerize.py`: recorta el fondo de stickers y los convierte a WebP con transparencia.
+- `docs/VISION.md`: visión, arquitectura, contrato de eventos, guía de arte y mecánicas.
+- Test que valida el manifiesto de personajes (66 tests en total).
+
 ## [1.1.0] — 2026-10-15
 
 Auditoría completa del proyecto. Detalle en [`docs/AUDITORIA.md`](docs/AUDITORIA.md).
