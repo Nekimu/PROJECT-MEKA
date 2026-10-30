@@ -1,0 +1,33 @@
+name: 🐛 Reportar un error
+description: Algo no funciona como debería
+labels: ["bug"]
+body:
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: ¿Qué ocurrió?
+      description: Describe el problema y qué esperabas que pasara.
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: |
+        1. Enviar una nota de voz al bot
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs de la consola
+      description: Pega el error. **Revisa que no incluya tu token ni conversaciones privadas.**
+      render: shell
+  - type: input
+    id: entorno
+    attributes:
+      label: Entorno
+      placeholder: "Windows 11 · Python 3.12 · Ollama 0.40 · gemma3:12b · tts: qwen-tts"
+    validations:
+      required: true

@@ -1,0 +1,5 @@
+# Motor opcional Qwen3-TTS (clonación de voz local). Dependencias pesadas:
+# PyTorch, transformers, accelerate... Instálalo solo si usas `tts.engine: "qwen-tts"`.
+-r requirements.txt
+qwen-tts>=0.1.1
+soundfile>=0.12

@@ -1,31 +1,63 @@
 app:
-  name: "Novia Telegram - Marin Kitagawa"
-  log_level: "INFO"
+  name: "Project MEKA - Marin Kitagawa"
+  log_level: "INFO"          # DEBUG | INFO | WARNING | ERROR
+  log_conversations: true    # Imprime la conversación en la consola
 
 ai:
-  model: "gemma3:12b" 
+  model: "gemma3:12b"        # Debe ser multimodal para analizar imágenes
   base_url: "http://localhost:11434"
   temperature: 0.8
-  system_prompt_file: "ai/prompts.py"
+  keep_alive: 0              # 0 = descarga el modelo tras cada respuesta (ahorra RAM); "5m" = más rápido
+  history_size: 20           # Mensajes recientes que recuerda por chat
+  system_prompt_file: ""     # Opcional: .txt/.md con otra personalidad (por defecto ai/prompts.py)
+  options:                   # Parámetros avanzados de generación de Ollama
+    num_predict: 512
+    top_k: 40
+    top_p: 0.9
+    repeat_penalty: 1.2
+    repeat_last_n: 64
+  vision_options:            # Análisis de imágenes: menor temperatura para precisión
+    temperature: 0.6
+    num_predict: 1024
+
+stt:
+  model_size: "base"         # tiny | base | small | medium | large | turbo
+  language: "es"
+  unload_after_use: true     # Libera Whisper de la RAM tras cada nota de voz
 
 tts:
   enabled: true
-  engine: "qwen-tts" # Cambiado a qwen-tts para voz personalizada
-  voice: "es-MX-DaliaNeural" # Usado si el engine es edge-tts
-  # Configuración Qwen-TTS (Personalizado)
+  engine: "qwen-tts"         # qwen-tts | edge-tts | piper
+  fallback_engine: "edge-tts" # Se usa si el motor principal falla (vacío = sin respaldo)
+  convert_to_ogg: true       # Convierte a OGG/Opus con FFmpeg para que llegue como nota de voz
+  # Parámetros para edge-tts
+  voice: "es-MX-DaliaNeural"
+  rate: "-10%"               # Un poco más lento para procesar mejor la entonación
+  pitch: "+2Hz"              # Un pelín más agudo para sonar más juvenil y menos plano
+  # Configuración Qwen-TTS (voz personalizada; requiere requirements-qwen.txt)
   qwen:
     model_id: "Qwen/Qwen3-TTS-12Hz-0.6B-Base"
-    device: "cpu" # Forzado a CPU para no competir con Ollama (GT 1030 2GB)
+    device: "cpu"            # Forzado a CPU para no competir con Ollama (GT 1030 2GB)
     ref_audio: "audio/YotsubaAudio.wav"
     ref_text: "Yo soy la única que todavia no ha madurado. ¿Aún no entiendes porque siempre estoy apoyandote? Es porque me gustas. Tonto!"
     language: "Spanish"
-  # Parámetros para edge-tts
-  rate: "-10%"   # Un poco más lento para procesar mejor la entonación
-  pitch: "+2Hz"   # Un pelín más agudo para sonar más juvenil y menos plano
-  # Piper settings (guardados por si acaso)
-  piper_path: "C:/ProjectMEKA/piper/piper.exe"
-  model_path: "C:/ProjectMEKA/piper/modelos/es_MX-claude-high.onnx"
+    unload_after_use: true   # Libera el modelo tras cada respuesta con audio
+  # Piper (guardado por si acaso)
+  piper:
+    path: "C:/ProjectMEKA/piper/piper.exe"
+    model_path: "C:/ProjectMEKA/piper/modelos/es_MX-claude-high.onnx"
+
+documents:
+  max_chars: 4000            # Caracteres del documento que se envían al modelo
+
+media:
+  # file_id de stickers que Marin puede enviar con [STICKER]. Envíale un sticker al bot
+  # y su file_id aparecerá en la consola.
+  stickers: []
+  # URLs o file_id de GIFs que puede enviar con [GIF]
+  gifs: []
 
 telegram:
-  # El token se carga desde .env por seguridad
+  # El token y ALLOWED_USER_IDS se cargan desde .env por seguridad
   request_timeout: 30
+  drop_pending_updates: false  # true = ignora los mensajes recibidos mientras el bot estaba apagado

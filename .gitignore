@@ -9,6 +9,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+.ruff_cache/
 venv/
 env/
 ENV/
@@ -25,7 +27,7 @@ temp_audio/
 temp_media/
 temp_voice*.ogg
 config_local.yml
-memory.json
+memory.json*
 logs/
 *.log
 
@@ -33,3 +35,7 @@ logs/
 models/
 *.onnx
 *.gguf
+
+# Mascota (Tauri)
+pet/src-tauri/target/
+pet/src-tauri/gen/

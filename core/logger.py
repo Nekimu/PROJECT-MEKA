@@ -1,14 +1,19 @@
 import logging
 import sys
-from colorama import init, Fore, Style
+from typing import ClassVar
+
+from colorama import Fore, Style, init
 
 # Inicializar colorama para Windows
 init(autoreset=True)
 
+ROOT_LOGGER_NAME = "meka"
+
+
 class ColorFormatter(logging.Formatter):
     """Formateador personalizado para logs con colores."""
-    
-    COLORS = {
+
+    COLORS: ClassVar[dict[int, str]] = {
         logging.DEBUG: Fore.CYAN,
         logging.INFO: Fore.GREEN,
         logging.WARNING: Fore.YELLOW,
@@ -21,19 +26,36 @@ class ColorFormatter(logging.Formatter):
         message = super().format(record)
         return f"{color}{message}{Style.RESET_ALL}"
 
-def setup_logger(name="NoviaBot", level=logging.INFO):
-    """Configura y devuelve un logger."""
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
 
-    if not logger.handlers:
+def configure_logging(level: str | int | None = None) -> logging.Logger:
+    """Configura (una sola vez) el logger raíz del proyecto y, opcionalmente, su nivel."""
+    root = logging.getLogger(ROOT_LOGGER_NAME)
+    if not root.handlers:
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(ColorFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S"))
-        logger.addHandler(handler)
+        handler.setFormatter(
+            ColorFormatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S"
+            )
+        )
+        root.addHandler(handler)
+        root.propagate = False
+    if level is not None:
+        try:
+            root.setLevel(level.upper() if isinstance(level, str) else level)
+        except (ValueError, TypeError):
+            root.setLevel(logging.INFO)
+            root.warning(f"Nivel de log inválido en app.log_level: {level!r}. Se usa INFO.")
+    elif root.level == logging.NOTSET:
+        root.setLevel(logging.INFO)
+    return root
 
-    return logger
 
-# Logger específico para la conversación
+def setup_logger(name: str = "NoviaBot") -> logging.Logger:
+    """Devuelve un logger hijo de 'meka'; el nivel se controla con `app.log_level`."""
+    configure_logging()
+    return logging.getLogger(f"{ROOT_LOGGER_NAME}.{name}")
+
+
 def log_conversation(role, message):
     """Imprime la conversación en la consola con colores específicos."""
     if role.lower() == "user":

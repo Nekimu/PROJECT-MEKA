@@ -1,0 +1,19 @@
+[package]
+name = "meka-pet"
+version = "0.1.0"
+description = "Mascota de escritorio de MEKA (prototipo)"
+edition = "2021"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# macos-private-api: necesario para ventanas transparentes en macOS
+tauri = { version = "2", features = ["macos-private-api"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
