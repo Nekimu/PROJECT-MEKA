@@ -11,7 +11,7 @@ from telegram.ext import ContextTypes
 from ai.prompts import build_document_prompt
 from ai.service import ai_service
 from ai.stt import stt_service
-from ai.text_utils import ParsedMessage, parse_message
+from ai.text_utils import ParsedMessage, chunk_text, parse_message
 from ai.tts import tts_service
 from core.config import resolve_path, settings
 from core.documents import DOCUMENT_EXTENSIONS, IMAGE_EXTENSIONS, extract_text
@@ -77,7 +77,8 @@ async def memories_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = 'Aún no me has pedido que recuerde nada. Dime "recuerda esto: ..." 💭'
     else:
         text = "Esto es lo que recuerdo de ti 💖\n\n" + "\n".join(f"• {fact}" for fact in facts)
-    await update.effective_message.reply_text(text)
+    for chunk in chunk_text(text):
+        await update.effective_message.reply_text(chunk)
 
 
 async def forget_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -194,7 +195,8 @@ async def _send_reply(
         # Acción de "Typing" con tiempo de escritura proporcional al mensaje
         await context.bot.send_chat_action(chat_id, ChatAction.TYPING)
         await asyncio.sleep(min(len(reply.text) * 0.05 + random.uniform(1.5, 3.0), 6.0))
-        await message.reply_text(reply.text)
+        for chunk in chunk_text(reply.text):
+            await message.reply_text(chunk)
 
     # Enviar media adicional
     stickers = _media_list("stickers")
@@ -295,7 +297,7 @@ async def _process_file(update: Update, context: ContextTypes.DEFAULT_TYPE, kind
                 bot_messages = await ai_service.generate_response(
                     update.effective_chat.id, update.effective_user.id, prompt, use_memory=False
                 )
-            replies = [parse_message(m) for m in bot_messages]
+            replies = [parse_message(m, remove_roleplay=False) for m in bot_messages]
             await _deliver(update, context, replies, allow_audio=False)
     except Exception as e:
         logger.error(f"Error procesando multimedia: {e}")

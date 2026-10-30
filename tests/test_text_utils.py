@@ -1,4 +1,33 @@
-from ai.text_utils import clean_for_speech, parse_message, split_into_messages, split_paragraphs
+from ai.text_utils import (
+    MAX_MESSAGE_CHARS,
+    chunk_text,
+    clean_for_speech,
+    parse_message,
+    split_into_messages,
+    split_paragraphs,
+)
+
+
+def test_parse_message_can_keep_parentheses_for_analysis():
+    """Regresión: el análisis de documentos perdía los datos entre paréntesis."""
+    raw = "El total es 200 € (IVA incluido) [AUDIO]"
+    assert parse_message(raw, remove_roleplay=False).text == "El total es 200 € (IVA incluido)"
+    assert parse_message(raw).text == "El total es 200 €"
+
+
+def test_chunk_text_respects_telegram_limit():
+    """Regresión: Telegram rechaza mensajes de más de 4096 caracteres."""
+    facts = "\n".join(f"• recuerdo número {i} con algo de texto" for i in range(400))
+    chunks = chunk_text(facts)
+    assert len(chunks) > 1
+    assert all(len(chunk) <= MAX_MESSAGE_CHARS for chunk in chunks)
+    assert "\n".join(chunks) == facts  # se corta por saltos de línea sin perder nada
+
+
+def test_chunk_text_without_spaces_and_short_text():
+    assert [len(c) for c in chunk_text("x" * 9000)] == [4000, 4000, 1000]
+    assert chunk_text("hola") == ["hola"]
+    assert chunk_text("") == []
 
 
 def test_parse_message_detects_tags_case_insensitive():

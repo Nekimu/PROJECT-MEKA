@@ -9,6 +9,9 @@ TAG_PATTERN = re.compile(r"\[(STICKER|GIF|AUDIO)\]", re.IGNORECASE)
 ROLEPLAY_PATTERN = re.compile(r"\([^()\n]*\)|\*[^*\n]*\*")
 # Emojis y símbolos que el TTS no debe leer (se conserva la puntuación expresiva)
 NON_SPEECH_PATTERN = re.compile(r"[^\w\s.,!¡?¿:;\-\"']")
+# Telegram rechaza mensajes de más de 4096 caracteres; se deja margen para los emojis,
+# que Telegram cuenta como dos unidades UTF-16.
+MAX_MESSAGE_CHARS = 4000
 
 
 @dataclass(frozen=True)
@@ -35,11 +38,19 @@ def _tidy(text: str) -> str:
     return "\n".join(line for line in lines if line).strip()
 
 
-def parse_message(raw: str) -> ParsedMessage:
-    """Detecta [AUDIO]/[STICKER]/[GIF] y devuelve el texto listo para enviarse al chat."""
+def parse_message(raw: str, *, remove_roleplay: bool = True) -> ParsedMessage:
+    """
+    Detecta [AUDIO]/[STICKER]/[GIF] y devuelve el texto listo para enviarse al chat.
+
+    `remove_roleplay=False` conserva los paréntesis: en el análisis de documentos e
+    imágenes suelen contener datos ("200 € (IVA incluido)"), no acotaciones de rol.
+    """
     tags = {tag.upper() for tag in TAG_PATTERN.findall(raw)}
+    text = strip_tags(raw)
+    if remove_roleplay:
+        text = strip_roleplay(text)
     return ParsedMessage(
-        text=_tidy(strip_roleplay(strip_tags(raw))),
+        text=_tidy(text),
         wants_audio="AUDIO" in tags,
         wants_sticker="STICKER" in tags,
         wants_gif="GIF" in tags,
@@ -66,6 +77,23 @@ def split_into_messages(raw_text: str, long_message: int = 100) -> list[str]:
             return lines
         return [s.strip() for s in re.split(r"(?<=[.!?])\s+", raw_text) if s.strip()]
     return messages
+
+
+def chunk_text(text: str, limit: int = MAX_MESSAGE_CHARS) -> list[str]:
+    """Trocea un texto para que cada parte quepa en un mensaje de Telegram."""
+    chunks = []
+    while len(text) > limit:
+        cut = text.rfind("\n", 0, limit + 1)
+        if cut <= 0:
+            cut = text.rfind(" ", 0, limit + 1)
+        if cut <= 0:
+            cut = limit
+        piece, text = text[:cut].rstrip(), text[cut:].lstrip()
+        if piece:
+            chunks.append(piece)
+    if text.strip():
+        chunks.append(text)
+    return chunks
 
 
 def split_paragraphs(raw_text: str) -> list[str]:
