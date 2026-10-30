@@ -12,7 +12,7 @@ La auditoría encontró **tres errores críticos** que impedían usar el bot tal
 
 También había **fugas de privacidad entre usuarios**: el historial y la memoria eran globales y el bot no tenía control de acceso. A esto se suman bloqueos del *event loop*, código duplicado y configuración que se ignoraba.
 
-Todos los hallazgos marcados con ✅ están corregidos en esta versión, con 53 tests automatizados y CI en GitHub Actions. Las secciones 3 y 4 evalúan versiones nuevas y alternativas. La sección 5 propone una hoja de ruta.
+Todos los hallazgos marcados con ✅ están corregidos en esta versión, con 56 tests automatizados y CI en GitHub Actions. Las secciones 3 y 4 evalúan versiones nuevas y alternativas. La sección 5 propone una hoja de ruta.
 
 ---
 
@@ -66,6 +66,8 @@ Todos los hallazgos marcados con ✅ están corregidos en esta versión, con 53 
 | 25 | La búsqueda en memoria no normalizaba tildes ni puntuación (`¿recuerdas`, `favorito?`). | ✅ Normalización y ranking por coincidencias |
 | 26 | Después de cada mensaje se llamaba a `unload_model()`, aunque `keep_alive=0` ya descarga el modelo: una petición HTTP extra en cada interacción. | ✅ `keep_alive` configurable |
 | 27 | README con imágenes rotas (capturas inexistentes) y licencia MIT declarada sin archivo `LICENSE`. | ✅ |
+| 28 | *(Segunda revisión)* El análisis de documentos e imágenes borraba el texto entre paréntesis, porque usaba el filtro de acotaciones de rol del chat. | ✅ Solo se quitan las etiquetas |
+| 29 | *(Segunda revisión)* Telegram rechaza mensajes de más de 4096 caracteres: `/recuerdos` o una respuesta larga fallaban sin enviar nada. | ✅ `chunk_text()` |
 
 ---
 
@@ -206,7 +208,7 @@ Versiones consultadas en PyPI y en las páginas de releases de GitHub el 15/10/2
 
 | Comprobación | Resultado |
 |---|---|
-| `pytest` (53 tests: texto, memoria, documentos, configuración, servicio de IA, TTS y registro de handlers) | ✅ 53 pasan |
+| `pytest` (56 tests: texto, memoria, documentos, configuración, servicio de IA, TTS y registro de handlers) | ✅ 56 pasan |
 | `ruff check .` y `ruff format --check .` | ✅ Sin errores |
 | `pip install --dry-run -r requirements-dev.txt` | ✅ Resuelve PTB 22.8, ollama 0.6.3 y httpx 0.28.1, sin conflictos |
 | Simulación de los handlers con Telegram y Ollama falsos: texto con `[AUDIO]`/`[STICKER]`, foto seguida de chat, DOCX, nota de voz con *"recuerda esto"* y formato no soportado | ✅ Mensajes correctos, audio convertido a OGG/Opus y ningún archivo temporal restante |

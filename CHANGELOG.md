@@ -19,6 +19,8 @@ Auditoría completa del proyecto. Detalle en [`docs/AUDITORIA.md`](docs/AUDITORI
 - Stickers y GIFs con IDs inventados que siempre fallaban en silencio.
 - Rutas relativas al directorio de ejecución (fallaba al lanzar el bot desde otra carpeta).
 - `.doc` y `.xls` se anunciaban como soportados pero no podían leerse.
+- El análisis de documentos e imágenes borraba el texto entre paréntesis ("200 € (IVA incluido)" llegaba como "200 €").
+- Los mensajes de más de 4096 caracteres (p. ej. `/recuerdos` con muchos recuerdos) eran rechazados por Telegram; ahora se trocean.
 
 ### Seguridad y privacidad
 - Lista blanca de usuarios con `ALLOWED_USER_IDS` (antes cualquiera podía usar el bot).
@@ -32,8 +34,9 @@ Auditoría completa del proyecto. Detalle en [`docs/AUDITORIA.md`](docs/AUDITORI
 - Caché del *voice prompt* de Qwen-TTS: la voz de referencia se procesa una vez por carga.
 - Personalidad configurable desde un `.txt`/`.md` (`ai.system_prompt_file`).
 - Opciones nuevas en `config.yml`: `keep_alive`, `history_size`, `options`, `stt.*`, `documents.max_chars`, `media.*`...
+- README renovado con banner, ejemplo de conversación, inicio rápido por sistema operativo y hoja de ruta.
 - Lectura de tablas en DOCX, de `.md` y `.csv`; corte temprano en PDFs largos.
-- 53 tests automatizados, ruff, GitHub Actions, Dependabot y plantillas de issues/PR.
+- 56 tests automatizados, ruff, GitHub Actions, Dependabot y plantillas de issues/PR.
 
 ### Cambiado
 - Dependencias actualizadas: `python-telegram-bot` 22.x, `ollama` 0.6.x. Eliminadas `pandas` y `pydub` (no necesarias). Qwen-TTS pasa a `requirements-qwen.txt`.
