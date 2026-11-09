@@ -17,6 +17,7 @@ from core.config import resolve_path, settings
 from core.documents import DOCUMENT_EXTENSIONS, IMAGE_EXTENSIONS, extract_text
 from core.logger import setup_logger
 from core.memory import memory_system
+from core.persona import persona
 
 logger = setup_logger("Bot_Handlers")
 
@@ -26,13 +27,6 @@ TEMP_MEDIA_DIR = resolve_path("temp_media")
 # Límite de descarga de la Bot API de Telegram para get_file
 MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024
 
-VOICE_ACK_MESSAGES = [
-    "¡Waaa! 😳 ¿Un audio? A ver, a ver... ¡Dámelo que lo escucho ya mismo! 🥰✨",
-    "¿Me mandaste un audio, gordi? ¡Ay, qué emoción! Déjame pongo mis audífonos... 💖👉👈",
-    "Uy, espera amor, ando un poquito ocupada con un traje... ¡pero tu voz es prioridad! Dame un segundito... 💋🔥",
-    "¿Qué me estarás diciendo con esa voz tan linda? Jeje, ¡ya mismo lo oigo! 😉✨",
-    "¡Hala! ¡Un mensaje de voz! ¡Qué detalle tan lindo! 😳💖 Espera que lo proceso...",
-]
 
 # Lock global para evitar que múltiples procesos de IA/TTS/STT saturen la RAM simultáneamente
 processing_lock = asyncio.Lock()
@@ -58,25 +52,22 @@ def _safe_remove(path: Path | None):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Manejador del comando /start"""
     user = update.effective_user
-    welcome_message = (
-        f"¡Hola {user.first_name}! Soy Marin, tu novia virtual. 💖 ¿Qué quieres hacer hoy? ✨"
-    )
-    await update.effective_message.reply_text(welcome_message)
+    await update.effective_message.reply_text(persona.line("greet", user=user.first_name))
 
 
 async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """/reset: olvida el contexto reciente de la conversación (no los recuerdos)."""
     ai_service.reset_conversation(update.effective_chat.id)
-    await update.effective_message.reply_text("¡Listo! Empecemos de cero, cielo ✨")
+    await update.effective_message.reply_text(persona.line("reset"))
 
 
 async def memories_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """/recuerdos: muestra los hechos guardados del usuario."""
     facts = memory_system.get_facts(update.effective_user.id)
     if not facts:
-        text = 'Aún no me has pedido que recuerde nada. Dime "recuerda esto: ..." 💭'
+        text = persona.line("memories_empty")
     else:
-        text = "Esto es lo que recuerdo de ti 💖\n\n" + "\n".join(f"• {fact}" for fact in facts)
+        text = persona.line("memories_header") + "\n\n" + "\n".join(f"• {fact}" for fact in facts)
     for chunk in chunk_text(text):
         await update.effective_message.reply_text(chunk)
 
@@ -84,7 +75,7 @@ async def memories_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def forget_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """/olvidar: borra los recuerdos persistentes del usuario."""
     removed = memory_system.clear(update.effective_user.id)
-    text = f"He olvidado {removed} recuerdo(s). 🫣" if removed else "No tenía nada guardado 💭"
+    text = persona.line("forget_done", count=removed) if removed else persona.line("forget_none")
     await update.effective_message.reply_text(text)
 
 
@@ -99,7 +90,7 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Manejador de mensajes de voz con mayor delay y creatividad"""
-    await update.effective_message.reply_text(random.choice(VOICE_ACK_MESSAGES))
+    await update.effective_message.reply_text(persona.line("voice_ack"))
     # Delay artificial más largo para simular que está "escuchando" y "procesando"
     await asyncio.sleep(random.uniform(2.5, 4.0))
 
@@ -107,9 +98,7 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with processing_lock:
         transcription = await _transcribe_voice(update, context)
         if not transcription:
-            await update.effective_message.reply_text(
-                "¡Uhh! No pude entender bien lo que dijiste... 😵 ¿Me lo repites por fis?"
-            )
+            await update.effective_message.reply_text(persona.line("voice_fail"))
             return
         await _respond(update, context, transcription)
 
@@ -234,10 +223,7 @@ async def document_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif ext in DOCUMENT_EXTENSIONS:
         await _process_file(update, context, kind="document", ext=ext)
     else:
-        await update.effective_message.reply_text(
-            "¡Uy! Ese tipo de archivo no sé cómo leerlo todavía... 😅 "
-            "(Usa fotos, PDF, Word .docx, Excel .xlsx o texto)"
-        )
+        await update.effective_message.reply_text(persona.line("unsupported_file"))
 
 
 async def sticker_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -251,7 +237,7 @@ async def sticker_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         except Exception as e:
             logger.warning(f"No se pudo enviar el sticker: {e}")
-    await update.effective_message.reply_text("¡Kyaa! Qué sticker tan lindo 😳💖")
+    await update.effective_message.reply_text(persona.line("sticker_reply"))
 
 
 async def _process_file(update: Update, context: ContextTypes.DEFAULT_TYPE, kind: str, ext: str):
@@ -266,13 +252,12 @@ async def _process_file(update: Update, context: ContextTypes.DEFAULT_TYPE, kind
 
     attachment = message.photo[-1] if message.photo else message.document
     if attachment.file_size and attachment.file_size > MAX_DOWNLOAD_BYTES:
-        await message.reply_text("¡Ese archivo es enorme! 😵 Mándame uno de menos de 20 MB, porfa")
+        await message.reply_text(persona.line("file_too_big"))
         return
 
-    default_request = (
-        "Analiza este documento por fis." if kind == "document" else "Analiza esta imagen."
+    request = message.caption or persona.line(
+        "analyze_document" if kind == "document" else "analyze_image"
     )
-    request = message.caption or default_request
 
     TEMP_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     file_path = TEMP_MEDIA_DIR / f"{uuid.uuid4().hex}{ext}"
@@ -301,7 +286,7 @@ async def _process_file(update: Update, context: ContextTypes.DEFAULT_TYPE, kind
             await _deliver(update, context, replies, allow_audio=False)
     except Exception as e:
         logger.error(f"Error procesando multimedia: {e}")
-        await message.reply_text("¡Waaa! Me mareé intentando entender eso... 😵")
+        await message.reply_text(persona.line("media_error"))
     finally:
         # Eliminar el archivo temporal del usuario tras procesarlo
         _safe_remove(file_path)

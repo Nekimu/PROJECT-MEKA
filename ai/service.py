@@ -6,11 +6,18 @@ from collections import deque
 import ollama
 from ollama import Client
 
-from ai.prompts import MEMORY_CONTEXT_TEMPLATE, VISION_PROMPT, load_persona_prompt
+from ai.prompts import (
+    MEMORY_CONTEXT_TEMPLATE,
+    build_system_prompt,
+    build_vision_prompt,
+    read_prompt_override,
+)
 from ai.text_utils import split_into_messages, split_paragraphs
 from core.config import resolve_path, settings
 from core.logger import log_conversation, setup_logger
 from core.memory import memory_system, normalize_text
+from core.persona import Persona
+from core.persona import persona as active_persona
 
 logger = setup_logger("AI_Service")
 
@@ -25,9 +32,6 @@ DEFAULT_VISION_OPTIONS = {"temperature": 0.6, "num_predict": 1024}  # Menor temp
 
 REMEMBER_PATTERN = re.compile(r"recuerda\s+esto\s*:\s*(.+)", re.IGNORECASE | re.DOTALL)
 RECALL_TRIGGERS = ("recuerdas", "te acuerdas", "sabes algo de", "que me dijiste de")
-
-ERROR_REPLY = "¡Waaa! 😵 Algo pasó y no pude pensar bien... ¿me lo repites en un ratito?"
-VISION_ERROR_REPLY = "¡Uy! No pude ver bien la imagen... ¿me la mandas otra vez? 😵"
 
 
 class ConversationStore:
@@ -50,7 +54,13 @@ class ConversationStore:
 
 
 class AIService:
-    def __init__(self, config: dict | None = None, client=None, memory=None):
+    def __init__(
+        self,
+        config: dict | None = None,
+        client=None,
+        memory=None,
+        persona: Persona | None = None,
+    ):
         config = settings if config is None else config
         ai_config = config.get("ai", {})
         self.model = ai_config.get("model", "gemma3:12b")
@@ -64,8 +74,12 @@ class AIService:
         }
         self.vision_options = {**DEFAULT_VISION_OPTIONS, **(ai_config.get("vision_options") or {})}
 
+        # Identidad: viene del paquete de personaje, no del proveedor de IA
+        self.persona = persona if persona is not None else active_persona
         prompt_file = ai_config.get("system_prompt_file")
-        self.system_prompt = load_persona_prompt(resolve_path(prompt_file) if prompt_file else None)
+        override = read_prompt_override(resolve_path(prompt_file) if prompt_file else None)
+        self.system_prompt = build_system_prompt(override or self.persona.prompt)
+        self.vision_prompt = build_vision_prompt(self.persona.name)
         self.history = ConversationStore(ai_config.get("history_size", 20))
         self.memory = memory if memory is not None else memory_system
         self.log_conversations = config.get("app", {}).get("log_conversations", True)
@@ -136,17 +150,17 @@ class AIService:
             raw_text, latency_ms = await self._chat(messages, self.options)
         except Exception as e:
             logger.error(f"Error generando respuesta con Ollama: {e}")
-            return [ERROR_REPLY]
+            return [self.persona.line("error")]
 
         if not raw_text:
-            return ["Mmm... me quedé en blanco 😳 ¿Me lo dices de otra forma?"]
+            return [self.persona.line("empty_reply")]
 
         # Solo se guarda en el historial si la llamada tuvo éxito
         self.history.add_exchange(chat_id, user_text, raw_text)
         bot_messages = split_into_messages(raw_text)
 
         logger.info(f"Respuesta generada en {latency_ms}ms | Modelo: {self.model}")
-        self._log("Marin", f"({latency_ms}ms) " + " | ".join(bot_messages))
+        self._log(self.persona.name, f"({latency_ms}ms) " + " | ".join(bot_messages))
         return bot_messages
 
     async def generate_multimodal_response(
@@ -155,7 +169,7 @@ class AIService:
         """Analiza una imagen utilizando la capacidad multimodal del modelo (p. ej. Gemma 3)."""
         self._log("User (Multimodal)", f"{user_text} [Imagen]")
         messages = [
-            {"role": "system", "content": VISION_PROMPT},
+            {"role": "system", "content": self.vision_prompt},
             {"role": "user", "content": user_text, "images": [str(image_path)]},
         ]
 
@@ -164,15 +178,15 @@ class AIService:
             raw_text, latency_ms = await self._chat(messages, self.vision_options)
         except Exception as e:
             logger.error(f"Error en análisis multimodal: {e}")
-            return [VISION_ERROR_REPLY]
+            return [self.persona.line("vision_error")]
 
         # El archivo de la imagen se borra tras procesarse: en el historial guardamos solo
         # texto. Guardar la ruta hacía fallar todas las respuestas posteriores del chat.
         self.history.add_exchange(chat_id, f"[Te envié una imagen] {user_text}", raw_text)
 
         logger.info(f"Análisis multimodal completado en {latency_ms}ms")
-        self._log("Marin (Vision)", f"({latency_ms}ms) {raw_text}")
-        return split_paragraphs(raw_text) or ["¡Ups! No se me ocurre nada..."]
+        self._log(f"{self.persona.name} (visión)", f"({latency_ms}ms) {raw_text}")
+        return split_paragraphs(raw_text) or [self.persona.line("empty_reply")]
 
     def reset_conversation(self, chat_id: int):
         self.history.clear(chat_id)

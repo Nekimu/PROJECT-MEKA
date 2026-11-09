@@ -4,13 +4,24 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ## [Sin publicar]
 
+### Filosofía híbrida
+- **Personajes intercambiables** (`personas/`): cada paquete define personalidad (`persona.md`), nombre, voz y frases del bot (`persona.yml`). Se elige con `persona:` en `config.yml` o `MEKA_PERSONA`. Incluye MEKA (inspirado en D.Va, por defecto), Marin y Yotsuba.
+- Ya no hay texto de ningún personaje fijo en el código: saludos, acuses de voz, errores, comandos y registros salen del paquete activo.
+- Las reglas de formato (`---`, `[AUDIO]`, `[STICKER]`, `[GIF]`) son comunes y se añaden a cualquier personalidad.
+- `docs/FILOSOFIA_HIBRIDA.md`: nueva dirección del proyecto, con el estado real del repositorio.
+- README, visión y banner actualizados.
+
+### Eliminado
+- Audios de referencia de voces de terceros (`audio/`). Qwen3-TTS solo debe clonar tu propia voz o una con permiso, guardada en `voices/` (ignorada por git). El motor por defecto pasa a ser Edge-TTS, con la voz definida por cada personaje.
+
 ### Añadido
 - **Prototipo de mascota de escritorio** (`pet/`): máquina de estados con 9 estados animados, Tamagotchi no punitivo (energía, saciedad, ánimo, afecto) con progreso offline, menú contextual, chat, personajes desbloqueables, vista previa en pixel art y cliente WebSocket del contrato de eventos de MEKA Core.
 - Envoltorio de escritorio con **Tauri 2**: ventana transparente, sin bordes y siempre visible.
 - 4 personajes a partir de arte original: MEKA, Nekimu, Espadachina y Kitsune.
 - `pet/tools/stickerize.py`: recorta el fondo de stickers y los convierte a WebP con transparencia.
 - `docs/VISION.md`: visión, arquitectura, contrato de eventos, guía de arte y mecánicas.
-- Test que valida el manifiesto de personajes (66 tests en total).
+- Test que valida el manifiesto de personajes.
+- Tests de los paquetes de personaje y de la selección por configuración (82 tests en total).
 
 ## [1.1.0] — 2026-10-15
 

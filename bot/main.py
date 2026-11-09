@@ -23,13 +23,14 @@ from bot.handlers import (
 )
 from core.config import is_valid_token, settings
 from core.logger import configure_logging, setup_logger
+from core.persona import persona
 
 logger = setup_logger("Bot_Main")
 
 BOT_COMMANDS = [
-    BotCommand("start", "Saludar a Marin"),
+    BotCommand("start", f"Saludar a {persona.name}"),
     BotCommand("reset", "Empezar la conversación de cero"),
-    BotCommand("recuerdos", "Ver lo que Marin recuerda de ti"),
+    BotCommand("recuerdos", f"Ver lo que {persona.name} recuerda de ti"),
     BotCommand("olvidar", "Borrar tus recuerdos guardados"),
 ]
 
@@ -135,8 +136,8 @@ def run_bot():
     if not stt_service.check_health():
         logger.error("ADVERTENCIA: STT (Whisper) no está listo. Los audios de voz podrían fallar.")
 
-    logger.info("Diagnóstico completado. Iniciando Marin Kitagawa...")
-    logger.info("¡Marin Kitagawa está lista y esperando mensajes! 💖")
+    logger.info(f"Diagnóstico completado. Personaje: {persona.name} ({persona.id})")
+    logger.info(f"¡{persona.name} está lista y esperando mensajes!")
 
     try:
         application.run_polling(
@@ -147,7 +148,7 @@ def run_bot():
         logger.info("Cerrando el bot por petición del usuario...")
     finally:
         _release_resources()
-        logger.info("¡Marin se ha ido a descansar! 💖")
+        logger.info(f"{persona.name} se ha ido a descansar.")
 
 
 if __name__ == "__main__":

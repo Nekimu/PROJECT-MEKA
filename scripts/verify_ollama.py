@@ -56,7 +56,7 @@ def verify_ollama():
     try:
         response = client.chat(
             model=model_name,
-            messages=[{"role": "user", "content": 'Di "Hola Marin" si me escuchas.'}],
+            messages=[{"role": "user", "content": 'Di "Hola MEKA" si me escuchas.'}],
             keep_alive=0,
         )
         print(f"{Fore.GREEN}✅ Respuesta de {model_name}:")

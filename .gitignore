@@ -39,3 +39,7 @@ models/
 # Mascota (Tauri)
 pet/src-tauri/target/
 pet/src-tauri/gen/
+
+# Voces de referencia personales para clonar (nunca al repositorio)
+voices/
+audio/

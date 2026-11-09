@@ -81,7 +81,7 @@ def test_qwen_voice_prompt_is_computed_once_and_released(tmp_path, monkeypatch):
     tts = make_tts(
         tmp_path,
         engine="qwen-tts",
-        qwen={"ref_audio": "audio/YotsubaAudio.wav", "ref_text": "hola"},
+        qwen={"ref_audio": "voices/prueba.wav", "ref_text": "hola"},
     )
     model = FakeQwenModel()
 

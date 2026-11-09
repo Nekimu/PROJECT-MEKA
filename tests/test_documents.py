@@ -5,9 +5,9 @@ from core.documents import UnsupportedDocumentError, extract_text
 
 def test_txt(tmp_path):
     path = tmp_path / "nota.txt"
-    path.write_text("Hola Marin ✨", encoding="utf-8")
+    path.write_text("Hola MEKA ✨", encoding="utf-8")
     result = extract_text(path)
-    assert result.text == "Hola Marin ✨" and not result.truncated
+    assert result.text == "Hola MEKA ✨" and not result.truncated
 
 
 def test_truncates_and_flags(tmp_path):

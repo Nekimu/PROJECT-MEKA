@@ -3,8 +3,9 @@ from types import SimpleNamespace
 
 from ollama import Image, Message
 
-from ai.service import ERROR_REPLY, AIService
+from ai.service import AIService
 from core.memory import MemorySystem
+from core.persona import Persona, load_persona
 
 
 class FakeClient:
@@ -26,10 +27,18 @@ class FakeClient:
         return SimpleNamespace(message=SimpleNamespace(content=self.replies.pop(0)))
 
 
+TEST_PERSONA = Persona(
+    id="prueba",
+    name="Prueba",
+    prompt="Eres un personaje de prueba.",
+    lines={"error": ["ERROR DE PRUEBA"], "vision_error": ["VISION"], "empty_reply": ["VACIO"]},
+)
+
+
 def make_service(tmp_path, client, **ai_overrides):
     config = {"ai": {"model": "test-model", "temperature": 0.3, **ai_overrides}}
     memory = MemorySystem(tmp_path / "memory.json")
-    return AIService(config=config, client=client, memory=memory)
+    return AIService(config=config, client=client, memory=memory, persona=TEST_PERSONA)
 
 
 def run(coro):
@@ -75,7 +84,7 @@ def test_chat_keeps_working_after_image_is_deleted(tmp_path):
 
 def test_failed_call_does_not_pollute_history(tmp_path):
     service = make_service(tmp_path, FakeClient(fail=True))
-    assert run(service.generate_response(1, 1, "hola")) == [ERROR_REPLY]
+    assert run(service.generate_response(1, 1, "hola")) == ["ERROR DE PRUEBA"]
     assert service.history.get(1) == []
 
 
@@ -116,3 +125,33 @@ def test_history_size_limit(tmp_path):
     for i in range(5):
         run(service.generate_response(1, 1, f"mensaje {i}"))
     assert len(service.history.get(1)) == 4
+
+
+def test_system_prompt_uses_persona_and_shared_format_rules(tmp_path):
+    client = FakeClient("Hola")
+    service = make_service(tmp_path, client)
+    run(service.generate_response(1, 1, "hola"))
+    system = client.calls[0]["messages"][0]["content"]
+    assert system.startswith("Eres un personaje de prueba.")
+    assert '"---"' in system and "[AUDIO]" in system  # reglas de formato comunes
+
+
+def test_vision_prompt_names_the_persona(tmp_path):
+    image = tmp_path / "foto.jpg"
+    image.write_bytes(b"\xff\xd8\xff")
+    client = FakeClient("Bonita")
+    service = make_service(tmp_path, client)
+    run(service.generate_multimodal_response(1, "mira", image))
+    assert client.calls[0]["messages"][0]["content"].startswith("Eres Prueba.")
+
+
+def test_real_persona_pack_drives_replies(tmp_path):
+    memory_path = tmp_path / "memory.json"
+    marin = load_persona("marin")
+    service = AIService(
+        config={"ai": {}},
+        client=FakeClient(fail=True),
+        memory=MemorySystem(memory_path),
+        persona=marin,
+    )
+    assert run(service.generate_response(1, 1, "hola"))[0] in marin.lines["error"]

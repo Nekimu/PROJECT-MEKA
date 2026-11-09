@@ -9,6 +9,7 @@ from pathlib import Path
 from ai.text_utils import clean_for_speech
 from core.config import resolve_path, settings
 from core.logger import setup_logger
+from core.persona import persona as active_persona
 
 logger = setup_logger("TTS_Service")
 
@@ -26,8 +27,11 @@ DEFAULT_QWEN_GENERATION = {
 
 
 class TTSService:
-    def __init__(self, config: dict | None = None):
+    def __init__(self, config: dict | None = None, voice: dict | None = None):
         tts_config = (settings if config is None else config).get("tts", {})
+        # La voz (edge-tts) la define el personaje activo y tiene prioridad sobre config.yml
+        voice = active_persona.voice if voice is None else voice
+        tts_config = {**tts_config, **voice}
         self.enabled = tts_config.get("enabled", False)
         self.engine = tts_config.get("engine", "edge-tts")
         self.fallback_engine = tts_config.get("fallback_engine")
@@ -254,7 +258,7 @@ class TTSService:
         if not await asyncio.to_thread(self._init_qwen):
             return None
 
-        output_path = self._new_output_path("marin_qwen", ".wav")
+        output_path = self._new_output_path("meka_qwen", ".wav")
         try:
             await asyncio.to_thread(self._qwen_generate, text, output_path)
             logger.info(f"Audio generado con Qwen-TTS: {output_path.name}")
@@ -268,7 +272,7 @@ class TTSService:
 
     async def _generate_edge_tts(self, text: str) -> Path | None:
         """Genera audio usando Edge-TTS (Online, alta calidad)."""
-        output_path = self._new_output_path("marin", ".mp3")
+        output_path = self._new_output_path("meka", ".mp3")
         try:
             import edge_tts
 
@@ -283,7 +287,7 @@ class TTSService:
 
     async def _generate_piper(self, text: str) -> Path | None:
         """Genera audio usando Piper (Local)."""
-        output_path = self._new_output_path("marin", ".wav")
+        output_path = self._new_output_path("meka", ".wav")
         command = [
             self.piper_path,
             "--model", self.model_path,

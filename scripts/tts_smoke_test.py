@@ -7,10 +7,11 @@ import asyncio
 import sys
 
 from ai.tts import tts_service
+from core.persona import persona
 
 
-async def test_marin_voice(text: str):
-    print(f"--- Probando Voz de Marin con {tts_service.engine} ---")
+async def try_voice(text: str):
+    print(f"--- Probando la voz de {persona.name} con {tts_service.engine} ---")
     print(f"Generando audio para: '{text}'...")
     audio_path = await tts_service.generate_audio(text)
     tts_service.release()
@@ -23,5 +24,5 @@ async def test_marin_voice(text: str):
 
 
 if __name__ == "__main__":
-    sample = " ".join(sys.argv[1:]) or "¡Hola! Soy Marin. ¿Te gusta cómo suena mi voz?"
-    asyncio.run(test_marin_voice(sample))
+    sample = " ".join(sys.argv[1:]) or f"¡Hola! Soy {persona.name}. ¿Te gusta cómo suena mi voz?"
+    asyncio.run(try_voice(sample))

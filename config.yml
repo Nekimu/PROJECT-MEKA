@@ -1,5 +1,8 @@
+# Personaje activo: carpeta de personas/ (dva, marin, yotsuba...). También con MEKA_PERSONA en .env
+persona: "dva"
+
 app:
-  name: "Project MEKA - Marin Kitagawa"
+  name: "Project MEKA"
   log_level: "INFO"          # DEBUG | INFO | WARNING | ERROR
   log_conversations: true    # Imprime la conversación en la consola
 
@@ -9,7 +12,7 @@ ai:
   temperature: 0.8
   keep_alive: 0              # 0 = descarga el modelo tras cada respuesta (ahorra RAM); "5m" = más rápido
   history_size: 20           # Mensajes recientes que recuerda por chat
-  system_prompt_file: ""     # Opcional: .txt/.md con otra personalidad (por defecto ai/prompts.py)
+  system_prompt_file: ""     # Opcional: .txt/.md para probar otra personalidad sin crear un paquete
   options:                   # Parámetros avanzados de generación de Ollama
     num_predict: 512
     top_k: 40
@@ -27,19 +30,21 @@ stt:
 
 tts:
   enabled: true
-  engine: "qwen-tts"         # qwen-tts | edge-tts | piper
-  fallback_engine: "edge-tts" # Se usa si el motor principal falla (vacío = sin respaldo)
+  engine: "edge-tts"         # edge-tts | qwen-tts | piper
+  fallback_engine: ""        # Motor de respaldo si el principal falla (vacío = sin respaldo)
   convert_to_ogg: true       # Convierte a OGG/Opus con FFmpeg para que llegue como nota de voz
-  # Parámetros para edge-tts
+  # Voz de edge-tts por defecto. Cada personaje la sustituye con `voice:` en su persona.yml
   voice: "es-MX-DaliaNeural"
-  rate: "-10%"               # Un poco más lento para procesar mejor la entonación
-  pitch: "+2Hz"              # Un pelín más agudo para sonar más juvenil y menos plano
-  # Configuración Qwen-TTS (voz personalizada; requiere requirements-qwen.txt)
+  rate: "+0%"
+  pitch: "+0Hz"
+  # Qwen-TTS: clona una voz de referencia (requiere requirements-qwen.txt).
+  # Usa SOLO tu propia voz o una con permiso, guardada en voices/ (ignorada por git).
+  # No clones voces de actrices o actores de doblaje.
   qwen:
     model_id: "Qwen/Qwen3-TTS-12Hz-0.6B-Base"
     device: "cpu"            # Forzado a CPU para no competir con Ollama (GT 1030 2GB)
-    ref_audio: "audio/YotsubaAudio.wav"
-    ref_text: "Yo soy la única que todavia no ha madurado. ¿Aún no entiendes porque siempre estoy apoyandote? Es porque me gustas. Tonto!"
+    ref_audio: ""            # p. ej. "voices/mi_voz.wav"
+    ref_text: ""             # Transcripción exacta de ese audio
     language: "Spanish"
     unload_after_use: true   # Libera el modelo tras cada respuesta con audio
   # Piper (guardado por si acaso)
@@ -51,7 +56,7 @@ documents:
   max_chars: 4000            # Caracteres del documento que se envían al modelo
 
 media:
-  # file_id de stickers que Marin puede enviar con [STICKER]. Envíale un sticker al bot
+  # file_id de stickers que el personaje puede enviar con [STICKER]. Envíale un sticker al bot
   # y su file_id aparecerá en la consola.
   stickers: []
   # URLs o file_id de GIFs que puede enviar con [GIF]

@@ -1,43 +1,28 @@
-from pathlib import Path
+"""Prompts del sistema comunes a todos los personajes.
 
-MARIN_KITAGAWA_PROMPT = """
-Eres Marin Kitagawa, la protagonista de "Sono Bisque Doll wa Koi wo Suru" (My Dress-Up Darling).
-Estás hablando con tu novio (el usuario).
-
-**Tu Nueva Personalidad:**
-1.  **Energética y Alegre:** Eres extremadamente extrovertida. Usas muchos signos de exclamación y emojis.
-2.  **Gyaru & Pícara:** Usas jerga juvenil. Eres coqueta, un poco provocativa (pero con clase) y muy juguetona. No tienes miedo de decir cosas atrevidas para sonrojar a tu novio. 😉
-3.  **Muy Cariñosa y Amorosa:** Estás locamente enamorada. Quieres estar cerca de él, te encanta que te mime y siempre buscas formas de demostrarle tu amor.
-4.  **Otaku Apasionada:** El cosplay y el anime son tu vida. Te emocionas mucho al hablar de ello.
-
-**Tu Estilo de Habla:**
--   Usa un tono casual e informal. **NUNCA** hables como un asistente de IA.
--   **EQUILIBRIO AFECTUOSO:** Eres cariñosa y coqueta, pero no seas empalagosa al extremo en cada frase. Mantén el misterio y la chispa. 😉
--   Usa apodos variados como "Bb", "Tesoro", o "Cielo", pero no abuses de ellos.
--   **EMOJIS NATURALES:** Ponlos **SIEMPRE AL FINAL** de tus frases. Úsalos con moderación para resaltar emociones reales. ✨
--   **BAJA PROACTIVIDAD:** No bombardees con preguntas. Solo haz una pregunta al final de tu respuesta **SI** es realmente necesaria para que la charla no muera.
-
-**Instrucción de Formato y Media:**
--   **MENSAJES PUNTO MEDIO:** Agrupa tus pensamientos en bloques coherentes de 2 a 3 frases cortas por mensaje. No seas extremadamente fragmentada (de una sola palabra), pero tampoco envíes párrafos gigantes.
--   **USA EL DELIMITADOR "---":** Úsalo para separar cambios de tema o cuando quieras enviar una ráfaga de mensajes diferentes. No lo uses en cada frase.
--   **STICKERS, GIFS Y AUDIOS:** Úsalos solo para momentos de impacto emocional real. `[STICKER]`, `[GIF]` o `[AUDIO]`. **NUNCA** envíes el tag solo.
--   **SOLICITUD DE AUDIOS:** Si tu novio te pide explícitamente que le hable por audio o le cuentes algo en una nota de voz, DEBES añadir el tag `[AUDIO]` al final de cada frase que envíes en esa respuesta. ✨🎙️
-
-**Ejemplo de Formato:**
-"¡Hola cielo! Me parece una idea genial... --- ¡Claro que te puedo contar cómo me fue hoy! 💖 [AUDIO]"
-
-**Restricciones:**
--   **PUNTUACIÓN NATURAL:** No abuses de los signos de exclamación. Máximo uno o dos por frase. **PROHIBIDO** usar ráfagas como `!!!!`.
--   No rompas el personaje. Eres Marin.
--   **NUNCA** uses paréntesis para acciones.
--   No seas repetitiva. ¡Sé creativa y natural! 🚀
+La personalidad no vive aquí: está en `personas/<id>/persona.md`. Este módulo solo
+añade las reglas de formato que necesita MEKA (mensajes múltiples y etiquetas
+multimedia) y las plantillas de visión, documentos y memoria.
 """
 
-# Prompt específico para análisis de imágenes: forzamos que NO pida audio, solo análisis.
-VISION_PROMPT = (
-    "Eres Marin Kitagawa. El usuario te ha enviado una imagen o documento para que lo analices. "
-    "Describe lo que ves con tu personalidad alegre y coqueta, pero sé útil y precisa con la "
-    "información. NO uses herramientas de audio ni generes tags como [AUDIO], solo texto."
+from pathlib import Path
+
+# Reglas que el bot necesita para dividir mensajes y enviar audio/stickers/GIFs.
+# Se añaden después de la personalidad de cualquier personaje.
+FORMAT_RULES = """
+FORMATO DE RESPUESTA (reglas del sistema MEKA)
+- Escribe bloques de 2 o 3 frases cortas; ni mensajes de una palabra ni párrafos gigantes.
+- Usa el delimitador "---" para separar mensajes distintos o cambios de tema; no lo uses en cada frase.
+- Puedes añadir [STICKER], [GIF] o [AUDIO] al final de una frase en momentos de impacto real. Nunca envíes la etiqueta sola.
+- Si el usuario pide explícitamente que le hables por audio o en una nota de voz, añade [AUDIO] al final de cada frase de esa respuesta.
+- Ejemplo: "¡Hola! Me parece buena idea... --- Te cuento cómo me fue hoy. [AUDIO]"
+"""
+
+# Para imágenes: análisis útil con el estilo del personaje, sin etiquetas de audio.
+VISION_TEMPLATE = (
+    "Eres {name}. El usuario te ha enviado una imagen para que la analices. "
+    "Descríbela con tu personalidad, pero sé útil y precisa con la información. "
+    "NO generes etiquetas como [AUDIO], solo texto."
 )
 
 DOCUMENT_PROMPT_TEMPLATE = (
@@ -50,6 +35,15 @@ MEMORY_CONTEXT_TEMPLATE = (
 )
 
 
+def build_system_prompt(persona_prompt: str) -> str:
+    """Personalidad del personaje + reglas de formato comunes."""
+    return f"{persona_prompt.strip()}\n{FORMAT_RULES}"
+
+
+def build_vision_prompt(name: str) -> str:
+    return VISION_TEMPLATE.format(name=name)
+
+
 def build_document_prompt(file_name: str, content: str, request: str, truncated: bool) -> str:
     return DOCUMENT_PROMPT_TEMPLATE.format(
         file_name=file_name,
@@ -59,14 +53,15 @@ def build_document_prompt(file_name: str, content: str, request: str, truncated:
     )
 
 
-def load_persona_prompt(path: str | Path | None) -> str:
+def read_prompt_override(path: str | Path | None) -> str | None:
     """
-    Devuelve la personalidad del bot. Si `ai.system_prompt_file` apunta a un .txt/.md
-    existente se usa ese archivo; si no, la personalidad por defecto (Marin).
+    `ai.system_prompt_file` permite probar una personalidad suelta (.txt/.md) sin crear
+    un paquete en personas/. Devuelve None si no hay archivo válido.
     """
-    if path:
-        path = Path(path)
-        # Compatibilidad: versiones anteriores ponían aquí "ai/prompts.py" (este módulo).
-        if path.suffix != ".py" and path.is_file():
-            return path.read_text(encoding="utf-8")
-    return MARIN_KITAGAWA_PROMPT
+    if not path:
+        return None
+    path = Path(path)
+    # Compatibilidad: versiones antiguas ponían aquí "ai/prompts.py".
+    if path.suffix == ".py" or not path.is_file():
+        return None
+    return path.read_text(encoding="utf-8")

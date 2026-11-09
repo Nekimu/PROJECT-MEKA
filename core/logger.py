@@ -58,9 +58,7 @@ def setup_logger(name: str = "NoviaBot") -> logging.Logger:
 
 def log_conversation(role, message):
     """Imprime la conversación en la consola con colores específicos."""
-    if role.lower() == "user":
+    if role.lower().startswith("user"):
         print(f"\n{Fore.BLUE}{Style.BRIGHT}Tú: {Style.RESET_ALL}{message}")
-    elif role.lower() in ["ai", "assistant", "marin"]:
-        print(f"{Fore.MAGENTA}{Style.BRIGHT}Marin: {Style.RESET_ALL}{message}\n")
-    else:
-        print(f"{Fore.WHITE}{role}: {message}")
+    else:  # El personaje activo (su nombre llega en `role`)
+        print(f"{Fore.MAGENTA}{Style.BRIGHT}{role}: {Style.RESET_ALL}{message}\n")

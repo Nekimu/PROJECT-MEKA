@@ -2,7 +2,7 @@
 
 > **Una compañera que vive en tu escritorio y en tu móvil, con el estilo de tus animes y videojuegos favoritos, que te acompaña mientras trabajas y te ayuda a gestionar tus proyectos sin que tus archivos salgan de tu equipo.**
 
-Este documento describe hacia dónde va el proyecto. El análisis técnico, las versiones y las alternativas evaluadas están en la [auditoría](AUDITORIA.md). El prototipo de la mascota está en [`pet/`](../pet/README.md).
+Este documento describe hacia dónde va el proyecto; la estrategia de proveedores (nube, local, agentes externos) está en la [filosofía híbrida](FILOSOFIA_HIBRIDA.md). El análisis técnico, las versiones y las alternativas evaluadas están en la [auditoría](AUDITORIA.md). El prototipo de la mascota está en [`pet/`](../pet/README.md).
 
 ## Por qué MEKA
 
@@ -23,7 +23,7 @@ Lo que diferencia a MEKA no es gestionar archivos, sino **la relación**: te rec
 1. **Local primero.** Tus archivos, tu memoria y tu mascota viven en tu equipo. Solo sale el texto que envías al cerebro que elijas, y con Ollama ni eso.
 2. **Viva, pero no punitiva.** Como un Tamagotchi moderno: tiene necesidades y estados de ánimo, pero nunca muere ni te regaña por no abrirla.
 3. **Personalidad antes que funciones.** Cada respuesta, animación y frase tiene que sonar al personaje.
-4. **Cerebro intercambiable.** La lógica no depende de un proveedor de IA.
+4. **Cerebro intercambiable.** La lógica no depende de un proveedor de IA, y el personaje tampoco: es un paquete en [`personas/`](../personas/README.md) que se elige por configuración.
 5. **Segura por diseño.** Solo toca lo que autorizas, pide permiso antes de cambiar nada y todo se puede deshacer.
 6. **Arte original en el repositorio público.** El *fan art* de personajes con derechos (D.Va, Nino Nakano, Steve, Master Chief, Marin...) es para uso personal y se guarda fuera del repositorio.
 
@@ -169,6 +169,5 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 
 - **Nombre definitivo** de la mascota principal ("MEKA" es provisional).
 - **Estilo final:** stickers anime, pixel art dibujado a mano o Rive.
-- **Personalidad:** ¿Marin se queda en el bot de Telegram o la mascota tiene su propia personalidad?
 - **Cerebro por defecto:** Claude Haiku (≈ 1 $/mes), Gemini Flash gratis (con sus condiciones de privacidad) u Ollama local.
 - **Voz:** sustituir los audios de referencia actuales por una voz original.
