@@ -1,13 +1,17 @@
-python-telegram-bot==20.*
-ollama
-python-dotenv
-PyYAML
-colorama
-openai-whisper
-pydub
-edge-tts
-soundfile
-pymupdf
-python-docx
-pandas
-openpyxl
+# --- Núcleo del bot ---
+# PTB 22 + ollama 0.6 comparten httpx 0.27/0.28. Con "python-telegram-bot==20.*"
+# pip terminaba eligiendo ollama 0.1.7 y PTB 20.7 (sin ReactionTypeEmoji) y el bot no arrancaba.
+python-telegram-bot>=22.0,<23
+ollama>=0.6,<1
+python-dotenv>=1.0
+PyYAML>=6.0
+colorama>=0.4.6
+
+# --- Voz ---
+openai-whisper>=20250625   # STT (instala PyTorch como dependencia)
+edge-tts>=7.0              # TTS ligero en la nube (motor de respaldo)
+
+# --- Lectura de documentos ---
+pymupdf>=1.24.3            # PDF
+python-docx>=1.1           # DOCX
+openpyxl>=3.1              # XLSX

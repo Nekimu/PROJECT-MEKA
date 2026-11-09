@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MEKA · Mascota</title>
+  <link rel="stylesheet" href="pet.css">
+</head>
+<body>
+  <main class="desk">
+    <!-- La "ventana" de la mascota: en escritorio (Tauri) es la ventana transparente completa -->
+    <section class="stage" id="stage" aria-label="Mascota MEKA">
+      <div class="bubble" id="bubble" role="status" aria-live="polite" hidden></div>
+
+      <div class="pet" id="pet" tabindex="0" aria-label="Mascota: haz clic para acariciarla, clic derecho para el menú">
+        <div class="pet__body" id="petBody" data-motion="breathe">
+          <img class="pet__sprite" id="sprite" alt="" draggable="false">
+          <canvas class="pet__sprite pet__sprite--pixel" id="pixelSprite" hidden></canvas>
+        </div>
+        <div class="pet__shadow"></div>
+        <div class="pet__particles" id="particles" aria-hidden="true"></div>
+      </div>
+
+      <div class="stats" id="statsMini" aria-label="Estado de la mascota">
+        <div class="stat" data-stat="energia" title="Energía"><span>⚡</span><i></i></div>
+        <div class="stat" data-stat="saciedad" title="Saciedad"><span>🍙</span><i></i></div>
+        <div class="stat" data-stat="animo" title="Ánimo"><span>😊</span><i></i></div>
+        <div class="stat" data-stat="afecto" title="Afecto"><span>💙</span><i></i></div>
+      </div>
+
+      <form class="chat" id="chatForm" hidden>
+        <input id="chatInput" type="text" maxlength="200" placeholder="Escríbele algo..." autocomplete="off" aria-label="Mensaje para la mascota">
+      </form>
+
+      <ul class="menu" id="menu" role="menu" hidden></ul>
+    </section>
+
+    <!-- Panel de pruebas: solo en el navegador, simula los eventos que enviará MEKA Core -->
+    <aside class="panel" id="panel" aria-label="Panel de pruebas">
+      <header class="panel__head">
+        <h1>MEKA <small>prototipo</small></h1>
+        <p>Clic: acariciar · Arrastrar: mover · Clic derecho o pulsación larga: menú</p>
+      </header>
+
+      <section>
+        <h2>Eventos de MEKA Core</h2>
+        <div class="buttons" id="eventButtons"></div>
+      </section>
+
+      <section>
+        <h2>Tamagotchi</h2>
+        <dl class="numbers" id="statsNumbers"></dl>
+        <label class="row">Velocidad del tiempo
+          <select id="speed">
+            <option value="1">Real (1×)</option>
+            <option value="60">1 min = 1 h (60×)</option>
+            <option value="600">Muy rápido (600×)</option>
+          </select>
+        </label>
+        <div class="buttons">
+          <button type="button" id="unlockAll">Desbloquear personajes</button>
+          <button type="button" id="resetPet">Reiniciar mascota</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Conexión con MEKA Core</h2>
+        <form class="row" id="coreForm">
+          <input id="coreUrl" type="text" value="ws://127.0.0.1:8765/events" aria-label="URL del WebSocket">
+          <button type="submit">Conectar</button>
+        </form>
+        <p class="hint">Estado: <strong id="coreStatus">sin conectar</strong></p>
+      </section>
+    </aside>
+  </main>
+
+  <script src="skins/manifest.js"></script>
+  <script src="pet.js"></script>
+</body>
+</html>

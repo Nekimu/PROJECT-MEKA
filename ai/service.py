@@ -1,210 +1,191 @@
+import asyncio
+import re
+import time
+from collections import deque
+
 import ollama
 from ollama import Client
-from core.config import settings
-from core.logger import setup_logger, log_conversation
-from ai.prompts import MARIN_KITAGAWA_PROMPT
-import re
-from core.memory import memory_system
+
+from ai.prompts import MEMORY_CONTEXT_TEMPLATE, VISION_PROMPT, load_persona_prompt
+from ai.text_utils import split_into_messages, split_paragraphs
+from core.config import resolve_path, settings
+from core.logger import log_conversation, setup_logger
+from core.memory import memory_system, normalize_text
 
 logger = setup_logger("AI_Service")
 
+DEFAULT_OPTIONS = {
+    "num_predict": 512,
+    "top_k": 40,
+    "top_p": 0.9,
+    "repeat_penalty": 1.2,  # Penaliza la repetición de palabras/frases
+    "repeat_last_n": 64,  # Cuánto atrás mirar para penalizar
+}
+DEFAULT_VISION_OPTIONS = {"temperature": 0.6, "num_predict": 1024}  # Menor temperatura: precisión
+
+REMEMBER_PATTERN = re.compile(r"recuerda\s+esto\s*:\s*(.+)", re.IGNORECASE | re.DOTALL)
+RECALL_TRIGGERS = ("recuerdas", "te acuerdas", "sabes algo de", "que me dijiste de")
+
+ERROR_REPLY = "¡Waaa! 😵 Algo pasó y no pude pensar bien... ¿me lo repites en un ratito?"
+VISION_ERROR_REPLY = "¡Uy! No pude ver bien la imagen... ¿me la mandas otra vez? 😵"
+
+
+class ConversationStore:
+    """Historial reciente de mensajes, separado por chat (antes era global y se mezclaba)."""
+
+    def __init__(self, max_messages: int = 20):
+        self.max_messages = max_messages
+        self._chats: dict[int, deque] = {}
+
+    def get(self, chat_id: int) -> list[dict]:
+        return list(self._chats.get(chat_id, ()))
+
+    def add_exchange(self, chat_id: int, user_text: str, assistant_text: str):
+        history = self._chats.setdefault(chat_id, deque(maxlen=self.max_messages))
+        history.append({"role": "user", "content": user_text})
+        history.append({"role": "assistant", "content": assistant_text})
+
+    def clear(self, chat_id: int):
+        self._chats.pop(chat_id, None)
+
+
 class AIService:
-    def __init__(self):
-        ai_config = settings.get("ai", {})
-        self.model = ai_config.get("model", "llama3")
+    def __init__(self, config: dict | None = None, client=None, memory=None):
+        config = settings if config is None else config
+        ai_config = config.get("ai", {})
+        self.model = ai_config.get("model", "gemma3:12b")
         self.host = ai_config.get("base_url", "http://localhost:11434")
-        self.system_prompt = MARIN_KITAGAWA_PROMPT
-        self.history = [] # Memoria simple en tiempo de ejecución
-        
-        # Inicializar el cliente con el host específico
-        try:
-            self.client = Client(host=self.host)
-            logger.info(f"Conectado a Ollama en {self.host} con el modelo {self.model}")
-        except Exception as e:
-            logger.error(f"Error inicializando cliente de Ollama: {e}")
-            self.client = None
+        # keep_alive=0 libera la RAM inmediatamente después de responder
+        self.keep_alive = ai_config.get("keep_alive", 0)
+        self.options = {
+            **DEFAULT_OPTIONS,
+            "temperature": ai_config.get("temperature", 0.8),
+            **(ai_config.get("options") or {}),
+        }
+        self.vision_options = {**DEFAULT_VISION_OPTIONS, **(ai_config.get("vision_options") or {})}
 
-    def _check_model(self):
-        if not self.client: return
-        try:
-            self.client.show(self.model)
-        except ollama.ResponseError:
-            logger.warning(f"Modelo {self.model} no encontrado. Intentando descargar...")
-            try:
-                self.client.pull(self.model)
-                logger.info(f"Modelo {self.model} descargado correctamente.")
-            except Exception as e:
-                logger.error(f"Error descargando el modelo: {e}")
+        prompt_file = ai_config.get("system_prompt_file")
+        self.system_prompt = load_persona_prompt(resolve_path(prompt_file) if prompt_file else None)
+        self.history = ConversationStore(ai_config.get("history_size", 20))
+        self.memory = memory if memory is not None else memory_system
+        self.log_conversations = config.get("app", {}).get("log_conversations", True)
+        self.client = client if client is not None else Client(host=self.host)
+        logger.info(f"Cliente de Ollama configurado en {self.host} con el modelo {self.model}")
 
-    def check_health(self):
-        """Verifica la conectividad con Ollama y el modelo."""
-        if not self.client:
-            return False
+    def check_health(self) -> bool:
+        """Verifica la conectividad con Ollama y que el modelo esté descargado."""
         try:
             self.client.show(self.model)
             return True
+        except ollama.ResponseError as e:
+            logger.critical(
+                f"Ollama no tiene el modelo '{self.model}' ({e}). "
+                f"Descárgalo con: ollama pull {self.model}"
+            )
         except Exception as e:
-            logger.critical(f"Health Check Fallido (Ollama): {e}")
-            return False
+            logger.critical(
+                f"No se pudo conectar con Ollama en {self.host}: {e}. "
+                "¿Está corriendo `ollama serve`?"
+            )
+        return False
 
-    def generate_response(self, user_text: str):
-        """Genera una respuesta utilizando el cliente de Ollama y la divide en múltiples mensajes."""
-        if not self.client:
-            return ["¡Waaa! 😵 No puedo conectarme con mi cerebro (Ollama no está disponible)."]
+    def _log(self, role: str, message: str):
+        if self.log_conversations:
+            log_conversation(role, message)
 
-        # Registrar mensaje del usuario en logs y memoria
-        log_conversation("User", user_text)
-        self.history.append({"role": "user", "content": user_text})
-        
-        # 1. Detección de persistencia de memoria ("Recuerda esto:")
-        memory_trigger = "recuerda esto:"
-        if memory_trigger in user_text.lower():
-            fact = re.split(memory_trigger, user_text, flags=re.IGNORECASE)[-1].strip()
-            if fact:
-                memory_system.add_fact(fact)
-        
-        # 2. Búsqueda de recuerdos relevantes si el usuario pregunta
-        retrieval_triggers = ["recuerdas", "te acuerdas", "sabes algo de", "que me dijiste de"]
-        relevant_context = ""
-        if any(t in user_text.lower() for t in retrieval_triggers):
-            memories = memory_system.search_memories(user_text)
-            if memories:
-                relevant_context = "\n\n[SISTEMA: Recuerdos relevantes encontrados en tu memoria persistente:\n" + \
-                                  "\n".join([f"- {m}" for m in memories]) + "]"
+    async def _chat(self, messages: list[dict], options: dict) -> tuple[str, int]:
+        """Llama a Ollama en un hilo aparte para no bloquear el event loop del bot."""
+        start = time.perf_counter()
+        response = await asyncio.to_thread(
+            self.client.chat,
+            model=self.model,
+            messages=messages,
+            options=options,
+            keep_alive=self.keep_alive,
+        )
+        latency_ms = int((time.perf_counter() - start) * 1000)
+        return (response.message.content or "").strip(), latency_ms
 
-        messages = [{"role": "system", "content": self.system_prompt + relevant_context}] + self.history
+    def _memory_context(self, user_id: int, user_text: str) -> str:
+        """Guarda "recuerda esto: ..." y recupera recuerdos si el usuario pregunta por ellos."""
+        match = REMEMBER_PATTERN.search(user_text)
+        if match:
+            self.memory.add_fact(user_id, match.group(1).strip())
+
+        normalized = normalize_text(user_text)
+        if not any(trigger in normalized for trigger in RECALL_TRIGGERS):
+            return ""
+        memories = self.memory.search(user_id, user_text)
+        if not memories:
+            return ""
+        return MEMORY_CONTEXT_TEMPLATE.format(memories="\n".join(f"- {m}" for m in memories))
+
+    async def generate_response(
+        self, chat_id: int, user_id: int, user_text: str, *, use_memory: bool = True
+    ) -> list[str]:
+        """Genera una respuesta con Ollama y la divide en múltiples mensajes."""
+        self._log("User", user_text)
+        context = self._memory_context(user_id, user_text) if use_memory else ""
+        messages = [
+            {"role": "system", "content": self.system_prompt + context},
+            *self.history.get(chat_id),
+            {"role": "user", "content": user_text},
+        ]
 
         try:
-            # Optimización de latencia y parámetros
-            options = {
-                "temperature": 0.8,
-                "num_predict": 512, 
-                "top_k": 40,
-                "top_p": 0.9,
-                "repeat_penalty": 1.2, # Penaliza la repetición de palabras/frases
-                "repeat_last_n": 64,   # Cuánto atrás mirar para penalizar
-            }
-
-            import time
-            start_time = time.time()
-
-            response = self.client.chat(
-                model=self.model, 
-                messages=messages,
-                options=options,
-                keep_alive=0 # Liberar RAM inmediatamente después de responder
-            )
-            
-            end_time = time.time()
-            latency_ms = int((end_time - start_time) * 1000)
-            
-            raw_text = response['message']['content']
-            
-            # Registrar respuesta completa en memoria
-            self.history.append({"role": "assistant", "content": raw_text})
-            
-            # Dividir respuesta en múltiples mensajes según el delimitador --- o saltos de línea
-            bot_messages = [msg.strip() for msg in raw_text.split("---") if msg.strip()]
-            
-            # Si no usó ---, intentar dividir por saltos de línea o puntos si es muy largo
-            if len(bot_messages) == 1 and len(raw_text) > 100:
-                # Intentar dividir por saltos de línea primero
-                parts = [msg.strip() for msg in raw_text.split("\n") if msg.strip()]
-                if len(parts) > 1:
-                    bot_messages = parts
-                else:
-                    # Si sigue siendo un solo bloque, intentar dividir por puntos seguidos de espacio
-                    bot_messages = [msg.strip() for msg in re.split(r'(?<=[.!?])\s+', raw_text) if msg.strip()]
-
-            # Log de la respuesta y latencia
-            logger.info(f"Respuesta generada en {latency_ms}ms | Modelo: {self.model}")
-            log_conversation("Marin", f"({latency_ms}ms) " + " | ".join(bot_messages))
-            
-            # Limitar historial
-            if len(self.history) > 20:
-                self.history = self.history[-20:]
-                
-            return bot_messages
-
+            raw_text, latency_ms = await self._chat(messages, self.options)
         except Exception as e:
             logger.error(f"Error generando respuesta con Ollama: {e}")
-            return [f"¡Waaa! 😵 Algo pasó... {str(e)}"]
+            return [ERROR_REPLY]
+
+        if not raw_text:
+            return ["Mmm... me quedé en blanco 😳 ¿Me lo dices de otra forma?"]
+
+        # Solo se guarda en el historial si la llamada tuvo éxito
+        self.history.add_exchange(chat_id, user_text, raw_text)
+        bot_messages = split_into_messages(raw_text)
+
+        logger.info(f"Respuesta generada en {latency_ms}ms | Modelo: {self.model}")
+        self._log("Marin", f"({latency_ms}ms) " + " | ".join(bot_messages))
+        return bot_messages
+
+    async def generate_multimodal_response(
+        self, chat_id: int, user_text: str, image_path
+    ) -> list[str]:
+        """Analiza una imagen utilizando la capacidad multimodal del modelo (p. ej. Gemma 3)."""
+        self._log("User (Multimodal)", f"{user_text} [Imagen]")
+        messages = [
+            {"role": "system", "content": VISION_PROMPT},
+            {"role": "user", "content": user_text, "images": [str(image_path)]},
+        ]
+
+        try:
+            logger.info("Enviando imagen al modelo para análisis...")
+            raw_text, latency_ms = await self._chat(messages, self.vision_options)
+        except Exception as e:
+            logger.error(f"Error en análisis multimodal: {e}")
+            return [VISION_ERROR_REPLY]
+
+        # El archivo de la imagen se borra tras procesarse: en el historial guardamos solo
+        # texto. Guardar la ruta hacía fallar todas las respuestas posteriores del chat.
+        self.history.add_exchange(chat_id, f"[Te envié una imagen] {user_text}", raw_text)
+
+        logger.info(f"Análisis multimodal completado en {latency_ms}ms")
+        self._log("Marin (Vision)", f"({latency_ms}ms) {raw_text}")
+        return split_paragraphs(raw_text) or ["¡Ups! No se me ocurre nada..."]
+
+    def reset_conversation(self, chat_id: int):
+        self.history.clear(chat_id)
 
     def unload_model(self):
         """Descarga el modelo de la memoria de Ollama."""
-        if not self.client: return
         try:
             logger.info(f"Descargando modelo {self.model} de memoria...")
-            # Enviar keep_alive: 0 descarga el modelo
+            # Un chat vacío con keep_alive=0 descarga el modelo sin generar nada
             self.client.chat(model=self.model, messages=[], keep_alive=0)
         except Exception as e:
             logger.error(f"Error al descargar el modelo: {e}")
 
-
-    def generate_multimodal_response(self, user_text: str, image_path: str):
-        """Analiza una imagen o documento utilizando la capacidad multimodal de Gemma 3."""
-        if not self.client:
-            return "¡Waaa! 😵 No puedo ver nada porque mi cerebro (Ollama) está desconectado."
-
-        # Registrar mensaje multimodal
-        log_conversation("User (Multimodal)", f"{user_text} [Image: {image_path}]")
-        self.history.append({"role": "user", "content": user_text, "images": [image_path]})
-
-        # Prompt específico para análisis de documentos/imágenes
-        # Forzamos que NO pida audio ni nada extra, solo análisis.
-        system_instruction = (
-            "Eres Marin Kitagawa. El usuario te ha enviado una imagen o documento para que lo analices. "
-            "Describe lo que ves con tu personalidad alegre y coqueta, pero sé útil y precisa con la información. "
-            "NO uses herramientas de audio ni generes tags como [AUDIO], solo texto."
-        )
-
-        messages = [
-            {"role": "system", "content": system_instruction},
-            {"role": "user", "content": user_text, "images": [image_path]}
-        ]
-
-        try:
-            import time
-            start_time = time.time()
-            
-            logger.info("Enviando imagen a Gemma 3 para análisis...")
-            
-            response = self.client.chat(
-                model=self.model,
-                messages=messages,
-                options={"temperature": 0.6, "num_predict": 1024}, # Menor temperatura para precisión
-                keep_alive=0 # IMPORTANTE: Liberar recursos inmediatamente
-            )
-
-            end_time = time.time()
-            latency_ms = int((end_time - start_time) * 1000)
-
-            raw_text = response['message']['content']
-            
-            # Registrar respuesta completa para logs
-            self.history.append({"role": "assistant", "content": raw_text})
-            
-            logger.info(f"Análisis multimodal completado en {latency_ms}ms")
-            log_conversation("Marin (Vision)", f"({latency_ms}ms) {raw_text}")
-            
-            # Dividir respuesta en burbujas por párrafos
-            # Usamos doble salto de línea como separador natural
-            bot_messages = [msg.strip() for msg in raw_text.split("\n\n") if msg.strip()]
-            
-            # Si no hay párrafos claros, intentar dividir por oraciones largas si excede ciertos caracteres,
-            # pero por ahora, una burbuja por párrafo es lo estándar.
-            if not bot_messages:
-                bot_messages = [raw_text] if raw_text.strip() else ["¡Ups! No se me ocurre nada..."]
-
-            # Limpieza de historial
-            if len(self.history) > 10:
-                self.history = self.history[-10:]
-
-            return bot_messages
-
-        except Exception as e:
-            logger.error(f"Error en análisis multimodal: {e}")
-            return [f"¡Uy! No pude ver bien la imagen... me dio un error: {str(e)}"]
 
 # Instancia global
 ai_service = AIService()

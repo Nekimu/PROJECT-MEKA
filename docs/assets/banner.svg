@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" width="1280" height="420" role="img" aria-labelledby="title desc">
+  <title id="title">Project MEKA</title>
+  <desc id="desc">Compañera virtual para Telegram con IA local: voz, visión y memoria.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b1029"/>
+      <stop offset="1" stop-color="#2a1236"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="0.85" cy="0.2" r="0.6">
+      <stop offset="0" stop-color="#ff4fa3" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#ff4fa3" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0.1" cy="1" r="0.6">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff8cc6"/>
+      <stop offset="1" stop-color="#c4a1ff"/>
+    </linearGradient>
+    <linearGradient id="bubbleGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5fa8"/>
+      <stop offset="1" stop-color="#b56cff"/>
+    </linearGradient>
+    <style>
+      .font { font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Noto Sans", Ubuntu, Arial, sans-serif; }
+      .pill-text { font-size: 21px; font-weight: 600; fill: #fbe7ff; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="420" rx="28" fill="url(#bg)"/>
+  <rect width="1280" height="420" rx="28" fill="url(#glow1)"/>
+  <rect width="1280" height="420" rx="28" fill="url(#glow2)"/>
+
+  <!-- Destellos -->
+  <g fill="#ffd1ea" opacity="0.8">
+    <path d="M770 70 l5 14 14 5 -14 5 -5 14 -5 -14 -14 -5 14 -5z"/>
+    <path d="M1215 345 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z"/>
+    <path d="M60 52 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3z"/>
+  </g>
+
+  <!-- Texto -->
+  <g class="font">
+    <text x="80" y="160" font-size="92" font-weight="800" fill="url(#titleGrad)" letter-spacing="-1">Project MEKA</text>
+    <text x="84" y="218" font-size="30" font-weight="500" fill="#f3e8ff">Compañera virtual para Telegram con IA local</text>
+
+    <g transform="translate(80 268)">
+      <rect width="140" height="44" rx="22" fill="#ffffff" fill-opacity="0.08" stroke="#ff8cc6" stroke-opacity="0.6"/>
+      <text x="70" y="29" text-anchor="middle" class="pill-text">IA local</text>
+      <rect x="156" width="178" height="44" rx="22" fill="#ffffff" fill-opacity="0.08" stroke="#ff8cc6" stroke-opacity="0.6"/>
+      <text x="245" y="29" text-anchor="middle" class="pill-text">Voz clonada</text>
+      <rect x="350" width="124" height="44" rx="22" fill="#ffffff" fill-opacity="0.08" stroke="#c4a1ff" stroke-opacity="0.6"/>
+      <text x="412" y="29" text-anchor="middle" class="pill-text">Visión</text>
+      <rect x="490" width="146" height="44" rx="22" fill="#ffffff" fill-opacity="0.08" stroke="#c4a1ff" stroke-opacity="0.6"/>
+      <text x="563" y="29" text-anchor="middle" class="pill-text">Memoria</text>
+    </g>
+  </g>
+
+  <!-- Ilustración de chat -->
+  <g class="font">
+    <!-- Mensaje del usuario -->
+    <rect x="865" y="92" width="310" height="62" rx="20" fill="#ffffff" fill-opacity="0.12"/>
+    <text x="890" y="132" font-size="24" fill="#f3e8ff">¿Me mandas un audio?</text>
+
+    <!-- Nota de voz de Marin -->
+    <rect x="845" y="182" width="330" height="76" rx="24" fill="url(#bubbleGrad)"/>
+    <circle cx="884" cy="220" r="22" fill="#ffffff" fill-opacity="0.95"/>
+    <path d="M877 208 l18 12 -18 12z" fill="#d6479a"/>
+    <g fill="#ffffff" fill-opacity="0.95">
+      <rect x="920" y="212" width="6" height="16" rx="3"/>
+      <rect x="932" y="204" width="6" height="32" rx="3"/>
+      <rect x="944" y="196" width="6" height="48" rx="3"/>
+      <rect x="956" y="206" width="6" height="28" rx="3"/>
+      <rect x="968" y="200" width="6" height="40" rx="3"/>
+      <rect x="980" y="210" width="6" height="20" rx="3"/>
+      <rect x="992" y="202" width="6" height="36" rx="3"/>
+      <rect x="1004" y="208" width="6" height="24" rx="3"/>
+      <rect x="1016" y="198" width="6" height="44" rx="3"/>
+      <rect x="1028" y="206" width="6" height="28" rx="3"/>
+      <rect x="1040" y="212" width="6" height="16" rx="3"/>
+      <rect x="1052" y="204" width="6" height="32" rx="3"/>
+      <rect x="1064" y="210" width="6" height="20" rx="3"/>
+    </g>
+    <text x="1145" y="228" font-size="20" font-weight="600" fill="#ffffff" text-anchor="end">0:07</text>
+
+    <!-- Respuesta de texto -->
+    <rect x="845" y="286" width="330" height="62" rx="20" fill="url(#bubbleGrad)" fill-opacity="0.85"/>
+    <text x="870" y="326" font-size="24" fill="#ffffff">¡Claro que sí, cielo!</text>
+    <path d="M1140 304 c-6 -9 -20 -6 -20 5 0 9 12 15 20 22 8 -7 20 -13 20 -22 0 -11 -14 -14 -20 -5z" fill="#ffffff"/>
+  </g>
+</svg>

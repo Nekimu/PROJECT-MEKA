@@ -1,0 +1,22 @@
+# Configuración de herramientas de desarrollo (las dependencias viven en requirements*.txt)
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["venv", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = [
+    "E501",    # El formateador ajusta el código; los textos largos en español se mantienen
+    "RUF001",  # Caracteres "ambiguos" (¡, ¿, emojis) son intencionados en los textos
+    "RUF003",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ai", "bot", "core"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
