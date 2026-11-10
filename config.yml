@@ -26,6 +26,15 @@ memory:
   recall_triggers: ["recuerdas", "te acuerdas", "sabes algo de", "que me dijiste de"]
   search_limit: 5            # Recuerdos que se añaden al contexto como máximo
   persist_history: true      # El historial de cada chat sobrevive a los reinicios
+  semantic:                  # Recordar por significado (embeddings locales con Ollama)
+    enabled: true            # Sin el modelo descargado, MEKA busca solo por palabras
+    model: "embeddinggemma"  # ollama pull embeddinggemma (multilingüe, ~600 MB)
+    keep_alive: 0            # Libera el modelo de embeddings tras usarlo
+    min_similarity: 0.35     # Si preguntas "¿te acuerdas...?", recuerdos con al menos esta similitud
+    auto_recall_similarity: 0.6  # Sin preguntar, solo recuerdos muy relacionados (0 = desactivado)
+    # Prefijos recomendados por embeddinggemma; para nomic-embed-text: "search_query: " / "search_document: "
+    query_prefix: "task: search result | query: "
+    document_prefix: "title: none | text: "
 
 ai:
   # Cerebro de cada tarea: ollama (local) | claude | gemini. La personalidad no cambia.

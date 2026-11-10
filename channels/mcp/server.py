@@ -62,9 +62,10 @@ class MekaTools:
         added = await self.core.remember(self.user, fact)
         return "Guardado." if added else "Ya lo sabía."
 
-    async def memories(self) -> list[str]:
-        """Lista lo que MEKA recuerda del usuario."""
-        return await self.core.memories(self.user)
+    async def memories(self, query: str = "") -> list[str]:
+        """Lo que MEKA recuerda del usuario. Con `query`, solo lo relacionado con ese tema
+        (busca por significado: "mascotas" encuentra "mi perro se llama Toby")."""
+        return await self.core.memories(self.user, query or None)
 
     def all(self):
         return [self.chat, self.pet_status, self.pet_emotion, self.remember, self.memories]

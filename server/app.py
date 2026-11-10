@@ -286,8 +286,12 @@ def create_app(
     # ------------------------------------------------------------------ memoria
 
     @app.get("/v1/users/{user}/memories", tags=["memoria"], dependencies=auth)
-    def memories(user: str, request: Request):
-        return {"memories": get_engine(request).memories(user)}
+    async def memories(user: str, request: Request, q: str | None = None):
+        """Todos los recuerdos, o con `q` los relacionados (por significado y por palabras)."""
+        engine = get_engine(request)
+        if q:
+            return {"memories": await engine.search_memories(user, q[:2_000])}
+        return {"memories": engine.memories(user)}
 
     @app.post("/v1/users/{user}/memories", tags=["memoria"], dependencies=auth)
     def remember(user: str, body: FactRequest, request: Request):

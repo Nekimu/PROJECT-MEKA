@@ -91,3 +91,34 @@ class FakeProvider:
 
     def unload(self):
         pass
+
+
+class FakeEmbedder:
+    """Embeddings de juguete: cada dimensión es un tema. Basta para probar el significado."""
+
+    TOPICS = (
+        {"perro", "toby", "mascota", "mascotas", "gato", "animal"},
+        {"color", "azul", "rojo", "verde"},
+        {"ramen", "comida", "sushi", "cenar", "comer"},
+        {"overwatch", "juego", "jugar", "partida"},
+    )
+
+    def __init__(self, fail=False):
+        self.model = "fake-embed"
+        self.fail = fail
+        self.calls = []
+
+    def embed(self, texts):
+        self.calls.append(list(texts))
+        if self.fail:
+            raise ConnectionError("Ollama caído")
+        return [self._vector(text) for text in texts]
+
+    def _vector(self, text):
+        from core.memory import normalize_text
+
+        words = set(normalize_text(text).split())
+        return [float(len(words & topic)) for topic in self.TOPICS] + [0.1]
+
+    def check_health(self):
+        return not self.fail

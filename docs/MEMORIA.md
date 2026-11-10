@@ -39,7 +39,7 @@ Hay un solo proceso que escribe (MEKA Core) y uno o pocos usuarios. Todo corre e
 
 - Varios equipos escriben a la vez en la misma memoria (por ejemplo, un MEKA Core por dispositivo que comparte recuerdos con los demás).
 - MEKA pasa a ser un servicio para muchas personas.
-- La memoria semántica crece a cientos de miles de vectores y conviene `pgvector` con índices HNSW.
+- La memoria semántica crece a cientos de miles de vectores y conviene `pgvector` con índices HNSW (hoy la búsqueda recorre los vectores del usuario, de sobra para miles).
 
 El cambio está acotado: todo el acceso pasa por la clase `MemoryStore` (`add_fact`, `get_facts`, `search`, `clear`, `add_messages`, `recent_messages`...). Un `PostgresMemoryStore` con los mismos métodos bastaría, sin tocar el motor ni los canales.
 
@@ -50,12 +50,33 @@ El cambio está acotado: todo el acceso pasa por la clase `MemoryStore` (`add_fa
 - **Concurrencia:** modo WAL y un *lock* por conexión. El servidor es asíncrono, pero las operaciones duran microsegundos.
 - **Migración automática:** al arrancar, si existe el antiguo `memory.json`, MEKA importa sus recuerdos y lo renombra a `memory.json.migrated`. Los recuerdos del formato más antiguo, sin dueño, se asignan al primer ID de `ALLOWED_USER_IDS`; sin ese ID, el archivo se deja intacto hasta que lo configures.
 - **Sin FTS5** (un SQLite compilado sin él, muy raro): se usa una búsqueda simple por palabras clave.
-- **Configuración:** `paths.memory_db` (ruta) y `memory.persist_history` (historial en disco o solo en RAM).
+- **Configuración:** `paths.memory_db` (ruta), `memory.persist_history` (historial en disco o solo en RAM) y `memory.semantic.*` (ver abajo).
 
-## Siguiente paso: memoria semántica
+## Memoria semántica
 
-Recordar por significado ("¿qué te conté de mi mascota?" → "mi perro se llama Toby") requiere *embeddings*. El plan, sin cambiar de base de datos:
+MEKA recuerda también **por significado**: "¿qué te conté de mi mascota?" encuentra "mi perro se llama Toby" aunque no compartan ninguna palabra.
 
-1. Generar el vector de cada recuerdo con un modelo local de Ollama (`embeddinggemma` o `nomic-embed-text`).
-2. Guardarlo con [`sqlite-vec`](https://github.com/asg017/sqlite-vec) en una tabla junto a `facts`.
-3. Combinar las dos búsquedas: FTS5 (palabras exactas) + vectores (significado).
+| Pieza | Elección | Por qué |
+|---|---|---|
+| Embeddings | [`embeddinggemma`](https://ollama.com/library/embeddinggemma) en Ollama | Local, multilingüe y ligero (~600 MB); se descarga de la RAM tras usarlo (`keep_alive: 0`) |
+| Almacén | Tabla `fact_vectors` en la misma `meka.db` | Sin otra base de datos; los vectores se borran con su recuerdo |
+| Similitud | [`sqlite-vec`](https://github.com/asg017/sqlite-vec) (`vec_distance_cosine`, en C) | Si no está instalado o Python no admite extensiones, se calcula en Python |
+
+**Cómo funciona:**
+
+1. Cada recuerdo se convierte en un vector la primera vez que hace falta buscar. Así se indexan solos los recuerdos nuevos, los migrados del JSON y los de un modelo anterior si cambias `memory.semantic.model`.
+2. **Si preguntas** ("¿te acuerdas…?", "¿recuerdas…?"), MEKA junta los recuerdos con similitud ≥ `min_similarity` (0,35) y los que coinciden por palabras (FTS5).
+3. **Si no preguntas**, añade al contexto solo los recuerdos muy relacionados (similitud ≥ `auto_recall_similarity`, 0,6). Si le cuentas "hoy saqué a pasear al perro", ya sabe que se llama Toby. Con `0` se desactiva y se ahorra una llamada a Ollama por mensaje.
+4. **Si Ollama no responde o falta el modelo**, avisa una vez en la consola y sigue buscando por palabras. Nada se rompe.
+
+**Calibrar los umbrales.** Dependen del modelo. Para ver las similitudes reales con tus recuerdos:
+
+```bash
+ollama pull embeddinggemma
+python -m scripts.semantic_check "¿qué te conté de mi mascota?"                    # frases de ejemplo
+python -m scripts.semantic_check "¿qué te conté de mi mascota?" --user 123456789   # tus recuerdos
+```
+
+Sube `min_similarity` si aparecen recuerdos que no vienen al caso y bájalo si se le escapan. Haz lo mismo con `auto_recall_similarity`.
+
+**Otros modelos.** `nomic-embed-text` (inglés sobre todo) o `bge-m3` (multilingüe, más pesado) también funcionan. Cambia `memory.semantic.model` y sus prefijos (`query_prefix` y `document_prefix`; los de `nomic-embed-text` son `search_query: ` y `search_document: `). Los vectores se recalculan solos.

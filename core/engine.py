@@ -26,6 +26,7 @@ from core.events import EventBus
 from core.logger import setup_logger
 from core.memory import MemoryStore
 from core.persona import Persona, load_active_persona
+from core.semantic import SemanticMemory
 
 logger = setup_logger("Engine")
 
@@ -75,7 +76,10 @@ class MekaEngine:
             legacy_json=resolve_path("memory.json"),
             legacy_owner=allowed[0] if allowed else None,
         )
-        self.ai = ai or AIService(config, memory=self.memory, persona=self.persona)
+        self.semantic = SemanticMemory.from_config(self.memory, config)
+        self.ai = ai or AIService(
+            config, memory=self.memory, persona=self.persona, semantic=self.semantic
+        )
         self.stt = stt or STTService(config)
         self.tts = tts or TTSService(config, voice=self.persona.voice)
         self.bus = bus or EventBus()
@@ -100,6 +104,8 @@ class MekaEngine:
             "tts": self.tts.check_health(),
             "stt": self.stt.check_health(),
         }
+        if self.semantic is not None:
+            status["memoria semántica"] = self.semantic.check_health()
         for name, ok in status.items():
             if not ok:
                 logger.error(f"ADVERTENCIA: '{name}' no está listo; esa función podría fallar.")
@@ -203,6 +209,10 @@ class MekaEngine:
 
     def memories(self, user: str) -> list[str]:
         return self.memory.get_facts(user)
+
+    async def search_memories(self, user: str, query: str) -> list[str]:
+        """Búsqueda por significado y por palabras (la usan la API y MCP)."""
+        return await self.ai.recall(user, query)
 
     def remember(self, user: str, fact: str) -> bool:
         return self.memory.add_fact(user, fact)

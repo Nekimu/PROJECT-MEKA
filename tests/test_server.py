@@ -167,6 +167,8 @@ def test_memories_and_reset(tmp_path):
             "added": True
         }
         assert client.get("/v1/users/8/memories").json() == {"memories": []}  # Aislada por usuario
+        found = client.get("/v1/users/7/memories", params={"q": "¿recuerdas el ramen?"}).json()
+        assert found == {"memories": ["me gusta el ramen"]}
 
         assert client.post("/v1/sessions/s/reset").status_code == 204
         assert engine.ai.history.get("s") == []

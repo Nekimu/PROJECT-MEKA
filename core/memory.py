@@ -4,22 +4,28 @@ Un solo archivo (`paths.memory_db`, por defecto `data/meka.db`), sin servidor y 
 dependencias: `sqlite3` viene con Python. La búsqueda usa FTS5 (índice de texto completo
 que ignora tildes) y ordena por relevancia (BM25). La evaluación frente a JSON y
 PostgreSQL está en docs/MEMORIA.md.
+
+La memoria semántica (recordar por significado) guarda un vector por recuerdo en
+`fact_vectors`. Con la extensión `sqlite-vec` la similitud se calcula en C; sin ella,
+en Python (de sobra para miles de recuerdos).
 """
 
 import contextlib
 import json
+import math
 import re
 import sqlite3
 import threading
 import time
 import unicodedata
+from array import array
 from pathlib import Path
 
 from core.logger import setup_logger
 
 logger = setup_logger("Memory")
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Palabras a ignorar en la búsqueda (conectores y disparadores), ya normalizadas sin tildes.
 STOPWORDS = {
@@ -46,6 +52,12 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS messages_session ON messages (session, id);
+
+CREATE TABLE IF NOT EXISTS fact_vectors (
+    fact_id INTEGER PRIMARY KEY REFERENCES facts (id) ON DELETE CASCADE,
+    model   TEXT NOT NULL,
+    vector  BLOB NOT NULL  -- float32, normalizado (longitud 1)
+);
 """
 
 FTS_SCHEMA = """
@@ -72,6 +84,16 @@ def extract_keywords(text: str) -> list[str]:
     return [w for w in normalize_text(text).split() if len(w) > 3 and w not in STOPWORDS]
 
 
+def pack(vector: list[float]) -> bytes:
+    """Vector normalizado en float32: el mismo formato que usa sqlite-vec."""
+    norm = math.sqrt(sum(x * x for x in vector)) or 1.0
+    return array("f", (x / norm for x in vector)).tobytes()
+
+
+def unpack(blob: bytes) -> array:
+    return array("f", blob)
+
+
 def stem(word: str) -> str:
     """Quita el plural para buscar por prefijo: juegos -> juego*, canciones -> cancion*."""
     if len(word) > 5 and word.endswith("es"):
@@ -93,6 +115,7 @@ class MemoryStore:
         self.db.execute("PRAGMA foreign_keys=ON")
         self.db.executescript(SCHEMA)
         self.fts = self._create_fts()
+        self.vec = self._load_sqlite_vec()
         self.db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
         self.db.commit()
         if legacy_json is not None:
@@ -104,6 +127,17 @@ class MemoryStore:
             return True
         except sqlite3.OperationalError as e:  # SQLite compilado sin FTS5 (muy raro)
             logger.warning(f"FTS5 no disponible ({e}); la búsqueda será más simple")
+            return False
+
+    def _load_sqlite_vec(self) -> bool:
+        try:
+            import sqlite_vec
+
+            self.db.enable_load_extension(True)
+            sqlite_vec.load(self.db)
+            self.db.enable_load_extension(False)
+            return True
+        except Exception:  # No instalado, o Python sin soporte para extensiones
             return False
 
     def close(self):
@@ -132,6 +166,15 @@ class MemoryStore:
                 "SELECT fact FROM facts WHERE user_id = ? ORDER BY id", (str(user_id),)
             ).fetchall()
         return [row[0] for row in rows]
+
+    def has_facts(self, user_id: int | str) -> bool:
+        with self._lock:
+            return (
+                self.db.execute(
+                    "SELECT 1 FROM facts WHERE user_id = ? LIMIT 1", (str(user_id),)
+                ).fetchone()
+                is not None
+            )
 
     def clear(self, user_id: int | str) -> int:
         """Borra los recuerdos del usuario y devuelve cuántos había."""
@@ -174,6 +217,50 @@ class MemoryStore:
                 scored.append((score, index, fact))
         scored.sort(key=lambda item: (-item[0], -item[1]))
         return [fact for _, _, fact in scored[:limit]]
+
+    # ------------------------------------------------------------------ vectores
+
+    def facts_without_vectors(self, user_id, model: str, limit: int = 64) -> list[tuple[int, str]]:
+        """Recuerdos sin vector de `model` (nuevos, migrados o de un modelo anterior)."""
+        with self._lock:
+            return self.db.execute(
+                "SELECT f.id, f.fact FROM facts f LEFT JOIN fact_vectors v ON v.fact_id = f.id "
+                "WHERE f.user_id = ? AND (v.fact_id IS NULL OR v.model != ?) ORDER BY f.id LIMIT ?",
+                (str(user_id), model, limit),
+            ).fetchall()
+
+    def set_vectors(self, model: str, items: list[tuple[int, list[float]]]):
+        with self._lock, self.db:
+            self.db.executemany(
+                "INSERT OR REPLACE INTO fact_vectors (fact_id, model, vector) VALUES (?, ?, ?)",
+                [(fact_id, model, pack(vector)) for fact_id, vector in items],
+            )
+
+    def nearest(
+        self, user_id, model: str, query: list[float], limit: int
+    ) -> list[tuple[str, float]]:
+        """Los recuerdos más parecidos a `query`, con su similitud coseno (de -1 a 1)."""
+        blob = pack(query)
+        with self._lock:
+            if self.vec:
+                rows = self.db.execute(
+                    "SELECT f.fact, 1 - vec_distance_cosine(v.vector, ?) AS similarity "
+                    "FROM fact_vectors v JOIN facts f ON f.id = v.fact_id "
+                    "WHERE f.user_id = ? AND v.model = ? ORDER BY similarity DESC LIMIT ?",
+                    (blob, str(user_id), model, limit),
+                ).fetchall()
+                return [(fact, float(similarity)) for fact, similarity in rows]
+            rows = self.db.execute(
+                "SELECT f.fact, v.vector FROM fact_vectors v JOIN facts f ON f.id = v.fact_id "
+                "WHERE f.user_id = ? AND v.model = ?",
+                (str(user_id), model),
+            ).fetchall()
+        target = unpack(blob)
+        scored = [
+            (fact, sum(a * b for a, b in zip(unpack(v), target, strict=False))) for fact, v in rows
+        ]
+        scored.sort(key=lambda item: -item[1])
+        return scored[:limit]
 
     # ------------------------------------------------------------------ historial
 

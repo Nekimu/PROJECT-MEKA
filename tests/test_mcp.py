@@ -24,7 +24,7 @@ class FakeCore:
         self.facts.append(fact)
         return True
 
-    async def memories(self, user):
+    async def memories(self, user, query=None):
         return list(self.facts)
 
 

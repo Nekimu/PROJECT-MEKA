@@ -12,6 +12,8 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ### Memoria en SQLite
 - `memory.json` se sustituye por **SQLite** (`data/meka.db`): escrituras transaccionales, búsqueda **FTS5** que ignora tildes y plurales y ordena por relevancia, e **historial de chat persistente** (`memory.persist_history`). Evaluación frente a JSON y PostgreSQL en [`docs/MEMORIA.md`](docs/MEMORIA.md).
+- **Memoria semántica** (`core/semantic.py`): recuerda por significado con embeddings locales (`embeddinggemma` en Ollama) guardados en la misma base y comparados con `sqlite-vec` (o en Python si no está). Búsqueda híbrida: significado + palabras. Recuerda sin que preguntes cuando algo está muy relacionado (`memory.semantic.auto_recall_similarity`). Sin Ollama, sigue buscando por palabras.
+- `GET /v1/users/{id}/memories?q=` y la herramienta MCP `memories(query)` buscan por significado; `scripts/semantic_check.py` ayuda a calibrar los umbrales.
 - **Migración automática**: el `memory.json` existente se importa al arrancar y se renombra a `memory.json.migrated`.
 
 ### MEKA Core: servidor local con canales como clientes

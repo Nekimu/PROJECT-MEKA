@@ -113,8 +113,11 @@ class CoreClient:
 
     # ------------------------------------------------------------------ memoria
 
-    async def memories(self, user: str) -> list[str]:
-        return (await self._json("GET", f"/v1/users/{quote(user, safe='')}/memories"))["memories"]
+    async def memories(self, user: str, query: str | None = None) -> list[str]:
+        params = {"q": query} if query else None
+        return (
+            await self._json("GET", f"/v1/users/{quote(user, safe='')}/memories", params=params)
+        )["memories"]
 
     async def remember(self, user: str, fact: str) -> bool:
         return (

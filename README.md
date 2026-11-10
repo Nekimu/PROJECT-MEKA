@@ -89,7 +89,7 @@ El documento completo, con las iteraciones previstas (Google Home, Home Assistan
 | 🔊 | **Habla** | Cada personaje tiene su voz (Edge-TTS por defecto; Qwen3-TTS y Piper opcionales). Llega como nota de voz nativa (OGG/Opus). |
 | 🖼️ | **Ve tus fotos** | Comenta las imágenes con un modelo multimodal. |
 | 📄 | **Lee documentos** | PDF, DOCX (con tablas), XLSX, TXT, MD y CSV. |
-| 💭 | **Recuerda** | Recuerdos por usuario (*«recuerda esto: …»*) e historial de cada chat en SQLite, con búsqueda que ignora tildes. Sobrevive a los reinicios. |
+| 💭 | **Recuerda** | Recuerdos por usuario (*«recuerda esto: …»*) e historial de cada chat en SQLite. Busca **por significado** con embeddings locales: *«¿qué te conté de mi mascota?»* encuentra *«mi perro se llama Toby»*. |
 | 🔒 | **Privada** | Lista blanca de usuarios, historial aislado y archivos temporales que se borran al procesarse. |
 | 🪶 | **Ligera** | Descarga los modelos tras cada respuesta para funcionar con 16 GB de RAM (configurable). |
 | 🔌 | **Un núcleo, muchos canales** | MEKA Core es un servidor local (REST + WebSocket): Telegram, la mascota de escritorio y los agentes MCP (Claude, Gemini CLI, Cursor) se conectan a él. |
@@ -135,6 +135,7 @@ Después:
 
 ```bash
 ollama pull gemma3:12b                  # 1. Descarga el modelo
+ollama pull embeddinggemma              #    y el de la memoria semántica (~600 MB)
 pip install -r requirements-qwen.txt    # 2. Opcional: Qwen3-TTS (clonar tu propia voz)
 pip install -r requirements-cloud.txt   #    Opcional: Claude y Gemini como cerebro
 python run.py                           # 3. ¡A charlar! (MEKA Core + Telegram)
@@ -215,7 +216,7 @@ En Claude Code también vale `claude mcp add meka -- python /ruta/a/PROJECT-MEKA
 | `pet_status` | Avisa a la mascota de que el agente empieza (`working`), termina (`done`) o falla (`error`) una tarea |
 | `pet_emotion` | Cambia la expresión de la mascota |
 | `chat` | Habla con el personaje (conversación propia, separada de Telegram) |
-| `remember` · `memories` | Guarda y consulta la memoria del usuario |
+| `remember` · `memories` | Guarda y consulta la memoria del usuario (`memories` acepta un tema y busca por significado) |
 
 </details>
 
@@ -233,7 +234,7 @@ Documentación interactiva en `http://127.0.0.1:8765/docs`. Si defines `MEKA_API
 | `POST /v1/files` | Imagen o documento → análisis |
 | `POST /v1/speech` · `GET /v1/audio/{id}` | Sintetizar un texto y descargar el audio (una sola vez) |
 | `POST /v1/sessions/{id}/reset` | Olvidar la conversación reciente |
-| `GET` · `POST` · `DELETE /v1/users/{id}/memories` | Ver, añadir o borrar recuerdos |
+| `GET` · `POST` · `DELETE /v1/users/{id}/memories` | Ver (`?q=` busca por significado), añadir o borrar recuerdos |
 | `POST /v1/events` · `WS /v1/events` | Publicar y recibir eventos de la mascota ([contrato](docs/VISION.md#contrato-de-eventos)) |
 
 ```bash
@@ -263,6 +264,8 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 | `paths.memory_db` / `paths.temp_dir` | `data/meka.db` / `temp` | Base de datos SQLite (recuerdos e historial) y archivos temporales. |
 | `memory.remember_pattern` / `recall_triggers` | — | Frases que guardan y recuperan recuerdos. |
 | `memory.persist_history` | `true` | El historial de cada chat sobrevive a los reinicios. |
+| `memory.semantic.enabled` / `model` | `true` / `embeddinggemma` | Memoria por significado con embeddings de Ollama. Sin el modelo, busca solo por palabras. |
+| `memory.semantic.min_similarity` / `auto_recall_similarity` | `0.35` / `0.6` | Similitud mínima al preguntar y para recordar sin que preguntes (`0` lo desactiva). Calíbralos con `python -m scripts.semantic_check`. |
 | `ai.provider` | `ollama` | Cerebro de la conversación: `ollama`, `claude` o `gemini`. |
 | `ai.vision_provider` / `ai.fallback_provider` | `""` | Cerebro para imágenes y cerebro de respaldo si el principal falla o se niega. |
 | `ai.local_only` | `false` | `true` ignora los proveedores en la nube: nada sale del equipo. |
@@ -359,7 +362,7 @@ flowchart LR
 | Núcleo | [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) (REST y WebSocket) · [httpx](https://www.python-httpx.org/) |
 | Canales | [python-telegram-bot](https://python-telegram-bot.org/) 22 · [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) 2 |
 | LLM y visión | [Ollama](https://ollama.com) + Gemma 3 · [Claude](https://platform.claude.com/docs) ([SDK](https://github.com/anthropics/anthropic-sdk-python)) · [Gemini](https://ai.google.dev/gemini-api/docs) ([google-genai](https://github.com/googleapis/python-genai)) |
-| Memoria | SQLite + FTS5 ([evaluación](docs/MEMORIA.md)) |
+| Memoria | SQLite + FTS5 + [sqlite-vec](https://github.com/asg017/sqlite-vec) · embeddings con `embeddinggemma` ([evaluación](docs/MEMORIA.md)) |
 | Voz → texto | [openai-whisper](https://github.com/openai/whisper) |
 | Texto → voz | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) · [edge-tts](https://github.com/rany2/edge-tts) · [Piper](https://github.com/OHF-Voice/piper1-gpl) |
 | Documentos | [PyMuPDF](https://pymupdf.readthedocs.io/) · [python-docx](https://python-docx.readthedocs.io/) · [openpyxl](https://openpyxl.readthedocs.io/) |
@@ -450,6 +453,7 @@ El canal no encuentra el núcleo. Arráncalo con `python run.py core` (o usa `py
 python -m scripts.verify_ollama            # Conexión con Ollama y prueba de respuesta
 python -m scripts.tts_smoke_test "Hola"    # Genera un audio con el motor de voz configurado
 python -m scripts.list_edge_voices es-MX   # Voces disponibles en edge-tts
+python -m scripts.semantic_check "¿qué te conté de mi mascota?"   # Similitudes de la memoria semántica
 ```
 
 </details>
@@ -463,6 +467,7 @@ python -m scripts.list_edge_voices es-MX   # Voces disponibles en edge-tts
 - [x] **Personajes intercambiables** independientes del modelo de IA ([`personas/`](personas/README.md))
 - [x] **Cerebro intercambiable**: Ollama, Claude y Gemini, con enrutamiento por tarea, respaldo y modo `local_only`
 - [x] **Memoria en SQLite** con búsqueda de texto completo e historial persistente ([evaluación](docs/MEMORIA.md))
+- [x] **Memoria semántica**: recordar por significado con embeddings locales y `sqlite-vec`
 - [x] **MEKA Core como servicio**: servidor local REST + WebSocket con Telegram, MCP y la mascota como clientes
 - [ ] Probar la personalidad con Gemini para Home y con Home Assistant (iteraciones 0 y 1)
 - [ ] Base del Funko del Meka (ESP32-S3, luces, sensor táctil) y caja de holograma ([planos](https://claude.ai/artifact/TVgmmCCLpmyd2KxQCpEEki))
@@ -471,7 +476,6 @@ python -m scripts.list_edge_voices es-MX   # Voces disponibles en edge-tts
 - [ ] Tamagotchi completo: logros, disfraces y rutinas
 - [ ] App móvil: Android con burbuja flotante, iOS con widget
 - [ ] Transcripción más rápida con [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
-- [ ] Memoria semántica: recordar por significado (`sqlite-vec` + embeddings de Ollama)
 
 La dirección del proyecto está en la [filosofía híbrida](docs/FILOSOFIA_HIBRIDA.md) y la [visión](docs/VISION.md); las alternativas técnicas evaluadas, en la [auditoría](docs/AUDITORIA.md).
 

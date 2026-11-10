@@ -11,6 +11,7 @@ from core.config import resolve_path, settings
 from core.logger import log_conversation, setup_logger
 from core.memory import MemoryStore, normalize_text
 from core.persona import Persona, load_active_persona
+from core.semantic import SemanticMemory
 
 logger = setup_logger("AI_Service")
 
@@ -60,6 +61,7 @@ class AIService:
         memory=None,
         persona: Persona | None = None,
         providers: dict[str, Provider] | None = None,
+        semantic: SemanticMemory | None = None,
     ):
         config = settings if config is None else config
         ai_config = config.get("ai", {})
@@ -99,6 +101,13 @@ class AIService:
             for t in memory_config.get("recall_triggers", DEFAULT_RECALL_TRIGGERS)
         )
         self.memory_limit = memory_config.get("search_limit", 5)
+
+        # Memoria semántica: si el usuario pregunta por el pasado basta una similitud baja;
+        # sin pregunta explícita, solo se añaden recuerdos muy relacionados (auto_recall)
+        semantic_config = memory_config.get("semantic") or {}
+        self.semantic = semantic
+        self.min_similarity = float(semantic_config.get("min_similarity", 0.35))
+        self.auto_recall = float(semantic_config.get("auto_recall_similarity", 0.6))
         self.log_conversations = config.get("app", {}).get("log_conversations", True)
         logger.info(f"Cerebro: {self.describe()}")
 
@@ -147,16 +156,32 @@ class AIService:
             return text, int((time.perf_counter() - start) * 1000), name
         raise ProviderError("Ningún proveedor respondió")  # pragma: no cover
 
-    def _memory_context(self, user_id: int | str, user_text: str) -> str:
-        """Guarda "recuerda esto: ..." y recupera recuerdos si el usuario pregunta por ellos."""
+    async def recall(self, user_id: int | str, query: str, *, asked: bool = True) -> list[str]:
+        """Recuerdos relevantes: primero por significado, después por palabras."""
+        found: list[str] = []
+        if self.semantic is not None:
+            threshold = self.min_similarity if asked else self.auto_recall
+            if threshold > 0:
+                hits = await self.semantic.search(user_id, query, self.memory_limit)
+                found = [fact for fact, similarity in hits if similarity >= threshold]
+        if asked:
+            for fact in self.memory.search(user_id, query, limit=self.memory_limit):
+                if fact not in found:
+                    found.append(fact)
+        return found[: self.memory_limit]
+
+    async def _memory_context(self, user_id: int | str, user_text: str) -> str:
+        """Guarda "recuerda esto: ..." y añade al prompt los recuerdos que vengan al caso."""
         match = self.remember_pattern.search(user_text)
         if match:
             self.memory.add_fact(user_id, match.group(1).strip())
+            return ""  # Acaba de contarlo: no hace falta recordárselo
 
         normalized = normalize_text(user_text)
-        if not any(trigger in normalized for trigger in self.recall_triggers):
+        asked = any(trigger in normalized for trigger in self.recall_triggers)
+        if not asked and self.semantic is None:
             return ""
-        memories = self.memory.search(user_id, user_text, limit=self.memory_limit)
+        memories = await self.recall(user_id, user_text, asked=asked)
         if not memories:
             return ""
         return MEMORY_CONTEXT_TEMPLATE.format(memories="\n".join(f"- {m}" for m in memories))
@@ -166,7 +191,7 @@ class AIService:
     ) -> list[str]:
         """Genera una respuesta y la divide en varios mensajes."""
         self._log("User", user_text)
-        context = self._memory_context(user_id, user_text) if use_memory else ""
+        context = await self._memory_context(user_id, user_text) if use_memory else ""
         messages = [*self.history.get(chat_id), {"role": "user", "content": user_text}]
 
         try:
