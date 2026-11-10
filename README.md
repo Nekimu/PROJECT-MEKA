@@ -26,7 +26,7 @@
 
 **Project MEKA** es un asistente personal al estilo de Alexa o Google Home, pero con identidad propia: un personaje anime que conversa contigo, escucha tus notas de voz, comenta tus fotos y documentos y recuerda lo que le cuentas. El objetivo final es darle vida a una figura Funko del Meka de D.Va con voz, luces y un avatar en pantalla.
 
-La personalidad, la memoria y la voz pertenecen a MEKA, no al modelo de IA. Hoy piensa con [Ollama](https://ollama.com) en tu equipo; la arquitectura está preparada para usar también Gemini, Claude u otros proveedores sin perder al personaje.
+La personalidad, la memoria y la voz pertenecen a MEKA, no al modelo de IA. Piensa con [Ollama](https://ollama.com) en tu equipo, con Claude o con Gemini: cambias de cerebro con una línea de configuración y el personaje sigue siendo el mismo.
 
 > [!TIP]
 > **Una mascota que vive en tu escritorio.** Prueba el [prototipo](pet/README.md) (abre `pet/web/index.html`) y lee la [visión del proyecto](docs/VISION.md).
@@ -84,12 +84,12 @@ El documento completo, con las iteraciones previstas (Google Home, Home Assistan
 | | Función | Detalle |
 |:---:|---|---|
 | 🎭 | **Personajes intercambiables** | D.Va, Marin o Yotsuba, o el tuyo propio: [paquetes en `personas/`](personas/README.md) que se eligen con una línea de configuración. |
-| 🧠 | **IA local** | Respuestas con cualquier modelo de Ollama (por defecto `gemma3:12b`), sin enviar tus conversaciones fuera. |
+| 🧠 | **Cerebro a elegir** | Ollama en local (por defecto `gemma3:12b`), Claude o Gemini, con un cerebro distinto para imágenes, uno de respaldo y un modo `local_only` que no deja salir nada del equipo. |
 | 🎙️ | **Escucha tus audios** | Transcribe las notas de voz con Whisper y responde como a un mensaje escrito. |
 | 🔊 | **Habla** | Cada personaje tiene su voz (Edge-TTS por defecto; Qwen3-TTS y Piper opcionales). Llega como nota de voz nativa (OGG/Opus). |
 | 🖼️ | **Ve tus fotos** | Comenta las imágenes con un modelo multimodal. |
 | 📄 | **Lee documentos** | PDF, DOCX (con tablas), XLSX, TXT, MD y CSV. |
-| 💭 | **Recuerda** | Contexto reciente por chat y memoria persistente por usuario con *«recuerda esto: …»*. |
+| 💭 | **Recuerda** | Recuerdos por usuario (*«recuerda esto: …»*) e historial de cada chat en SQLite, con búsqueda que ignora tildes. Sobrevive a los reinicios. |
 | 🔒 | **Privada** | Lista blanca de usuarios, historial aislado y archivos temporales que se borran al procesarse. |
 | 🪶 | **Ligera** | Descarga los modelos tras cada respuesta para funcionar con 16 GB de RAM (configurable). |
 | 🔌 | **Un núcleo, muchos canales** | MEKA Core es un servidor local (REST + WebSocket): Telegram, la mascota de escritorio y los agentes MCP (Claude, Gemini CLI, Cursor) se conectan a él. |
@@ -136,6 +136,7 @@ Después:
 ```bash
 ollama pull gemma3:12b                  # 1. Descarga el modelo
 pip install -r requirements-qwen.txt    # 2. Opcional: Qwen3-TTS (clonar tu propia voz)
+pip install -r requirements-cloud.txt   #    Opcional: Claude y Gemini como cerebro
 python run.py                           # 3. ¡A charlar! (MEKA Core + Telegram)
 ```
 
@@ -259,14 +260,18 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 | `server.allowed_origins` | `[]` | Webs extra que pueden conectarse; la mascota y `localhost` ya están permitidas. |
 | `server.max_upload_mb` | `20` | Tamaño máximo de las notas de voz, imágenes y documentos. |
 | `server.broadcast_messages` | `true` | La mascota también dice lo que MEKA responde por otros canales. |
-| `paths.memory_file` / `paths.temp_dir` | `memory.json` / `temp` | Dónde se guardan los recuerdos y los archivos temporales. |
+| `paths.memory_db` / `paths.temp_dir` | `data/meka.db` / `temp` | Base de datos SQLite (recuerdos e historial) y archivos temporales. |
 | `memory.remember_pattern` / `recall_triggers` | — | Frases que guardan y recuperan recuerdos. |
-| `ai.model` | `gemma3:12b` | Modelo de Ollama. Debe ser **multimodal** para ver fotos. |
-| `ai.base_url` | `http://localhost:11434` | Dirección del servidor de Ollama. |
-| `ai.temperature` | `0.8` | Creatividad de las respuestas. |
-| `ai.keep_alive` | `0` | `0` descarga el modelo tras responder (ahorra RAM); `"5m"` lo mantiene cargado (más rápido). |
+| `memory.persist_history` | `true` | El historial de cada chat sobrevive a los reinicios. |
+| `ai.provider` | `ollama` | Cerebro de la conversación: `ollama`, `claude` o `gemini`. |
+| `ai.vision_provider` / `ai.fallback_provider` | `""` | Cerebro para imágenes y cerebro de respaldo si el principal falla o se niega. |
+| `ai.local_only` | `false` | `true` ignora los proveedores en la nube: nada sale del equipo. |
 | `ai.history_size` | `20` | Mensajes recientes que recuerda por chat. |
-| `ai.options` / `ai.vision_options` | — | Parámetros avanzados de Ollama (`num_predict`, `top_p`...). |
+| `ai.providers.ollama.model` | `gemma3:12b` | Modelo de Ollama. Debe ser **multimodal** para ver fotos. |
+| `ai.providers.ollama.keep_alive` | `0` | `0` descarga el modelo tras responder (ahorra RAM); `"5m"` lo mantiene cargado (más rápido). |
+| `ai.providers.ollama.*` | — | `base_url`, `temperature`, `options` y `vision_options` de Ollama. |
+| `ai.providers.claude.model` / `effort` | `claude-opus-5-5` / `low` | Modelo de Claude y cuánto piensa (`low` a `max`). Requiere `ANTHROPIC_API_KEY`. |
+| `ai.providers.gemini.model` | `gemini-flash-latest` | Modelo de Gemini. Requiere `GEMINI_API_KEY`. |
 | `stt.model_size` | `base` | Whisper: `tiny`, `base`, `small`, `medium`, `large`, `turbo`. |
 | `stt.unload_after_use` | `true` | Libera Whisper de la RAM tras cada nota de voz. |
 | `tts.engine` | `edge-tts` | `edge-tts`, `qwen-tts` o `piper`. La voz de edge-tts la pone cada personaje. |
@@ -284,7 +289,29 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 </details>
 
 <details>
-<summary><b>¿Qué modelo de lenguaje elijo?</b></summary>
+<summary><b>¿Qué cerebro elijo?</b></summary>
+
+| Cerebro | Privacidad | Costo | Para qué |
+|---|---|---|---|
+| **Ollama** (local) | Nada sale del equipo | Gratis; usa tu RAM/GPU | Por defecto. Conversación diaria y todo lo privado |
+| **Claude** | El texto va a Anthropic | Por uso (`effort: low` lo abarata) | Respuestas de más calidad, documentos largos, visión |
+| **Gemini** | El texto va a Google; en el nivel gratuito puede usarse para mejorar sus productos | Nivel gratuito disponible | Probar sin GPU, o como respaldo |
+
+Ejemplos de `config.yml`:
+
+```yaml
+ai:
+  provider: "claude"            # Charla con Claude...
+  fallback_provider: "ollama"   # ...y si no hay internet o se niega, responde Ollama
+```
+
+```yaml
+ai:
+  provider: "ollama"            # Todo en local...
+  vision_provider: "gemini"     # ...salvo las fotos, que analiza Gemini
+```
+
+Modelos de Ollama recomendados:
 
 | Modelo | Descarga aprox. | Visión | Para quién |
 |---|---|:---:|---|
@@ -313,8 +340,8 @@ flowchart LR
         ENG --> TTS[ai/tts.py<br/>Edge-TTS · Qwen3-TTS · Piper]
         ENG --> BUS((core/events.py))
         P[[personas/&lt;id&gt;]] -.-> ENG
-        AI <-->|chat · visión| OL[(Ollama)]
-        AI <--> MEM[(memory.json)]
+        AI <-->|ai/providers| OL[(Ollama · Claude · Gemini)]
+        AI <--> MEM[(core/memory.py<br/>SQLite data/meka.db)]
     end
     BUS -.->|emotion · message · agent.*| PET
 ```
@@ -331,7 +358,8 @@ flowchart LR
 |---|---|
 | Núcleo | [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) (REST y WebSocket) · [httpx](https://www.python-httpx.org/) |
 | Canales | [python-telegram-bot](https://python-telegram-bot.org/) 22 · [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) 2 |
-| LLM y visión | [Ollama](https://ollama.com) + Gemma 3 |
+| LLM y visión | [Ollama](https://ollama.com) + Gemma 3 · [Claude](https://platform.claude.com/docs) ([SDK](https://github.com/anthropics/anthropic-sdk-python)) · [Gemini](https://ai.google.dev/gemini-api/docs) ([google-genai](https://github.com/googleapis/python-genai)) |
+| Memoria | SQLite + FTS5 ([evaluación](docs/MEMORIA.md)) |
 | Voz → texto | [openai-whisper](https://github.com/openai/whisper) |
 | Texto → voz | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) · [edge-tts](https://github.com/rany2/edge-tts) · [Piper](https://github.com/OHF-Voice/piper1-gpl) |
 | Documentos | [PyMuPDF](https://pymupdf.readthedocs.io/) · [python-docx](https://python-docx.readthedocs.io/) · [openpyxl](https://openpyxl.readthedocs.io/) |
@@ -347,7 +375,7 @@ PROJECT-MEKA/
 ├── run.py                  # Punto de entrada: all | core | telegram | mcp
 ├── server/                 # MEKA Core: API REST + WebSocket (FastAPI)
 ├── core/                   # Motor, eventos, configuración, memoria, documentos y personajes
-├── ai/                     # LLM, STT, TTS, prompts y utilidades de texto
+├── ai/                     # Proveedores de IA (ai/providers), STT, TTS, prompts y texto
 ├── channels/               # Clientes del núcleo: Telegram, MCP y el cliente HTTP común
 ├── personas/               # Paquetes de personaje (D.Va, Marin, Yotsuba...)
 ├── pet/                    # Mascota de escritorio (web + Tauri), prototipo
@@ -356,10 +384,10 @@ PROJECT-MEKA/
 ├── docs/                   # Filosofía híbrida, visión, auditoría e imágenes
 ├── config.yml              # Configuración general
 ├── .env.example            # Plantilla de secretos
-└── requirements*.txt       # Dependencias: base, MCP, Qwen3-TTS y desarrollo
+└── requirements*.txt       # Dependencias: base, nube, MCP, Qwen3-TTS y desarrollo
 ```
 
-Se generan al ejecutar o son personales (ignorados por git): `temp/`, `logs/`, `memory.json`, `models/` y `voices/`.
+Se generan al ejecutar o son personales (ignorados por git): `data/` (la base de datos), `temp/`, `logs/`, `models/` y `voices/`.
 
 </details>
 
@@ -371,7 +399,7 @@ Se generan al ejecutar o son personales (ignorados por git): `temp/`, `logs/`, `
 - 👤 **`ALLOWED_USER_IDS`** decide quién puede hablar con el bot.
 - 🧱 El **historial** se separa por chat y los **recuerdos** por usuario: nadie puede leer lo que otra persona le contó al asistente.
 - 🗑️ Las **fotos, documentos y notas de voz** se borran justo después de procesarse.
-- 🏠 La inferencia es **local**. La única excepción es `edge-tts`, que sintetiza la voz en los servidores de Microsoft.
+- 🏠 Con Ollama la inferencia es **local**. Si eliges Claude o Gemini, el texto (y las fotos) de la conversación va a su API; `ai.local_only: true` lo impide. `edge-tts` sintetiza la voz en los servidores de Microsoft.
 - 🤐 Los errores internos no se muestran al usuario y los logs no incluyen el contenido de los mensajes (salvo con `app.log_conversations`).
 
 > [!WARNING]
@@ -382,13 +410,13 @@ Se generan al ejecutar o son personales (ignorados por git): `temp/`, `logs/`, `
 <details>
 <summary><b>«No se pudo conectar con Ollama»</b></summary>
 
-Ejecuta `ollama serve` (o abre la app de Ollama) y comprueba que `ai.base_url` apunta a él. Para diagnosticarlo: `python -m scripts.verify_ollama`.
+Ejecuta `ollama serve` (o abre la app de Ollama) y comprueba que `ai.providers.ollama.base_url` apunta a él. Para diagnosticarlo: `python -m scripts.verify_ollama`.
 </details>
 
 <details>
 <summary><b>«Ollama no tiene el modelo»</b></summary>
 
-Descárgalo con `ollama pull <modelo>`, usando el mismo nombre que en `ai.model`.
+Descárgalo con `ollama pull <modelo>`, usando el mismo nombre que en `ai.providers.ollama.model`.
 </details>
 
 <details>
@@ -406,7 +434,7 @@ Instálalas con `pip install -r requirements-qwen.txt` o cambia `tts.engine` a `
 <details>
 <summary><b>Mi equipo se queda sin memoria</b></summary>
 
-Usa un modelo más pequeño (`gemma3:4b`), `stt.model_size: tiny` y `tts.engine: edge-tts`. Mantén `ai.keep_alive: 0` y las opciones `unload_after_use: true`.
+Usa un modelo más pequeño (`gemma3:4b`), `stt.model_size: tiny` y `tts.engine: edge-tts`. Mantén `ai.providers.ollama.keep_alive: 0` y las opciones `unload_after_use: true`.
 </details>
 
 <details>
@@ -433,16 +461,17 @@ python -m scripts.list_edge_voices es-MX   # Voces disponibles en edge-tts
 - [x] Tests automatizados, CI y auditoría técnica ([v1.1.0](CHANGELOG.md))
 - [x] Prototipo de **mascota de escritorio** tipo Tamagotchi ([`pet/`](pet/README.md))
 - [x] **Personajes intercambiables** independientes del modelo de IA ([`personas/`](personas/README.md))
+- [x] **Cerebro intercambiable**: Ollama, Claude y Gemini, con enrutamiento por tarea, respaldo y modo `local_only`
+- [x] **Memoria en SQLite** con búsqueda de texto completo e historial persistente ([evaluación](docs/MEMORIA.md))
 - [x] **MEKA Core como servicio**: servidor local REST + WebSocket con Telegram, MCP y la mascota como clientes
 - [ ] Probar la personalidad con Gemini para Home y con Home Assistant (iteraciones 0 y 1)
-- [ ] Adaptadores de proveedor (Ollama, Gemini, Claude) y enrutamiento por tarea y privacidad
 - [ ] Base del Funko del Meka (ESP32-S3, luces, sensor táctil) y caja de holograma ([planos](https://claude.ai/artifact/TVgmmCCLpmyd2KxQCpEEki))
 - [ ] Google Drive como memoria documental compartida con otros agentes
 - [ ] Gestionar carpetas autorizadas desde el móvil, con confirmación y git
 - [ ] Tamagotchi completo: logros, disfraces y rutinas
 - [ ] App móvil: Android con burbuja flotante, iOS con widget
 - [ ] Transcripción más rápida con [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
-- [ ] Memoria semántica: recordar por significado (SQLite + embeddings)
+- [ ] Memoria semántica: recordar por significado (`sqlite-vec` + embeddings de Ollama)
 
 La dirección del proyecto está en la [filosofía híbrida](docs/FILOSOFIA_HIBRIDA.md) y la [visión](docs/VISION.md); las alternativas técnicas evaluadas, en la [auditoría](docs/AUDITORIA.md).
 

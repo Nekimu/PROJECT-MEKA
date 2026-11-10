@@ -198,6 +198,7 @@ def create_app(
             "status": "ok",
             "version": API_VERSION,
             "persona": engine.persona.id,
+            "brain": engine.ai.describe(),
             "clients": engine.bus.subscribers,
         }
 

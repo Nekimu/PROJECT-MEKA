@@ -48,8 +48,8 @@ flowchart TB
 
 | Pieza | Responsabilidad | Estado |
 |---|---|---|
-| **Alma** | Personalidad, memoria por usuario, estado de la mascota | ✅ Personalidad y memoria (v1.1) |
-| **Cerebro** | Generar respuestas e interpretar imágenes y documentos | ✅ Ollama · ⏳ adaptador para Claude y Gemini |
+| **Alma** | Personalidad, memoria por usuario, estado de la mascota | ✅ Personalidad y memoria en SQLite |
+| **Cerebro** | Generar respuestas e interpretar imágenes y documentos | ✅ Ollama, Claude y Gemini (`ai/providers/`) |
 | **Manos** | Leer y organizar archivos en carpetas autorizadas | ⏳ Fase 3 |
 | **Cuerpo** | Mostrar a la mascota y recoger la interacción | ✅ Telegram · ✅ MCP · ✅ prototipo de escritorio |
 
@@ -164,7 +164,7 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 | Fase | Entregable | Estado |
 |---|---|---|
 | 0 | Bot de Telegram estable, seguro y con tests | ✅ v1.1 |
-| 1 | **MEKA Core como servicio**: servidor local con este contrato, Telegram y MCP como clientes · adaptador de cerebro (Claude, Gemini, Ollama) | ✅ Servidor y canales · ⏳ Adaptadores |
+| 1 | **MEKA Core como servicio**: servidor local con este contrato, Telegram y MCP como clientes · adaptador de cerebro (Claude, Gemini, Ollama) | ✅ |
 | 2 | **Mascota de escritorio** | ✅ Prototipo (`pet/`) |
 | 3 | Manos: carpetas autorizadas, lectura y luego escritura con git y confirmación | Pendiente |
 | 4 | Tamagotchi completo: logros, disfraces, rutinas | Pendiente |

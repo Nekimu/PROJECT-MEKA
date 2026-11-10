@@ -26,6 +26,7 @@ ENV/
 temp/
 config_local.yml
 memory.json*
+data/
 logs/
 *.log
 

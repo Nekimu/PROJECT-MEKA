@@ -67,3 +67,27 @@ class FakeTTS:
 
     def check_health(self):
         return True
+
+
+class FakeProvider:
+    """Un proveedor de IA (Claude, Gemini...) con respuestas programadas."""
+
+    def __init__(self, name, *replies, error=None, local=False):
+        self.name = name
+        self.model = f"{name}-test"
+        self.local = local
+        self.replies = list(replies)
+        self.error = error
+        self.calls = []
+
+    async def chat(self, system, messages, *, vision=False):
+        self.calls.append({"system": system, "messages": messages, "vision": vision})
+        if self.error:
+            raise self.error
+        return self.replies.pop(0)
+
+    def check_health(self):
+        return True
+
+    def unload(self):
+        pass

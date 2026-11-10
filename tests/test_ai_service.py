@@ -1,9 +1,13 @@
 import asyncio
 
+import pytest
+
+from ai.providers import ProviderError, RefusalError
+from ai.providers.ollama import OllamaProvider
 from ai.service import AIService
-from core.memory import MemorySystem
+from core.memory import MemoryStore
 from core.persona import Persona, load_persona
-from tests.fakes import FakeClient
+from tests.fakes import FakeClient, FakeProvider
 
 TEST_PERSONA = Persona(
     id="prueba",
@@ -13,10 +17,19 @@ TEST_PERSONA = Persona(
 )
 
 
-def make_service(tmp_path, client, **ai_overrides):
-    config = {"ai": {"model": "test-model", "temperature": 0.3, **ai_overrides}}
-    memory = MemorySystem(tmp_path / "memory.json")
-    return AIService(config=config, client=client, memory=memory, persona=TEST_PERSONA)
+OLLAMA_KEYS = {"model", "temperature", "keep_alive", "options", "vision_options"}
+
+
+def make_service(tmp_path, client, **overrides):
+    ollama = {"model": "test-model", "temperature": 0.3}
+    ollama.update({k: v for k, v in overrides.items() if k in OLLAMA_KEYS})
+    ai = {k: v for k, v in overrides.items() if k not in OLLAMA_KEYS}
+    return AIService(
+        config={"ai": ai},
+        memory=MemoryStore(tmp_path / "meka.db"),
+        persona=TEST_PERSONA,
+        providers={"ollama": OllamaProvider(ollama, client=client)},
+    )
 
 
 def run(coro):
@@ -124,12 +137,68 @@ def test_vision_prompt_names_the_persona(tmp_path):
 
 
 def test_real_persona_pack_drives_replies(tmp_path):
-    memory_path = tmp_path / "memory.json"
     marin = load_persona("marin")
     service = AIService(
         config={"ai": {}},
-        client=FakeClient(fail=True),
-        memory=MemorySystem(memory_path),
+        memory=MemoryStore(tmp_path / "meka.db"),
         persona=marin,
+        providers={"ollama": OllamaProvider({}, client=FakeClient(fail=True))},
     )
     assert run(service.generate_response(1, 1, "hola"))[0] in marin.lines["error"]
+
+
+# ---------------------------------------------------------------------- enrutamiento
+
+
+def routed_service(tmp_path, providers, **ai):
+    return AIService(
+        config={"ai": ai},
+        memory=MemoryStore(tmp_path / "meka.db"),
+        persona=TEST_PERSONA,
+        providers=providers,
+    )
+
+
+def test_history_survives_restart(tmp_path):
+    """El historial vive en SQLite: un reinicio de MEKA Core no olvida la conversación."""
+    run(make_service(tmp_path, FakeClient("Hola, Nekimu")).generate_response(1, 1, "soy Nekimu"))
+    client = FakeClient("Te recuerdo")
+    run(make_service(tmp_path, client).generate_response(1, 1, "¿quién soy?"))
+    assert "soy Nekimu" in str(client.calls[0]["messages"])
+
+
+def test_each_task_uses_its_provider(tmp_path):
+    claude, gemini = FakeProvider("claude", "Hola"), FakeProvider("gemini", "Una foto")
+    service = routed_service(
+        tmp_path, {"claude": claude, "gemini": gemini}, provider="claude", vision_provider="gemini"
+    )
+    image = tmp_path / "foto.png"
+    image.write_bytes(b"\x89PNG")
+    run(service.generate_response(1, 1, "hola"))
+    run(service.generate_multimodal_response(1, "mira", image))
+    assert len(claude.calls) == 1 and len(gemini.calls) == 1
+    assert gemini.calls[0]["vision"] and gemini.calls[0]["messages"][0]["images"] == [str(image)]
+    assert claude.calls[0]["system"].startswith("Eres un personaje de prueba.")
+
+
+@pytest.mark.parametrize("error", [ProviderError("caído"), RefusalError("declinó")])
+def test_fallback_provider_takes_over(tmp_path, error):
+    claude = FakeProvider("claude", error=error)
+    ollama = FakeProvider("ollama", "Respuesta local", local=True)
+    service = routed_service(
+        tmp_path,
+        {"claude": claude, "ollama": ollama},
+        provider="claude",
+        fallback_provider="ollama",
+    )
+    assert run(service.generate_response(1, 1, "hola")) == ["Respuesta local"]
+
+
+def test_local_only_never_calls_the_cloud(tmp_path):
+    claude = FakeProvider("claude", "Desde la nube")
+    ollama = FakeProvider("ollama", "Desde tu PC", local=True)
+    service = routed_service(
+        tmp_path, {"claude": claude, "ollama": ollama}, provider="claude", local_only=True
+    )
+    assert run(service.generate_response(1, 1, "hola")) == ["Desde tu PC"]
+    assert claude.calls == []

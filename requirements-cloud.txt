@@ -1,0 +1,4 @@
+# Cerebros en la nube opcionales (ai.provider: claude | gemini). Ollama no necesita esto.
+-r requirements.txt
+anthropic>=2.7,<3          # Claude (ANTHROPIC_API_KEY)
+google-genai>=3.0,<4       # Gemini (GEMINI_API_KEY)

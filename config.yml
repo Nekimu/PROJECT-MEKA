@@ -18,29 +18,47 @@ server:
   audio_ttl_seconds: 300     # Tiempo que se guardan los audios generados hasta que un canal los pide
 
 paths:
-  memory_file: "memory.json" # Recuerdos persistentes (ignorado por git)
+  memory_db: "data/meka.db"  # Recuerdos e historial en SQLite (ignorado por git)
   temp_dir: "temp"           # Audios y archivos temporales (ignorado por git)
 
 memory:
   remember_pattern: 'recuerda\s+esto\s*:\s*(.+)'   # "Recuerda esto: ..." guarda un recuerdo
   recall_triggers: ["recuerdas", "te acuerdas", "sabes algo de", "que me dijiste de"]
   search_limit: 5            # Recuerdos que se añaden al contexto como máximo
+  persist_history: true      # El historial de cada chat sobrevive a los reinicios
 
 ai:
-  model: "gemma3:12b"        # Debe ser multimodal para analizar imágenes
-  base_url: "http://localhost:11434"
-  temperature: 0.8
-  keep_alive: 0              # 0 = descarga el modelo tras cada respuesta (ahorra RAM); "5m" = más rápido
+  # Cerebro de cada tarea: ollama (local) | claude | gemini. La personalidad no cambia.
+  provider: "ollama"         # Conversación
+  vision_provider: ""        # Imágenes; vacío = el mismo que provider
+  fallback_provider: ""      # Si el principal falla o se niega (p. ej. "ollama" como red local)
+  local_only: false          # true = nada sale del equipo: se ignoran los proveedores en la nube
   history_size: 20           # Mensajes recientes que recuerda por chat
-  options:                   # Parámetros avanzados de generación de Ollama
-    num_predict: 512
-    top_k: 40
-    top_p: 0.9
-    repeat_penalty: 1.2
-    repeat_last_n: 64
-  vision_options:            # Análisis de imágenes: menor temperatura para precisión
-    temperature: 0.6
-    num_predict: 1024
+
+  providers:
+    ollama:
+      model: "gemma3:12b"    # Debe ser multimodal para analizar imágenes
+      base_url: "http://localhost:11434"
+      temperature: 0.8
+      keep_alive: 0          # 0 = descarga el modelo tras cada respuesta (ahorra RAM); "5m" = más rápido
+      options:               # Parámetros avanzados de generación de Ollama
+        num_predict: 512
+        top_k: 40
+        top_p: 0.9
+        repeat_penalty: 1.2
+        repeat_last_n: 64
+      vision_options:        # Análisis de imágenes: menor temperatura para precisión
+        temperature: 0.6
+        num_predict: 1024
+    claude:                  # Requiere ANTHROPIC_API_KEY en .env y requirements-cloud.txt
+      model: "claude-opus-5-5"
+      effort: "low"          # low | medium | high | xhigh | max (más = piensa más y cuesta más)
+      max_tokens: 16000
+      fallbacks: true        # Si un filtro de seguridad la rechaza, la API reintenta con otro modelo
+    gemini:                  # Requiere GEMINI_API_KEY en .env y requirements-cloud.txt
+      model: "gemini-flash-latest"  # Alias de la última versión de Flash
+      temperature: 0.8
+      max_output_tokens: 2048
 
 stt:
   model_size: "base"         # tiny | base | small | medium | large | turbo

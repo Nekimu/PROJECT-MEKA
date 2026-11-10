@@ -12,7 +12,7 @@ init(autoreset=True)
 
 
 def verify_ollama():
-    ai_config = settings.get("ai", {})
+    ai_config = settings.get("ai", {}).get("providers", {}).get("ollama", {})
     model_name = ai_config.get("model", "gemma3:12b")
     base_url = ai_config.get("base_url", "http://localhost:11434")
     client = Client(host=base_url)

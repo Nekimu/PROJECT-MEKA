@@ -24,7 +24,7 @@ from core.config import resolve_path
 from core.documents import DOCUMENT_EXTENSIONS, IMAGE_EXTENSIONS, extract_text
 from core.events import EventBus
 from core.logger import setup_logger
-from core.memory import MemorySystem
+from core.memory import MemoryStore
 from core.persona import Persona, load_active_persona
 
 logger = setup_logger("Engine")
@@ -59,7 +59,7 @@ class MekaEngine:
         config: dict,
         *,
         persona: Persona | None = None,
-        memory: MemorySystem | None = None,
+        memory: MemoryStore | None = None,
         ai: AIService | None = None,
         stt: STTService | None = None,
         tts: TTSService | None = None,
@@ -69,9 +69,11 @@ class MekaEngine:
         self.persona = persona or load_active_persona(config)
         paths = config.get("paths", {})
         allowed = config.get("telegram", {}).get("allowed_user_ids") or []
-        self.memory = memory or MemorySystem(
-            resolve_path(paths.get("memory_file", "memory.json")),
-            legacy_owner_id=allowed[0] if allowed else None,
+        # La primera vez se importa el antiguo memory.json (y se renombra a .migrated)
+        self.memory = memory or MemoryStore(
+            resolve_path(paths.get("memory_db", "data/meka.db")),
+            legacy_json=resolve_path("memory.json"),
+            legacy_owner=allowed[0] if allowed else None,
         )
         self.ai = ai or AIService(config, memory=self.memory, persona=self.persona)
         self.stt = stt or STTService(config)
@@ -113,6 +115,8 @@ class MekaEngine:
                 torch._dynamo.reset()
         self.ai.unload_model()
         self.stt.unload_model()
+        with contextlib.suppress(Exception):
+            self.memory.close()
         self.tts.unload_qwen()
         for audio_id in list(self._audio):
             self._drop_audio(audio_id)

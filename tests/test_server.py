@@ -6,11 +6,12 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
+from ai.providers.ollama import OllamaProvider
 from ai.service import AIService
 from channels.client import CoreClient
 from core.config import core_url, default_user
 from core.engine import MekaEngine
-from core.memory import MemorySystem
+from core.memory import MemoryStore
 from core.persona import load_persona
 from server.app import ConfigError, create_app, server_token
 from tests.fakes import FakeClient, FakeSTT, FakeTTS
@@ -23,8 +24,13 @@ def make_engine(tmp_path, *replies, broadcast=True):
         "paths": {"temp_dir": str(tmp_path / "temp")},
         "server": {"broadcast_messages": broadcast},
     }
-    memory = MemorySystem(tmp_path / "memory.json")
-    ai = AIService(config, client=FakeClient(*replies), memory=memory, persona=PERSONA)
+    memory = MemoryStore(tmp_path / "meka.db")
+    ai = AIService(
+        config,
+        memory=memory,
+        persona=PERSONA,
+        providers={"ollama": OllamaProvider({}, client=FakeClient(*replies))},
+    )
     return MekaEngine(
         config,
         persona=PERSONA,
@@ -131,7 +137,7 @@ def test_documents_are_analyzed_and_unknown_types_rejected(tmp_path):
             files={"file": ("lista.txt", b"leche, pan")},
         )
         assert response.json()["replies"][0]["text"] == "Es una lista de la compra (con IVA)"
-        prompt = engine.ai.client.calls[0]["messages"][-1]["content"]
+        prompt = engine.ai.providers["ollama"].client.calls[0]["messages"][-1]["content"]
         assert "leche, pan" in prompt and "lista.txt" in prompt
 
         assert (

@@ -4,6 +4,16 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ## [Sin publicar]
 
+### Cerebro intercambiable
+- **Adaptadores de IA** (`ai/providers/`): Ollama (local), **Claude** (SDK oficial de Anthropic, `claude-opus-5-5` con `effort: low`, reintento automático si un filtro lo rechaza) y **Gemini** (`google-genai`, `gemini-flash-latest`). Los tres reciben el mismo prompt del personaje.
+- **Enrutamiento** en `config.yml`: `ai.provider` (conversación), `ai.vision_provider` (imágenes), `ai.fallback_provider` (si el principal falla o se niega) y `ai.local_only` (nada sale del equipo).
+- Las opciones de Ollama pasan a `ai.providers.ollama.*`. SDKs de la nube opcionales en `requirements-cloud.txt`; claves `ANTHROPIC_API_KEY` y `GEMINI_API_KEY` en `.env`.
+- `/v1/health` indica qué cerebro usa cada tarea.
+
+### Memoria en SQLite
+- `memory.json` se sustituye por **SQLite** (`data/meka.db`): escrituras transaccionales, búsqueda **FTS5** que ignora tildes y plurales y ordena por relevancia, e **historial de chat persistente** (`memory.persist_history`). Evaluación frente a JSON y PostgreSQL en [`docs/MEMORIA.md`](docs/MEMORIA.md).
+- **Migración automática**: el `memory.json` existente se importa al arrancar y se renombra a `memory.json.migrated`.
+
 ### MEKA Core: servidor local con canales como clientes
 - **MEKA Core** (`server/app.py`, `core/engine.py`): servidor FastAPI en `127.0.0.1:8765` con API REST (chat, voz, archivos, síntesis de voz, memoria, eventos) y WebSocket `/v1/events` con el contrato de la mascota. Documentación interactiva en `/docs`.
 - **Seguridad del servidor**: solo escucha en este equipo por defecto; fuera de `127.0.0.1` exige `MEKA_API_TOKEN` (si no, se niega a arrancar). Rechaza peticiones de webs ajenas (`Origin`) para que una página cualquiera no pueda usar MEKA desde el navegador. Límite de subida configurable.
