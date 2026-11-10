@@ -1,4 +1,4 @@
-"""Memoria persistente de hechos ("recuerda esto: ..."), aislada por usuario de Telegram."""
+"""Memoria persistente de hechos ("recuerda esto: ..."), aislada por usuario."""
 
 import contextlib
 import json
@@ -10,7 +10,7 @@ import time
 import unicodedata
 from pathlib import Path
 
-from core.config import resolve_path, settings
+from core.config import resolve_path
 from core.logger import setup_logger
 
 logger = setup_logger("Memory_System")
@@ -35,7 +35,7 @@ def extract_keywords(text: str) -> list[str]:
 
 
 class MemorySystem:
-    def __init__(self, file_path=None, legacy_owner_id: int | None = None):
+    def __init__(self, file_path=None, legacy_owner_id: int | str | None = None):
         self.file_path = Path(file_path) if file_path else resolve_path("memory.json")
         self._lock = threading.Lock()
         self.data = self._load(legacy_owner_id)
@@ -88,7 +88,7 @@ class MemorySystem:
         except Exception as e:
             logger.error(f"Error guardando memoria: {e}")
 
-    def add_fact(self, user_id: int, fact: str) -> bool:
+    def add_fact(self, user_id: int | str, fact: str) -> bool:
         """Añade un hecho a la memoria del usuario."""
         fact = fact.strip()
         if not fact:
@@ -102,11 +102,11 @@ class MemorySystem:
         logger.info(f"Nuevo hecho recordado para el usuario {user_id}")
         return True
 
-    def get_facts(self, user_id: int) -> list[str]:
+    def get_facts(self, user_id: int | str) -> list[str]:
         """Devuelve todos los hechos recordados del usuario."""
         return list(self.data["users"].get(str(user_id), []))
 
-    def clear(self, user_id: int) -> int:
+    def clear(self, user_id: int | str) -> int:
         """Borra los recuerdos del usuario y devuelve cuántos había."""
         with self._lock:
             removed = self.data["users"].pop(str(user_id), [])
@@ -114,7 +114,7 @@ class MemorySystem:
                 self._save()
         return len(removed)
 
-    def search(self, user_id: int, query: str, limit: int = 5) -> list[str]:
+    def search(self, user_id: int | str, query: str, limit: int = 5) -> list[str]:
         """Busca hechos relevantes del usuario, ordenados por número de palabras clave."""
         facts = self.get_facts(user_id)
         keywords = extract_keywords(query)
@@ -132,12 +132,3 @@ class MemorySystem:
             return facts[-3:]
         scored.sort(key=lambda item: (-item[0], -item[1]))
         return [fact for _, _, fact in scored[:limit]]
-
-
-def _legacy_owner():
-    allowed = settings.get("telegram", {}).get("allowed_user_ids") or []
-    return allowed[0] if allowed else None
-
-
-# Instancia global
-memory_system = MemorySystem(legacy_owner_id=_legacy_owner())

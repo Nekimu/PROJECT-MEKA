@@ -70,11 +70,36 @@ def load_config(config_path: str | os.PathLike | None = None) -> dict:
         env_ids if env_ids is not None else telegram.get("allowed_user_ids")
     )
 
-    # Validar configuración crítica
-    if not is_valid_token(telegram.get("token")):
-        logger.warning("No se ha configurado el token de Telegram en .env")
+    server = config.setdefault("server", {})
+    if os.getenv("MEKA_API_TOKEN"):
+        server["token"] = os.getenv("MEKA_API_TOKEN").strip()
+    if os.getenv("MEKA_CORE_URL"):
+        server["url"] = os.getenv("MEKA_CORE_URL").strip()
 
     return config
+
+
+def is_loopback(host: str) -> bool:
+    """True si el servidor solo escucha en este equipo."""
+    return host in {"127.0.0.1", "localhost", "::1"}
+
+
+def core_url(config: dict) -> str:
+    """URL HTTP con la que los canales encuentran a MEKA Core."""
+    server = config.get("server", {})
+    if server.get("url"):
+        return str(server["url"]).rstrip("/")
+    host = server.get("host", "127.0.0.1")
+    # 0.0.0.0 escucha en todas las interfaces, pero no es una dirección a la que conectarse
+    host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
+    host = f"[{host}]" if ":" in host else host  # IPv6
+    return f"http://{host}:{server.get('port', 8765)}"
+
+
+def default_user(config: dict) -> str:
+    """Usuario de memoria para canales sin usuarios propios (MCP, mascota): el dueño."""
+    allowed = config.get("telegram", {}).get("allowed_user_ids") or []
+    return str(allowed[0]) if allowed else "local"
 
 
 # Instancia global de configuración

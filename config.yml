@@ -6,13 +6,32 @@ app:
   log_level: "INFO"          # DEBUG | INFO | WARNING | ERROR
   log_conversations: true    # Imprime la conversación en la consola
 
+# MEKA Core: servidor local (REST + WebSocket) al que se conectan todos los canales
+server:
+  host: "127.0.0.1"          # Solo este equipo. Para la red local o Tailscale, "0.0.0.0" + token
+  port: 8765
+  url: ""                    # Cómo lo encuentran los canales; vacío = http://host:port (o MEKA_CORE_URL)
+  # El token va en .env (MEKA_API_TOKEN). Es obligatorio si host no es 127.0.0.1/localhost
+  allowed_origins: []        # Webs extra que pueden conectarse (la mascota y localhost ya lo tienen)
+  max_upload_mb: 20          # Tamaño máximo de notas de voz, imágenes y documentos
+  broadcast_messages: true   # La mascota también dice lo que MEKA responde por Telegram o MCP
+  audio_ttl_seconds: 300     # Tiempo que se guardan los audios generados hasta que un canal los pide
+
+paths:
+  memory_file: "memory.json" # Recuerdos persistentes (ignorado por git)
+  temp_dir: "temp"           # Audios y archivos temporales (ignorado por git)
+
+memory:
+  remember_pattern: 'recuerda\s+esto\s*:\s*(.+)'   # "Recuerda esto: ..." guarda un recuerdo
+  recall_triggers: ["recuerdas", "te acuerdas", "sabes algo de", "que me dijiste de"]
+  search_limit: 5            # Recuerdos que se añaden al contexto como máximo
+
 ai:
   model: "gemma3:12b"        # Debe ser multimodal para analizar imágenes
   base_url: "http://localhost:11434"
   temperature: 0.8
   keep_alive: 0              # 0 = descarga el modelo tras cada respuesta (ahorra RAM); "5m" = más rápido
   history_size: 20           # Mensajes recientes que recuerda por chat
-  system_prompt_file: ""     # Opcional: .txt/.md para probar otra personalidad sin crear un paquete
   options:                   # Parámetros avanzados de generación de Ollama
     num_predict: 512
     top_k: 40
@@ -47,22 +66,28 @@ tts:
     ref_text: ""             # Transcripción exacta de ese audio
     language: "Spanish"
     unload_after_use: true   # Libera el modelo tras cada respuesta con audio
-  # Piper (guardado por si acaso)
+  # Piper: TTS local y ligero
   piper:
-    path: "C:/ProjectMEKA/piper/piper.exe"
-    model_path: "C:/ProjectMEKA/piper/modelos/es_MX-claude-high.onnx"
+    path: "piper"            # Ejecutable (en el PATH o ruta completa)
+    model_path: "models/piper/es_MX-claude-high.onnx"
 
 documents:
   max_chars: 4000            # Caracteres del documento que se envían al modelo
 
-media:
+# ------------------------------------------------------------------ canales
+# Cada canal es un cliente de MEKA Core: no carga modelos y puede ir en otro equipo.
+
+telegram:
+  enabled: true              # El token y ALLOWED_USER_IDS se cargan desde .env por seguridad
+  request_timeout: 30
+  drop_pending_updates: false  # true = ignora los mensajes recibidos mientras el bot estaba apagado
+  typing_delay: 1.0          # Pausas de "escribiendo..." para parecer humana (0 = sin pausas)
   # file_id de stickers que el personaje puede enviar con [STICKER]. Envíale un sticker al bot
   # y su file_id aparecerá en la consola.
   stickers: []
-  # URLs o file_id de GIFs que puede enviar con [GIF]
-  gifs: []
+  gifs: []                   # URLs o file_id de GIFs que puede enviar con [GIF]
 
-telegram:
-  # El token y ALLOWED_USER_IDS se cargan desde .env por seguridad
-  request_timeout: 30
-  drop_pending_updates: false  # true = ignora los mensajes recibidos mientras el bot estaba apagado
+mcp:
+  # Servidor MCP para Claude Desktop, Claude Code, Gemini CLI... (python run.py mcp)
+  session: "mcp"             # Conversación propia, separada de Telegram
+  user: ""                   # Memoria que usa; vacío = el primer ID de ALLOWED_USER_IDS

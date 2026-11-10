@@ -8,7 +8,7 @@ from ai.tts import TTSService
 
 
 def make_tts(tmp_path, **overrides):
-    config = {"tts": {"enabled": True, "output_dir": str(tmp_path), **overrides}}
+    config = {"paths": {"temp_dir": str(tmp_path)}, "tts": {"enabled": True, **overrides}}
     return TTSService(config)
 
 

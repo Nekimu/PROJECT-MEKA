@@ -5,8 +5,6 @@ añade las reglas de formato que necesita MEKA (mensajes múltiples y etiquetas
 multimedia) y las plantillas de visión, documentos y memoria.
 """
 
-from pathlib import Path
-
 # Reglas que el bot necesita para dividir mensajes y enviar audio/stickers/GIFs.
 # Se añaden después de la personalidad de cualquier personaje.
 FORMAT_RULES = """
@@ -51,17 +49,3 @@ def build_document_prompt(file_name: str, content: str, request: str, truncated:
         request=request,
         truncated_note=" (solo el principio, el documento es más largo)" if truncated else "",
     )
-
-
-def read_prompt_override(path: str | Path | None) -> str | None:
-    """
-    `ai.system_prompt_file` permite probar una personalidad suelta (.txt/.md) sin crear
-    un paquete en personas/. Devuelve None si no hay archivo válido.
-    """
-    if not path:
-        return None
-    path = Path(path)
-    # Compatibilidad: versiones antiguas ponían aquí "ai/prompts.py".
-    if path.suffix == ".py" or not path.is_file():
-        return None
-    return path.read_text(encoding="utf-8")

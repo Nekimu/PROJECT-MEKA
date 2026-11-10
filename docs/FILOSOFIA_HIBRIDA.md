@@ -56,7 +56,8 @@ Revisión del repositorio (noviembre de 2026). Esto es lo que **existe hoy** y s
 
 | Pieza | Implementación actual |
 |---|---|
-| Canal de conversación | Bot de Telegram (`bot/`, python-telegram-bot 22) |
+| MEKA Core | Servidor local FastAPI (`server/`, `core/engine.py`): API REST + WebSocket de eventos, con token y solo en 127.0.0.1 por defecto |
+| Canales | Telegram (`channels/telegram/`) y MCP (`channels/mcp/`), ambos clientes de MEKA Core; la mascota se conecta por WebSocket |
 | Personalidad | **Paquetes de personaje** en `personas/` (D.Va/MEKA, Marin, Yotsuba), seleccionables por configuración |
 | Inferencia | Ollama (`ai/service.py`), con Gemma 3 12B por defecto |
 | Voz a texto | `openai-whisper` (`ai/stt.py`) |
@@ -67,7 +68,7 @@ Revisión del repositorio (noviembre de 2026). Esto es lo que **existe hoy** y s
 Y esto **todavía no existe**, aunque la versión 0.2 de este documento lo daba por hecho:
 
 - Open-LLM-VTuber: no está en el repositorio. La interfaz visual es `pet/`; Open-LLM-VTuber queda como referencia o alternativa.
-- FastAPI y servidor WebSocket/WebRTC: no hay servidor. MEKA Core (iteración 3) lo añadirá.
+- WebRTC (voz en tiempo real): no existe. El servidor FastAPI con WebSocket sí (`server/app.py`).
 - faster-whisper, Coqui y Bark: no se usan.
 - Módulo de planificación y herramientas: no existe.
 - PostgreSQL o base vectorial: no se usan.

@@ -1,31 +1,9 @@
 import asyncio
-from types import SimpleNamespace
-
-from ollama import Image, Message
 
 from ai.service import AIService
 from core.memory import MemorySystem
 from core.persona import Persona, load_persona
-
-
-class FakeClient:
-    """Imita ollama.Client: registra las llamadas y devuelve respuestas programadas."""
-
-    def __init__(self, *replies, fail=False):
-        self.replies = list(replies)
-        self.fail = fail
-        self.calls = []
-
-    def chat(self, **kwargs):
-        # Igual que el cliente real: serializa los mensajes, lo que lee del disco cada imagen
-        for message in kwargs["messages"]:
-            images = [Image(value=image) for image in message.get("images") or []]
-            Message(**{**message, "images": images or None}).model_dump()
-        self.calls.append(kwargs)
-        if self.fail:
-            raise ConnectionError("Ollama caído")
-        return SimpleNamespace(message=SimpleNamespace(content=self.replies.pop(0)))
-
+from tests.fakes import FakeClient
 
 TEST_PERSONA = Persona(
     id="prueba",

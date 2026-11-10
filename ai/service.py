@@ -6,18 +6,12 @@ from collections import deque
 import ollama
 from ollama import Client
 
-from ai.prompts import (
-    MEMORY_CONTEXT_TEMPLATE,
-    build_system_prompt,
-    build_vision_prompt,
-    read_prompt_override,
-)
+from ai.prompts import MEMORY_CONTEXT_TEMPLATE, build_system_prompt, build_vision_prompt
 from ai.text_utils import split_into_messages, split_paragraphs
 from core.config import resolve_path, settings
 from core.logger import log_conversation, setup_logger
-from core.memory import memory_system, normalize_text
-from core.persona import Persona
-from core.persona import persona as active_persona
+from core.memory import MemorySystem, normalize_text
+from core.persona import Persona, load_active_persona
 
 logger = setup_logger("AI_Service")
 
@@ -30,8 +24,9 @@ DEFAULT_OPTIONS = {
 }
 DEFAULT_VISION_OPTIONS = {"temperature": 0.6, "num_predict": 1024}  # Menor temperatura: precisión
 
-REMEMBER_PATTERN = re.compile(r"recuerda\s+esto\s*:\s*(.+)", re.IGNORECASE | re.DOTALL)
-RECALL_TRIGGERS = ("recuerdas", "te acuerdas", "sabes algo de", "que me dijiste de")
+# Valores por defecto de la sección `memory` de config.yml
+DEFAULT_REMEMBER_PATTERN = r"recuerda\s+esto\s*:\s*(.+)"
+DEFAULT_RECALL_TRIGGERS = ("recuerdas", "te acuerdas", "sabes algo de", "que me dijiste de")
 
 
 class ConversationStore:
@@ -41,15 +36,15 @@ class ConversationStore:
         self.max_messages = max_messages
         self._chats: dict[int, deque] = {}
 
-    def get(self, chat_id: int) -> list[dict]:
+    def get(self, chat_id: int | str) -> list[dict]:
         return list(self._chats.get(chat_id, ()))
 
-    def add_exchange(self, chat_id: int, user_text: str, assistant_text: str):
+    def add_exchange(self, chat_id: int | str, user_text: str, assistant_text: str):
         history = self._chats.setdefault(chat_id, deque(maxlen=self.max_messages))
         history.append({"role": "user", "content": user_text})
         history.append({"role": "assistant", "content": assistant_text})
 
-    def clear(self, chat_id: int):
+    def clear(self, chat_id: int | str):
         self._chats.pop(chat_id, None)
 
 
@@ -75,13 +70,28 @@ class AIService:
         self.vision_options = {**DEFAULT_VISION_OPTIONS, **(ai_config.get("vision_options") or {})}
 
         # Identidad: viene del paquete de personaje, no del proveedor de IA
-        self.persona = persona if persona is not None else active_persona
-        prompt_file = ai_config.get("system_prompt_file")
-        override = read_prompt_override(resolve_path(prompt_file) if prompt_file else None)
-        self.system_prompt = build_system_prompt(override or self.persona.prompt)
+        self.persona = persona if persona is not None else load_active_persona(config)
+        self.system_prompt = build_system_prompt(self.persona.prompt)
         self.vision_prompt = build_vision_prompt(self.persona.name)
         self.history = ConversationStore(ai_config.get("history_size", 20))
-        self.memory = memory if memory is not None else memory_system
+
+        memory_config = config.get("memory", {})
+        self.memory = (
+            memory
+            if memory is not None
+            else MemorySystem(
+                resolve_path(config.get("paths", {}).get("memory_file", "memory.json"))
+            )
+        )
+        self.remember_pattern = re.compile(
+            memory_config.get("remember_pattern") or DEFAULT_REMEMBER_PATTERN,
+            re.IGNORECASE | re.DOTALL,
+        )
+        self.recall_triggers = tuple(
+            normalize_text(t).strip()
+            for t in memory_config.get("recall_triggers", DEFAULT_RECALL_TRIGGERS)
+        )
+        self.memory_limit = memory_config.get("search_limit", 5)
         self.log_conversations = config.get("app", {}).get("log_conversations", True)
         self.client = client if client is not None else Client(host=self.host)
         logger.info(f"Cliente de Ollama configurado en {self.host} con el modelo {self.model}")
@@ -120,22 +130,22 @@ class AIService:
         latency_ms = int((time.perf_counter() - start) * 1000)
         return (response.message.content or "").strip(), latency_ms
 
-    def _memory_context(self, user_id: int, user_text: str) -> str:
+    def _memory_context(self, user_id: int | str, user_text: str) -> str:
         """Guarda "recuerda esto: ..." y recupera recuerdos si el usuario pregunta por ellos."""
-        match = REMEMBER_PATTERN.search(user_text)
+        match = self.remember_pattern.search(user_text)
         if match:
             self.memory.add_fact(user_id, match.group(1).strip())
 
         normalized = normalize_text(user_text)
-        if not any(trigger in normalized for trigger in RECALL_TRIGGERS):
+        if not any(trigger in normalized for trigger in self.recall_triggers):
             return ""
-        memories = self.memory.search(user_id, user_text)
+        memories = self.memory.search(user_id, user_text, limit=self.memory_limit)
         if not memories:
             return ""
         return MEMORY_CONTEXT_TEMPLATE.format(memories="\n".join(f"- {m}" for m in memories))
 
     async def generate_response(
-        self, chat_id: int, user_id: int, user_text: str, *, use_memory: bool = True
+        self, chat_id: int | str, user_id: int | str, user_text: str, *, use_memory: bool = True
     ) -> list[str]:
         """Genera una respuesta con Ollama y la divide en múltiples mensajes."""
         self._log("User", user_text)
@@ -164,7 +174,7 @@ class AIService:
         return bot_messages
 
     async def generate_multimodal_response(
-        self, chat_id: int, user_text: str, image_path
+        self, chat_id: int | str, user_text: str, image_path
     ) -> list[str]:
         """Analiza una imagen utilizando la capacidad multimodal del modelo (p. ej. Gemma 3)."""
         self._log("User (Multimodal)", f"{user_text} [Imagen]")
@@ -188,7 +198,7 @@ class AIService:
         self._log(f"{self.persona.name} (visión)", f"({latency_ms}ms) {raw_text}")
         return split_paragraphs(raw_text) or [self.persona.line("empty_reply")]
 
-    def reset_conversation(self, chat_id: int):
+    def reset_conversation(self, chat_id: int | str):
         self.history.clear(chat_id)
 
     def unload_model(self):
@@ -199,7 +209,3 @@ class AIService:
             self.client.chat(model=self.model, messages=[], keep_alive=0)
         except Exception as e:
             logger.error(f"Error al descargar el modelo: {e}")
-
-
-# Instancia global
-ai_service = AIService()

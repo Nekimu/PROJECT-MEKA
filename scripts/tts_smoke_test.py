@@ -6,8 +6,12 @@ Uso (desde la raíz del proyecto):  python -m scripts.tts_smoke_test ["texto opc
 import asyncio
 import sys
 
-from ai.tts import tts_service
-from core.persona import persona
+from ai.tts import TTSService
+from core.config import settings
+from core.persona import load_active_persona
+
+persona = load_active_persona()
+tts_service = TTSService(settings, voice=persona.voice)
 
 
 async def try_voice(text: str):

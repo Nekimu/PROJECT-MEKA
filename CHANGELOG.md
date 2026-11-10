@@ -4,6 +4,28 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ## [Sin publicar]
 
+### MEKA Core: servidor local con canales como clientes
+- **MEKA Core** (`server/app.py`, `core/engine.py`): servidor FastAPI en `127.0.0.1:8765` con API REST (chat, voz, archivos, síntesis de voz, memoria, eventos) y WebSocket `/v1/events` con el contrato de la mascota. Documentación interactiva en `/docs`.
+- **Seguridad del servidor**: solo escucha en este equipo por defecto; fuera de `127.0.0.1` exige `MEKA_API_TOKEN` (si no, se niega a arrancar). Rechaza peticiones de webs ajenas (`Origin`) para que una página cualquiera no pueda usar MEKA desde el navegador. Límite de subida configurable.
+- **Bus de eventos** (`core/events.py`): la mascota piensa (`emotion: thinking`) y dice lo que MEKA responde por cualquier canal (`server.broadcast_messages`). Los agentes externos publican `agent.working`, `agent.done`... con `POST /v1/events`.
+- **Canal de Telegram** (`channels/telegram/`, antes `bot/`): ya no carga modelos ni toca la memoria; habla con MEKA Core por HTTP (`channels/client.py`), así que puede ir en otro equipo. Las fotos, documentos y notas de voz se descargan en memoria, sin archivos temporales.
+- **Canal MCP** (`channels/mcp/`, `requirements-mcp.txt`): MEKA como herramienta de Claude Desktop, Claude Code, Gemini CLI o Cursor, con `pet_status`, `pet_emotion`, `chat`, `remember` y `memories`.
+- `run.py` con modos: `all` (por defecto: núcleo + Telegram), `core`, `telegram` y `mcp`.
+- La mascota se conecta a `ws://127.0.0.1:8765/v1/events` (antes `/events`) y acepta `?token=`.
+
+### Todo configurable
+- Nuevas secciones en `config.yml`: `server` (host, puerto, URL, orígenes, límite de subida, difusión, caducidad de audios), `paths` (memoria y temporales), `memory` (frase para recordar, disparadores y límite de búsqueda) y `mcp`.
+- `telegram.typing_delay` controla las pausas de "escribiendo…" (antes fijas); `0` las desactiva.
+- Variables nuevas en `.env`: `MEKA_API_TOKEN` y `MEKA_CORE_URL`.
+- Rutas de Piper relativas al proyecto (`models/piper/...`) en lugar de `C:/ProjectMEKA/...`.
+
+### Eliminado (código que ya no encaja con la nueva arquitectura)
+- `bot/`: sustituido por `channels/telegram/`.
+- Instancias globales creadas al importar (`ai_service`, `stt_service`, `tts_service`, `memory_system`, `persona`): ahora las crea MEKA Core una sola vez.
+- `ai.system_prompt_file` y `read_prompt_override`: la personalidad vive en `personas/`.
+- Claves antiguas de Piper en la raíz de `tts` y `tts.output_dir`; `media.*` pasa a `telegram.stickers` / `telegram.gifs` (son `file_id` de Telegram).
+- Carpetas `temp_audio/` y `temp_media/`: todo lo temporal va a `temp/`.
+
 ### Filosofía híbrida
 - **Personajes intercambiables** (`personas/`): cada paquete define personalidad (`persona.md`), nombre, voz y frases del bot (`persona.yml`). Se elige con `persona:` en `config.yml` o `MEKA_PERSONA`. Incluye MEKA (inspirado en D.Va, por defecto), Marin y Yotsuba.
 - Ya no hay texto de ningún personaje fijo en el código: saludos, acuses de voz, errores, comandos y registros salen del paquete activo.
@@ -21,7 +43,8 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 - `pet/tools/stickerize.py`: recorta el fondo de stickers y los convierte a WebP con transparencia.
 - `docs/VISION.md`: visión, arquitectura, contrato de eventos, guía de arte y mecánicas.
 - Test que valida el manifiesto de personajes.
-- Tests de los paquetes de personaje y de la selección por configuración (82 tests en total).
+- Tests de los paquetes de personaje y de la selección por configuración.
+- Tests del servidor, del cliente, del WebSocket, del canal MCP y de los manejadores de Telegram contra MEKA Core (104 tests en total).
 
 ## [1.1.0] — 2026-10-15
 

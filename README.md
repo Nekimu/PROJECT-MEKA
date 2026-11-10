@@ -92,6 +92,7 @@ El documento completo, con las iteraciones previstas (Google Home, Home Assistan
 | 💭 | **Recuerda** | Contexto reciente por chat y memoria persistente por usuario con *«recuerda esto: …»*. |
 | 🔒 | **Privada** | Lista blanca de usuarios, historial aislado y archivos temporales que se borran al procesarse. |
 | 🪶 | **Ligera** | Descarga los modelos tras cada respuesta para funcionar con 16 GB de RAM (configurable). |
+| 🔌 | **Un núcleo, muchos canales** | MEKA Core es un servidor local (REST + WebSocket): Telegram, la mascota de escritorio y los agentes MCP (Claude, Gemini CLI, Cursor) se conectan a él. |
 
 ## 🚀 Inicio rápido
 
@@ -135,8 +136,15 @@ Después:
 ```bash
 ollama pull gemma3:12b                  # 1. Descarga el modelo
 pip install -r requirements-qwen.txt    # 2. Opcional: Qwen3-TTS (clonar tu propia voz)
-python run.py                           # 3. ¡A charlar!
+python run.py                           # 3. ¡A charlar! (MEKA Core + Telegram)
 ```
+
+| Comando | Qué arranca |
+|---|---|
+| `python run.py` | MEKA Core y los canales activados (Telegram) en un solo proceso |
+| `python run.py core` | Solo MEKA Core en `http://127.0.0.1:8765` (API interactiva en `/docs`) |
+| `python run.py telegram` | Solo el bot; se conecta a un MEKA Core ya en marcha, incluso en otro equipo |
+| `python run.py mcp` | Servidor MCP por stdio para agentes ([ver abajo](#-canales-y-api)) |
 
 Antes de arrancar, edita `.env` con tu token y tu ID de Telegram (puedes obtenerlo con [@userinfobot](https://t.me/userinfobot)):
 
@@ -175,6 +183,65 @@ ALLOWED_USER_IDS=123456789
 | Borrar tus recuerdos | `/olvidar` |
 | Empezar de cero | `/reset` (olvida la conversación, no los recuerdos) |
 
+## 🔌 Canales y API
+
+Todo pasa por **MEKA Core**, un servidor local que guarda el personaje, la memoria, la IA y la voz. Los canales solo son clientes, así que añadir uno nuevo (Discord, una app móvil, la figura física) no toca el núcleo.
+
+| Canal | Cómo se conecta | Estado |
+|---|---|---|
+| Telegram | `channels/telegram/` → REST | ✅ |
+| Mascota de escritorio | `pet/` → WebSocket `/v1/events` | ✅ |
+| Agentes por MCP | `channels/mcp/` → REST (stdio hacia el agente) | ✅ |
+| App móvil, figura del Meka | Tailscale + token → REST y WebSocket | Pendiente |
+
+<details>
+<summary><b>Conectar MEKA a Claude Desktop, Claude Code, Gemini CLI o Cursor (MCP)</b></summary>
+
+Instala el SDK (`pip install -r requirements-mcp.txt`) y, con MEKA Core en marcha, añade el servidor a la configuración MCP de tu agente:
+
+```json
+{
+  "mcpServers": {
+    "meka": { "command": "python", "args": ["/ruta/a/PROJECT-MEKA/run.py", "mcp"] }
+  }
+}
+```
+
+En Claude Code también vale `claude mcp add meka -- python /ruta/a/PROJECT-MEKA/run.py mcp`. Usa el Python del entorno virtual del proyecto.
+
+| Herramienta | Qué hace |
+|---|---|
+| `pet_status` | Avisa a la mascota de que el agente empieza (`working`), termina (`done`) o falla (`error`) una tarea |
+| `pet_emotion` | Cambia la expresión de la mascota |
+| `chat` | Habla con el personaje (conversación propia, separada de Telegram) |
+| `remember` · `memories` | Guarda y consulta la memoria del usuario |
+
+</details>
+
+<details>
+<summary><b>API REST de MEKA Core</b></summary>
+
+Documentación interactiva en `http://127.0.0.1:8765/docs`. Si defines `MEKA_API_TOKEN`, todas las rutas salvo `/v1/health` piden `Authorization: Bearer <token>` (en el WebSocket, `?token=`).
+
+| Ruta | Uso |
+|---|---|
+| `GET /v1/health` | Estado y personaje activo |
+| `GET /v1/persona` | Nombre, frases y avatar del personaje (sin su prompt) |
+| `POST /v1/chat` | Mensaje de texto → respuestas (con audio si llevan `[AUDIO]`) |
+| `POST /v1/voice` | Nota de voz → transcripción y respuestas |
+| `POST /v1/files` | Imagen o documento → análisis |
+| `POST /v1/speech` · `GET /v1/audio/{id}` | Sintetizar un texto y descargar el audio (una sola vez) |
+| `POST /v1/sessions/{id}/reset` | Olvidar la conversación reciente |
+| `GET` · `POST` · `DELETE /v1/users/{id}/memories` | Ver, añadir o borrar recuerdos |
+| `POST /v1/events` · `WS /v1/events` | Publicar y recibir eventos de la mascota ([contrato](docs/VISION.md#contrato-de-eventos)) |
+
+```bash
+curl -s http://127.0.0.1:8765/v1/chat -H "Content-Type: application/json" \
+  -d '{"session": "prueba", "user": "local", "text": "¡Hola!", "audio": false}'
+```
+
+</details>
+
 ## ⚙️ Configuración
 
 Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
@@ -187,23 +254,32 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 | `persona` | `dva` | Personaje activo: una carpeta de [`personas/`](personas/README.md). También con `MEKA_PERSONA` en `.env`. |
 | `app.log_level` | `INFO` | `DEBUG`, `INFO`, `WARNING` o `ERROR`. |
 | `app.log_conversations` | `true` | Muestra la conversación en la consola. |
+| `server.host` / `server.port` | `127.0.0.1` / `8765` | Dónde escucha MEKA Core. Fuera de `127.0.0.1` exige `MEKA_API_TOKEN`. |
+| `server.url` | `""` | Cómo encuentran los canales al núcleo si está en otro equipo (o `MEKA_CORE_URL`). |
+| `server.allowed_origins` | `[]` | Webs extra que pueden conectarse; la mascota y `localhost` ya están permitidas. |
+| `server.max_upload_mb` | `20` | Tamaño máximo de las notas de voz, imágenes y documentos. |
+| `server.broadcast_messages` | `true` | La mascota también dice lo que MEKA responde por otros canales. |
+| `paths.memory_file` / `paths.temp_dir` | `memory.json` / `temp` | Dónde se guardan los recuerdos y los archivos temporales. |
+| `memory.remember_pattern` / `recall_triggers` | — | Frases que guardan y recuperan recuerdos. |
 | `ai.model` | `gemma3:12b` | Modelo de Ollama. Debe ser **multimodal** para ver fotos. |
 | `ai.base_url` | `http://localhost:11434` | Dirección del servidor de Ollama. |
 | `ai.temperature` | `0.8` | Creatividad de las respuestas. |
 | `ai.keep_alive` | `0` | `0` descarga el modelo tras responder (ahorra RAM); `"5m"` lo mantiene cargado (más rápido). |
 | `ai.history_size` | `20` | Mensajes recientes que recuerda por chat. |
-| `ai.system_prompt_file` | `""` | `.txt`/`.md` con otra personalidad. |
 | `ai.options` / `ai.vision_options` | — | Parámetros avanzados de Ollama (`num_predict`, `top_p`...). |
 | `stt.model_size` | `base` | Whisper: `tiny`, `base`, `small`, `medium`, `large`, `turbo`. |
 | `stt.unload_after_use` | `true` | Libera Whisper de la RAM tras cada nota de voz. |
-| `tts.engine` | `qwen-tts` | `qwen-tts`, `edge-tts` o `piper`. |
-| `tts.fallback_engine` | `edge-tts` | Motor de respaldo si falla el principal. |
+| `tts.engine` | `edge-tts` | `edge-tts`, `qwen-tts` o `piper`. La voz de edge-tts la pone cada personaje. |
+| `tts.fallback_engine` | `""` | Motor de respaldo si falla el principal. |
 | `tts.convert_to_ogg` | `true` | Convierte a OGG/Opus para que llegue como nota de voz. |
 | `tts.qwen.ref_audio` / `ref_text` | — | Solo con Qwen3-TTS: tu propia voz (en `voices/`, ignorada por git) y su transcripción exacta. |
 | `tts.qwen.device` | `cpu` | `cpu` o `cuda`. |
 | `documents.max_chars` | `4000` | Caracteres de cada documento que se envían al modelo. |
-| `media.stickers` / `media.gifs` | `[]` | Stickers (`file_id`) y GIFs que el personaje puede enviar. Envíale un sticker y su `file_id` aparecerá en la consola. |
+| `telegram.enabled` | `true` | Arranca el bot con `python run.py`. |
+| `telegram.typing_delay` | `1.0` | Multiplica las pausas de "escribiendo…"; `0` responde sin pausas. |
+| `telegram.stickers` / `telegram.gifs` | `[]` | Stickers (`file_id`) y GIFs que el personaje puede enviar. Envíale un sticker y su `file_id` aparecerá en la consola. |
 | `telegram.drop_pending_updates` | `false` | Ignora los mensajes recibidos con el bot apagado. |
+| `mcp.session` / `mcp.user` | `mcp` / `""` | Conversación y memoria del canal MCP (vacío = el primer ID de `ALLOWED_USER_IDS`). |
 
 </details>
 
@@ -224,24 +300,28 @@ La RAM necesaria es algo mayor que el tamaño de descarga. Consulta los tamaños
 
 ```mermaid
 flowchart LR
-    U([Usuario de Telegram]) -->|texto · voz · foto · documento| H[bot/handlers.py]
-    H -->|nota de voz| STT[ai/stt.py<br/>Whisper]
-    H -->|documento| DOC[core/documents.py]
-    STT --> AI
-    DOC --> AI
-    H -->|texto · imagen| AI[ai/service.py]
-    P[[personas/<id><br/>personalidad · voz · frases]] -.-> AI
-    P -.-> H
-    AI <-->|chat · visión| OL[(Ollama)]
-    AI <--> MEM[(core/memory.py<br/>memory.json)]
-    AI -->|respuesta con etiquetas| H
-    H -->|"[AUDIO]"| TTS[ai/tts.py<br/>Edge-TTS · Qwen3-TTS · Piper]
-    TTS -->|OGG/Opus| H
-    H -->|mensajes · voz · stickers| U
+    U([Telegram]) <--> TG[channels/telegram]
+    A([Claude · Gemini CLI · Cursor]) <-->|MCP stdio| MCP[channels/mcp]
+    TG <-->|REST| API
+    MCP <-->|REST| API
+    PET([Mascota pet/]) <-->|WebSocket /v1/events| API
+    subgraph CORE[MEKA Core · 127.0.0.1:8765]
+        API[server/app.py<br/>FastAPI · token · origen] --> ENG[core/engine.py]
+        ENG --> STT[ai/stt.py<br/>Whisper]
+        ENG --> DOC[core/documents.py]
+        ENG --> AI[ai/service.py]
+        ENG --> TTS[ai/tts.py<br/>Edge-TTS · Qwen3-TTS · Piper]
+        ENG --> BUS((core/events.py))
+        P[[personas/&lt;id&gt;]] -.-> ENG
+        AI <-->|chat · visión| OL[(Ollama)]
+        AI <--> MEM[(memory.json)]
+    end
+    BUS -.->|emotion · message · agent.*| PET
 ```
 
-- **Un modelo pesado a la vez.** Un `asyncio.Lock` impide que Whisper, el LLM y el TTS coincidan en memoria.
-- **Sin bloqueos.** La inferencia corre en hilos aparte, así que el bot sigue atendiendo a Telegram mientras piensa.
+- **Los canales no cargan modelos.** Telegram y MCP solo hablan con MEKA Core por HTTP; pueden ir en otro equipo.
+- **Un modelo pesado a la vez.** Un `asyncio.Lock` en el núcleo impide que Whisper, el LLM y el TTS coincidan en memoria, venga la petición del canal que venga.
+- **Sin bloqueos.** La inferencia corre en hilos aparte, así que el servidor sigue atendiendo mientras piensa.
 - **Etiquetas de intención.** El modelo marca sus respuestas con `[AUDIO]`, `[STICKER]` o `[GIF]` y el bot decide cómo entregarlas.
 
 <details>
@@ -249,7 +329,8 @@ flowchart LR
 
 | Capa | Tecnología |
 |---|---|
-| Mensajería | [python-telegram-bot](https://python-telegram-bot.org/) 22 |
+| Núcleo | [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) (REST y WebSocket) · [httpx](https://www.python-httpx.org/) |
+| Canales | [python-telegram-bot](https://python-telegram-bot.org/) 22 · [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) 2 |
 | LLM y visión | [Ollama](https://ollama.com) + Gemma 3 |
 | Voz → texto | [openai-whisper](https://github.com/openai/whisper) |
 | Texto → voz | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) · [edge-tts](https://github.com/rany2/edge-tts) · [Piper](https://github.com/OHF-Voice/piper1-gpl) |
@@ -263,10 +344,11 @@ flowchart LR
 
 ```
 PROJECT-MEKA/
-├── run.py                  # Punto de entrada
-├── bot/                    # Telegram: arranque, filtros de acceso y manejadores
+├── run.py                  # Punto de entrada: all | core | telegram | mcp
+├── server/                 # MEKA Core: API REST + WebSocket (FastAPI)
+├── core/                   # Motor, eventos, configuración, memoria, documentos y personajes
 ├── ai/                     # LLM, STT, TTS, prompts y utilidades de texto
-├── core/                   # Configuración, logging, memoria, documentos y personajes
+├── channels/               # Clientes del núcleo: Telegram, MCP y el cliente HTTP común
 ├── personas/               # Paquetes de personaje (D.Va, Marin, Yotsuba...)
 ├── pet/                    # Mascota de escritorio (web + Tauri), prototipo
 ├── scripts/                # Herramientas de diagnóstico
@@ -274,16 +356,18 @@ PROJECT-MEKA/
 ├── docs/                   # Filosofía híbrida, visión, auditoría e imágenes
 ├── config.yml              # Configuración general
 ├── .env.example            # Plantilla de secretos
-└── requirements*.txt       # Dependencias: base, Qwen3-TTS y desarrollo
+└── requirements*.txt       # Dependencias: base, MCP, Qwen3-TTS y desarrollo
 ```
 
-Se generan al ejecutar o son personales (ignorados por git): `temp_audio/`, `temp_media/`, `logs/`, `memory.json` y `voices/`.
+Se generan al ejecutar o son personales (ignorados por git): `temp/`, `logs/`, `memory.json`, `models/` y `voices/`.
 
 </details>
 
 ## 🔒 Privacidad y seguridad
 
-- 🔑 El **token** vive en `.env`, excluido de git. Nunca lo subas al repositorio.
+- 🔑 Los **tokens** viven en `.env`, excluido de git. Nunca los subas al repositorio.
+- 🏠 **MEKA Core solo escucha en este equipo** (`127.0.0.1`). Para abrirlo a tu red o a Tailscale hace falta `MEKA_API_TOKEN`; sin él, el servidor se niega a arrancar.
+- 🌐 El servidor **rechaza webs ajenas**: una página cualquiera no puede usar tu MEKA desde el navegador. Solo la mascota, `localhost` y los orígenes de `server.allowed_origins`.
 - 👤 **`ALLOWED_USER_IDS`** decide quién puede hablar con el bot.
 - 🧱 El **historial** se separa por chat y los **recuerdos** por usuario: nadie puede leer lo que otra persona le contó al asistente.
 - 🗑️ Las **fotos, documentos y notas de voz** se borran justo después de procesarse.
@@ -326,6 +410,12 @@ Usa un modelo más pequeño (`gemma3:4b`), `stt.model_size: tiny` y `tts.engine:
 </details>
 
 <details>
+<summary><b>«MEKA Core no responde en http://127.0.0.1:8765»</b></summary>
+
+El canal no encuentra el núcleo. Arráncalo con `python run.py core` (o usa `python run.py`, que lanza los dos). Si está en otro equipo, pon su dirección en `server.url` o en `MEKA_CORE_URL`, y el mismo `MEKA_API_TOKEN` en ambos.
+</details>
+
+<details>
 <summary><b>Herramientas de diagnóstico</b></summary>
 
 ```bash
@@ -343,9 +433,9 @@ python -m scripts.list_edge_voices es-MX   # Voces disponibles en edge-tts
 - [x] Tests automatizados, CI y auditoría técnica ([v1.1.0](CHANGELOG.md))
 - [x] Prototipo de **mascota de escritorio** tipo Tamagotchi ([`pet/`](pet/README.md))
 - [x] **Personajes intercambiables** independientes del modelo de IA ([`personas/`](personas/README.md))
+- [x] **MEKA Core como servicio**: servidor local REST + WebSocket con Telegram, MCP y la mascota como clientes
 - [ ] Probar la personalidad con Gemini para Home y con Home Assistant (iteraciones 0 y 1)
 - [ ] Adaptadores de proveedor (Ollama, Gemini, Claude) y enrutamiento por tarea y privacidad
-- [ ] MEKA Core como servicio: API local de eventos para la mascota y la figura física
 - [ ] Base del Funko del Meka (ESP32-S3, luces, sensor táctil) y caja de holograma ([planos](https://claude.ai/artifact/TVgmmCCLpmyd2KxQCpEEki))
 - [ ] Google Drive como memoria documental compartida con otros agentes
 - [ ] Gestionar carpetas autorizadas desde el móvil, con confirmación y git

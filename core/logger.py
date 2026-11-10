@@ -50,7 +50,14 @@ def configure_logging(level: str | int | None = None) -> logging.Logger:
     return root
 
 
-def setup_logger(name: str = "NoviaBot") -> logging.Logger:
+def log_to_stderr():
+    """Para el servidor MCP por stdio: stdout queda reservado al protocolo."""
+    for handler in configure_logging().handlers:
+        if isinstance(handler, logging.StreamHandler):
+            handler.setStream(sys.stderr)
+
+
+def setup_logger(name: str = "Core") -> logging.Logger:
     """Devuelve un logger hijo de 'meka'; el nivel se controla con `app.log_level`."""
     configure_logging()
     return logging.getLogger(f"{ROOT_LOGGER_NAME}.{name}")

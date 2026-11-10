@@ -16,7 +16,7 @@
   const STAT_MIN = 5;
   const STAT_MAX = 100;
   const MAX_OFFLINE_HOURS = 48;
-  const DEFAULT_CORE_URL = "ws://127.0.0.1:8765/events";
+  const DEFAULT_CORE_URL = "ws://127.0.0.1:8765/v1/events";
 
   // Variación por hora de juego. Con hambre o cansancio el ánimo baja el doble.
   const RATES = { saciedad: -6, animo: -3, afecto: -0.5, energiaDespierta: -4, energiaDormida: 15 };

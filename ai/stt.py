@@ -87,7 +87,3 @@ class STTService:
         if torch is not None and torch.cuda.is_available():
             torch.cuda.empty_cache()
         return True
-
-
-# Instancia global (por defecto 'base': equilibrio entre velocidad y precisión)
-stt_service = STTService()

@@ -54,6 +54,30 @@ class Persona:
     avatar: str | None = None
     voice: dict[str, str] = field(default_factory=dict)
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "Persona":
+        """Reconstruye el personaje que publica MEKA Core en GET /v1/persona."""
+        return cls(
+            id=str(data["id"]),
+            name=str(data["name"]),
+            prompt="",
+            lines={key: [str(v) for v in values] for key, values in data["lines"].items()},
+            inspiration=str(data.get("inspiration", "")),
+            description=str(data.get("description", "")),
+            avatar=data.get("avatar"),
+        )
+
+    def public(self) -> dict:
+        """Lo que pueden ver los canales: todo menos la personalidad (el prompt)."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "inspiration": self.inspiration,
+            "description": self.description,
+            "avatar": self.avatar,
+            "lines": self.lines,
+        }
+
     def line(self, key: str, **values) -> str:
         """Una frase al azar del tipo `key`, con sus marcadores rellenados."""
         template = random.choice(self.lines[key])
@@ -117,7 +141,3 @@ def load_active_persona(config: dict | None = None) -> Persona:
         persona = load_persona(DEFAULT_PERSONA)
     logger.info(f"Personaje activo: {persona.name} ({persona.id})")
     return persona
-
-
-# Instancia global
-persona = load_active_persona()

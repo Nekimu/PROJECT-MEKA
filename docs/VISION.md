@@ -33,14 +33,17 @@ Lo que diferencia a MEKA no es gestionar archivos, sino **la relación**: te rec
 flowchart TB
     subgraph PC["Tu PC (todo local)"]
         direction TB
-        CORE["<b>MEKA Core</b> (Python)<br/>Alma: personalidad, memoria, estado<br/>Cerebro: Claude · Gemini · Ollama<br/>Manos: agente sobre carpetas autorizadas"]
-        BUS(("Eventos<br/>WebSocket"))
+        CORE["<b>MEKA Core</b> (FastAPI)<br/>Alma: personalidad, memoria, estado<br/>Cerebro: Ollama · Claude · Gemini<br/>Manos: agente sobre carpetas autorizadas"]
+        BUS(("REST + WebSocket<br/>127.0.0.1:8765"))
         CORE <--> BUS
         PET["Mascota de escritorio<br/>(Tauri, ventana transparente)"]
         BUS <--> PET
+        TGC["Canal Telegram"] <--> BUS
+        MCPC["Canal MCP"] <--> BUS
     end
-    BUS <-->|Tailscale: red privada| APP["App móvil<br/>(mascota + chat + archivos)"]
-    CORE <-->|Bot API| TG["Telegram<br/>(ya funciona)"]
+    BUS <-->|Tailscale + token| APP["App móvil<br/>(mascota + chat + archivos)"]
+    TGC <-->|Bot API| TG["Telegram"]
+    MCPC <-->|stdio| AG["Claude · Gemini CLI · Cursor"]
 ```
 
 | Pieza | Responsabilidad | Estado |
@@ -48,11 +51,13 @@ flowchart TB
 | **Alma** | Personalidad, memoria por usuario, estado de la mascota | ✅ Personalidad y memoria (v1.1) |
 | **Cerebro** | Generar respuestas e interpretar imágenes y documentos | ✅ Ollama · ⏳ adaptador para Claude y Gemini |
 | **Manos** | Leer y organizar archivos en carpetas autorizadas | ⏳ Fase 3 |
-| **Cuerpo** | Mostrar a la mascota y recoger la interacción | ✅ Telegram · ✅ prototipo de escritorio |
+| **Cuerpo** | Mostrar a la mascota y recoger la interacción | ✅ Telegram · ✅ MCP · ✅ prototipo de escritorio |
 
 ## Contrato de eventos
 
-MEKA Core y sus clientes (mascota, app móvil) se comunican con mensajes JSON `{"type": ..., "data": {...}}` por WebSocket en `ws://127.0.0.1:8765/events`. La conexión solo escucha en local; el acceso remoto irá por Tailscale y con token. El prototipo de la mascota **ya implementa este contrato** (`pet/web/pet.js`).
+MEKA Core y sus clientes (mascota, app móvil) se comunican con mensajes JSON `{"type": ..., "data": {...}}` por WebSocket en `ws://127.0.0.1:8765/v1/events`. **MEKA Core ya implementa este contrato** (`server/app.py`) y la mascota también (`pet/web/pet.js`). Por defecto solo escucha en este equipo; para conectarse desde fuera (red local o Tailscale) hace falta `MEKA_API_TOKEN`, que se envía como `?token=` o en la cabecera `Authorization: Bearer`.
+
+Un agente externo puede publicar estos eventos con `POST /v1/events` o con las herramientas `pet_status` y `pet_emotion` del servidor MCP.
 
 ### De MEKA Core a los clientes
 
@@ -159,7 +164,7 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 | Fase | Entregable | Estado |
 |---|---|---|
 | 0 | Bot de Telegram estable, seguro y con tests | ✅ v1.1 |
-| 1 | **MEKA Core como servicio**: WebSocket con este contrato y adaptador de cerebro (Claude, Gemini, Ollama) | ⏳ Siguiente |
+| 1 | **MEKA Core como servicio**: servidor local con este contrato, Telegram y MCP como clientes · adaptador de cerebro (Claude, Gemini, Ollama) | ✅ Servidor y canales · ⏳ Adaptadores |
 | 2 | **Mascota de escritorio** | ✅ Prototipo (`pet/`) |
 | 3 | Manos: carpetas autorizadas, lectura y luego escritura con git y confirmación | Pendiente |
 | 4 | Tamagotchi completo: logros, disfraces, rutinas | Pendiente |

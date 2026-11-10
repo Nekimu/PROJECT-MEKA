@@ -38,7 +38,7 @@ cargo install tauri-cli        # una sola vez, para crear el instalador
 cargo tauri build              # instalador .msi/.exe en target/release/bundle
 ```
 
-En escritorio, arrastrar a la mascota **mueve la ventana** y el menú incluye "Cerrar". Además intenta conectarse sola a MEKA Core en `ws://127.0.0.1:8765/events` y reintenta en silencio mientras no exista.
+En escritorio, arrastrar a la mascota **mueve la ventana** y el menú incluye "Cerrar". Además intenta conectarse sola a MEKA Core en `ws://127.0.0.1:8765/v1/events` (arráncalo con `python run.py`) y reintenta en silencio mientras no exista. Si configuraste `MEKA_API_TOKEN`, añádelo a la URL: `ws://127.0.0.1:8765/v1/events?token=...`. En el navegador puedes abrir `index.html?core=ws://127.0.0.1:8765/v1/events` para probar la conexión.
 
 ## Cómo funciona
 
