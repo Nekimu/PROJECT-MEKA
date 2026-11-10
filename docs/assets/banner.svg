@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" width="1280" height="420" role="img" aria-labelledby="title desc">
   <title id="title">Project MEKA</title>
-  <desc id="desc">Compañera virtual para Telegram con IA local: voz, visión y memoria.</desc>
+  <desc id="desc">Asistente personal híbrido con personalidad anime: personajes, voz, visión y memoria.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#1b1029"/>
@@ -42,15 +42,15 @@
   <!-- Texto -->
   <g class="font">
     <text x="80" y="160" font-size="92" font-weight="800" fill="url(#titleGrad)" letter-spacing="-1">Project MEKA</text>
-    <text x="84" y="218" font-size="30" font-weight="500" fill="#f3e8ff">Compañera virtual para Telegram con IA local</text>
+    <text x="84" y="218" font-size="30" font-weight="500" fill="#f3e8ff">Asistente personal con alma de personaje anime</text>
 
     <g transform="translate(80 268)">
       <rect width="140" height="44" rx="22" fill="#ffffff" fill-opacity="0.08" stroke="#ff8cc6" stroke-opacity="0.6"/>
-      <text x="70" y="29" text-anchor="middle" class="pill-text">IA local</text>
+      <text x="70" y="29" text-anchor="middle" class="pill-text">Híbrido</text>
       <rect x="156" width="178" height="44" rx="22" fill="#ffffff" fill-opacity="0.08" stroke="#ff8cc6" stroke-opacity="0.6"/>
-      <text x="245" y="29" text-anchor="middle" class="pill-text">Voz clonada</text>
+      <text x="245" y="29" text-anchor="middle" class="pill-text">Personajes</text>
       <rect x="350" width="124" height="44" rx="22" fill="#ffffff" fill-opacity="0.08" stroke="#c4a1ff" stroke-opacity="0.6"/>
-      <text x="412" y="29" text-anchor="middle" class="pill-text">Visión</text>
+      <text x="412" y="29" text-anchor="middle" class="pill-text">Voz</text>
       <rect x="490" width="146" height="44" rx="22" fill="#ffffff" fill-opacity="0.08" stroke="#c4a1ff" stroke-opacity="0.6"/>
       <text x="563" y="29" text-anchor="middle" class="pill-text">Memoria</text>
     </g>

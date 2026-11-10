@@ -23,11 +23,10 @@ ENV/
 *.swo
 
 # Project specific
-temp_audio/
-temp_media/
-temp_voice*.ogg
+temp/
 config_local.yml
 memory.json*
+data/
 logs/
 *.log
 
@@ -39,3 +38,7 @@ models/
 # Mascota (Tauri)
 pet/src-tauri/target/
 pet/src-tauri/gen/
+
+# Voces de referencia personales para clonar (nunca al repositorio)
+voices/
+audio/

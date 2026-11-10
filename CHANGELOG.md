@@ -4,13 +4,59 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ## [Sin publicar]
 
+### Cerebro intercambiable
+- **Adaptadores de IA** (`ai/providers/`): Ollama (local), **Claude** (SDK oficial de Anthropic, `claude-opus-5-5` con `effort: low`, reintento automático si un filtro lo rechaza) y **Gemini** (`google-genai`, `gemini-flash-latest`). Los tres reciben el mismo prompt del personaje.
+- **Enrutamiento** en `config.yml`: `ai.provider` (conversación), `ai.vision_provider` (imágenes), `ai.fallback_provider` (si el principal falla o se niega) y `ai.local_only` (nada sale del equipo).
+- Las opciones de Ollama pasan a `ai.providers.ollama.*`. SDKs de la nube opcionales en `requirements-cloud.txt`; claves `ANTHROPIC_API_KEY` y `GEMINI_API_KEY` en `.env`.
+- `/v1/health` indica qué cerebro usa cada tarea.
+
+### Memoria en SQLite
+- `memory.json` se sustituye por **SQLite** (`data/meka.db`): escrituras transaccionales, búsqueda **FTS5** que ignora tildes y plurales y ordena por relevancia, e **historial de chat persistente** (`memory.persist_history`). Evaluación frente a JSON y PostgreSQL en [`docs/MEMORIA.md`](docs/MEMORIA.md).
+- **Memoria semántica** (`core/semantic.py`): recuerda por significado con embeddings locales (`embeddinggemma` en Ollama) guardados en la misma base y comparados con `sqlite-vec` (o en Python si no está). Búsqueda híbrida: significado + palabras. Recuerda sin que preguntes cuando algo está muy relacionado (`memory.semantic.auto_recall_similarity`). Sin Ollama, sigue buscando por palabras.
+- `GET /v1/users/{id}/memories?q=` y la herramienta MCP `memories(query)` buscan por significado; `scripts/semantic_check.py` ayuda a calibrar los umbrales.
+- **Migración automática**: el `memory.json` existente se importa al arrancar y se renombra a `memory.json.migrated`.
+
+### MEKA Core: servidor local con canales como clientes
+- **MEKA Core** (`server/app.py`, `core/engine.py`): servidor FastAPI en `127.0.0.1:8765` con API REST (chat, voz, archivos, síntesis de voz, memoria, eventos) y WebSocket `/v1/events` con el contrato de la mascota. Documentación interactiva en `/docs`.
+- **Seguridad del servidor**: solo escucha en este equipo por defecto; fuera de `127.0.0.1` exige `MEKA_API_TOKEN` (si no, se niega a arrancar). Rechaza peticiones de webs ajenas (`Origin`) para que una página cualquiera no pueda usar MEKA desde el navegador. Límite de subida configurable.
+- **Bus de eventos** (`core/events.py`): la mascota piensa (`emotion: thinking`) y dice lo que MEKA responde por cualquier canal (`server.broadcast_messages`). Los agentes externos publican `agent.working`, `agent.done`... con `POST /v1/events`.
+- **Canal de Telegram** (`channels/telegram/`, antes `bot/`): ya no carga modelos ni toca la memoria; habla con MEKA Core por HTTP (`channels/client.py`), así que puede ir en otro equipo. Las fotos, documentos y notas de voz se descargan en memoria, sin archivos temporales.
+- **Canal MCP** (`channels/mcp/`, `requirements-mcp.txt`): MEKA como herramienta de Claude Desktop, Claude Code, Gemini CLI o Cursor, con `pet_status`, `pet_emotion`, `chat`, `remember` y `memories`.
+- `run.py` con modos: `all` (por defecto: núcleo + Telegram), `core`, `telegram` y `mcp`.
+- La mascota se conecta a `ws://127.0.0.1:8765/v1/events` (antes `/events`) y acepta `?token=`.
+
+### Todo configurable
+- Nuevas secciones en `config.yml`: `server` (host, puerto, URL, orígenes, límite de subida, difusión, caducidad de audios), `paths` (memoria y temporales), `memory` (frase para recordar, disparadores y límite de búsqueda) y `mcp`.
+- `telegram.typing_delay` controla las pausas de "escribiendo…" (antes fijas); `0` las desactiva.
+- Variables nuevas en `.env`: `MEKA_API_TOKEN` y `MEKA_CORE_URL`.
+- Rutas de Piper relativas al proyecto (`models/piper/...`) en lugar de `C:/ProjectMEKA/...`.
+
+### Eliminado (código que ya no encaja con la nueva arquitectura)
+- `bot/`: sustituido por `channels/telegram/`.
+- Instancias globales creadas al importar (`ai_service`, `stt_service`, `tts_service`, `memory_system`, `persona`): ahora las crea MEKA Core una sola vez.
+- `ai.system_prompt_file` y `read_prompt_override`: la personalidad vive en `personas/`.
+- Claves antiguas de Piper en la raíz de `tts` y `tts.output_dir`; `media.*` pasa a `telegram.stickers` / `telegram.gifs` (son `file_id` de Telegram).
+- Carpetas `temp_audio/` y `temp_media/`: todo lo temporal va a `temp/`.
+
+### Filosofía híbrida
+- **Personajes intercambiables** (`personas/`): cada paquete define personalidad (`persona.md`), nombre, voz y frases del bot (`persona.yml`). Se elige con `persona:` en `config.yml` o `MEKA_PERSONA`. Incluye MEKA (inspirado en D.Va, por defecto), Marin y Yotsuba.
+- Ya no hay texto de ningún personaje fijo en el código: saludos, acuses de voz, errores, comandos y registros salen del paquete activo.
+- Las reglas de formato (`---`, `[AUDIO]`, `[STICKER]`, `[GIF]`) son comunes y se añaden a cualquier personalidad.
+- `docs/FILOSOFIA_HIBRIDA.md`: nueva dirección del proyecto, con el estado real del repositorio.
+- README, visión y banner actualizados.
+
+### Eliminado
+- Audios de referencia de voces de terceros (`audio/`). Qwen3-TTS solo debe clonar tu propia voz o una con permiso, guardada en `voices/` (ignorada por git). El motor por defecto pasa a ser Edge-TTS, con la voz definida por cada personaje.
+
 ### Añadido
 - **Prototipo de mascota de escritorio** (`pet/`): máquina de estados con 9 estados animados, Tamagotchi no punitivo (energía, saciedad, ánimo, afecto) con progreso offline, menú contextual, chat, personajes desbloqueables, vista previa en pixel art y cliente WebSocket del contrato de eventos de MEKA Core.
 - Envoltorio de escritorio con **Tauri 2**: ventana transparente, sin bordes y siempre visible.
 - 4 personajes a partir de arte original: MEKA, Nekimu, Espadachina y Kitsune.
 - `pet/tools/stickerize.py`: recorta el fondo de stickers y los convierte a WebP con transparencia.
 - `docs/VISION.md`: visión, arquitectura, contrato de eventos, guía de arte y mecánicas.
-- Test que valida el manifiesto de personajes (66 tests en total).
+- Test que valida el manifiesto de personajes.
+- Tests de los paquetes de personaje y de la selección por configuración.
+- Tests del servidor, del cliente, del WebSocket, del canal MCP y de los manejadores de Telegram contra MEKA Core (104 tests en total).
 
 ## [1.1.0] — 2026-10-15
 

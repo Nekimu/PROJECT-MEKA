@@ -42,4 +42,13 @@ def test_load_config_missing_file(tmp_path):
 def test_repository_config_is_valid():
     config = load_config()
     assert config["tts"]["engine"] in {"qwen-tts", "edge-tts", "piper"}
-    assert isinstance(config["media"]["stickers"], list)
+    assert isinstance(config["telegram"]["stickers"], list)
+    assert config["server"]["host"] == "127.0.0.1"  # Por defecto, solo este equipo
+
+
+def test_repository_memory_pattern_works():
+    import re
+
+    memory = load_config()["memory"]
+    match = re.search(memory["remember_pattern"], "Recuerda esto: me gusta el ramen", re.IGNORECASE)
+    assert match.group(1) == "me gusta el ramen"

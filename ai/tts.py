@@ -26,12 +26,15 @@ DEFAULT_QWEN_GENERATION = {
 
 
 class TTSService:
-    def __init__(self, config: dict | None = None):
-        tts_config = (settings if config is None else config).get("tts", {})
+    def __init__(self, config: dict | None = None, voice: dict | None = None):
+        config = settings if config is None else config
+        # La voz (edge-tts) la define el personaje activo y tiene prioridad sobre config.yml
+        tts_config = {**config.get("tts", {}), **(voice or {})}
         self.enabled = tts_config.get("enabled", False)
         self.engine = tts_config.get("engine", "edge-tts")
         self.fallback_engine = tts_config.get("fallback_engine")
-        self.output_dir = resolve_path(tts_config.get("output_dir", "temp_audio"))
+        temp_dir = resolve_path(config.get("paths", {}).get("temp_dir", "temp"))
+        self.output_dir = temp_dir / "audio"
         # Telegram solo muestra como nota de voz OGG/Opus (y MP3/M4A); el WAV llega como archivo
         self.convert_to_ogg = tts_config.get("convert_to_ogg", True)
 
@@ -40,10 +43,11 @@ class TTSService:
         self.rate = tts_config.get("rate", "+0%")
         self.pitch = tts_config.get("pitch", "+0Hz")
 
-        # Piper config (se aceptan también las claves antiguas en la raíz de `tts`)
+        # Piper config
         piper_config = tts_config.get("piper") or {}
-        self.piper_path = piper_config.get("path", tts_config.get("piper_path", "piper"))
-        self.model_path = piper_config.get("model_path", tts_config.get("model_path", ""))
+        self.piper_path = piper_config.get("path", "piper")
+        model_path = piper_config.get("model_path")
+        self.model_path = str(resolve_path(model_path)) if model_path else ""
         self.length_scale = piper_config.get("length_scale", 1.0)
         self.noise_scale = piper_config.get("noise_scale", 0.667)
         self.noise_w = piper_config.get("noise_w", 0.8)
@@ -81,7 +85,7 @@ class TTSService:
             if shutil.which(self.piper_path) is None and not Path(self.piper_path).exists():
                 logger.critical(f"No se encontró el ejecutable de Piper en {self.piper_path}")
                 return False
-            if not Path(self.model_path).exists():
+            if not self.model_path or not Path(self.model_path).is_file():
                 logger.critical(f"No se encontró el modelo de Piper en {self.model_path}")
                 return False
         elif engine == "qwen-tts":
@@ -254,7 +258,7 @@ class TTSService:
         if not await asyncio.to_thread(self._init_qwen):
             return None
 
-        output_path = self._new_output_path("marin_qwen", ".wav")
+        output_path = self._new_output_path("meka_qwen", ".wav")
         try:
             await asyncio.to_thread(self._qwen_generate, text, output_path)
             logger.info(f"Audio generado con Qwen-TTS: {output_path.name}")
@@ -268,7 +272,7 @@ class TTSService:
 
     async def _generate_edge_tts(self, text: str) -> Path | None:
         """Genera audio usando Edge-TTS (Online, alta calidad)."""
-        output_path = self._new_output_path("marin", ".mp3")
+        output_path = self._new_output_path("meka", ".mp3")
         try:
             import edge_tts
 
@@ -283,7 +287,7 @@ class TTSService:
 
     async def _generate_piper(self, text: str) -> Path | None:
         """Genera audio usando Piper (Local)."""
-        output_path = self._new_output_path("marin", ".wav")
+        output_path = self._new_output_path("meka", ".wav")
         command = [
             self.piper_path,
             "--model", self.model_path,
@@ -309,7 +313,3 @@ class TTSService:
             output_path.unlink(missing_ok=True)
             return None
         return output_path
-
-
-# Instancia global
-tts_service = TTSService()

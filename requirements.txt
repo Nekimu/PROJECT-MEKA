@@ -7,6 +7,15 @@ python-dotenv>=1.0
 PyYAML>=6.0
 colorama>=0.4.6
 
+# --- MEKA Core (servidor local) y cliente de los canales ---
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9    # Subida de notas de voz, imágenes y documentos
+httpx>=0.27,<1             # Ya lo traen PTB y ollama; lo usa channels/client.py
+
+# --- Memoria ---
+sqlite-vec>=0.1.6          # Similitud de vectores en C para la memoria semántica (sin él, en Python)
+
 # --- Voz ---
 openai-whisper>=20250625   # STT (instala PyTorch como dependencia)
 edge-tts>=7.0              # TTS ligero en la nube (motor de respaldo)

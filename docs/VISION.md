@@ -2,7 +2,7 @@
 
 > **Una compañera que vive en tu escritorio y en tu móvil, con el estilo de tus animes y videojuegos favoritos, que te acompaña mientras trabajas y te ayuda a gestionar tus proyectos sin que tus archivos salgan de tu equipo.**
 
-Este documento describe hacia dónde va el proyecto. El análisis técnico, las versiones y las alternativas evaluadas están en la [auditoría](AUDITORIA.md). El prototipo de la mascota está en [`pet/`](../pet/README.md).
+Este documento describe hacia dónde va el proyecto; la estrategia de proveedores (nube, local, agentes externos) está en la [filosofía híbrida](FILOSOFIA_HIBRIDA.md). El análisis técnico, las versiones y las alternativas evaluadas están en la [auditoría](AUDITORIA.md). El prototipo de la mascota está en [`pet/`](../pet/README.md).
 
 ## Por qué MEKA
 
@@ -23,7 +23,7 @@ Lo que diferencia a MEKA no es gestionar archivos, sino **la relación**: te rec
 1. **Local primero.** Tus archivos, tu memoria y tu mascota viven en tu equipo. Solo sale el texto que envías al cerebro que elijas, y con Ollama ni eso.
 2. **Viva, pero no punitiva.** Como un Tamagotchi moderno: tiene necesidades y estados de ánimo, pero nunca muere ni te regaña por no abrirla.
 3. **Personalidad antes que funciones.** Cada respuesta, animación y frase tiene que sonar al personaje.
-4. **Cerebro intercambiable.** La lógica no depende de un proveedor de IA.
+4. **Cerebro intercambiable.** La lógica no depende de un proveedor de IA, y el personaje tampoco: es un paquete en [`personas/`](../personas/README.md) que se elige por configuración.
 5. **Segura por diseño.** Solo toca lo que autorizas, pide permiso antes de cambiar nada y todo se puede deshacer.
 6. **Arte original en el repositorio público.** El *fan art* de personajes con derechos (D.Va, Nino Nakano, Steve, Master Chief, Marin...) es para uso personal y se guarda fuera del repositorio.
 
@@ -33,26 +33,31 @@ Lo que diferencia a MEKA no es gestionar archivos, sino **la relación**: te rec
 flowchart TB
     subgraph PC["Tu PC (todo local)"]
         direction TB
-        CORE["<b>MEKA Core</b> (Python)<br/>Alma: personalidad, memoria, estado<br/>Cerebro: Claude · Gemini · Ollama<br/>Manos: agente sobre carpetas autorizadas"]
-        BUS(("Eventos<br/>WebSocket"))
+        CORE["<b>MEKA Core</b> (FastAPI)<br/>Alma: personalidad, memoria, estado<br/>Cerebro: Ollama · Claude · Gemini<br/>Manos: agente sobre carpetas autorizadas"]
+        BUS(("REST + WebSocket<br/>127.0.0.1:8765"))
         CORE <--> BUS
         PET["Mascota de escritorio<br/>(Tauri, ventana transparente)"]
         BUS <--> PET
+        TGC["Canal Telegram"] <--> BUS
+        MCPC["Canal MCP"] <--> BUS
     end
-    BUS <-->|Tailscale: red privada| APP["App móvil<br/>(mascota + chat + archivos)"]
-    CORE <-->|Bot API| TG["Telegram<br/>(ya funciona)"]
+    BUS <-->|Tailscale + token| APP["App móvil<br/>(mascota + chat + archivos)"]
+    TGC <-->|Bot API| TG["Telegram"]
+    MCPC <-->|stdio| AG["Claude · Gemini CLI · Cursor"]
 ```
 
 | Pieza | Responsabilidad | Estado |
 |---|---|---|
-| **Alma** | Personalidad, memoria por usuario, estado de la mascota | ✅ Personalidad y memoria (v1.1) |
-| **Cerebro** | Generar respuestas e interpretar imágenes y documentos | ✅ Ollama · ⏳ adaptador para Claude y Gemini |
+| **Alma** | Personalidad, memoria por usuario, estado de la mascota | ✅ Personalidad y memoria en SQLite |
+| **Cerebro** | Generar respuestas e interpretar imágenes y documentos | ✅ Ollama, Claude y Gemini (`ai/providers/`) |
 | **Manos** | Leer y organizar archivos en carpetas autorizadas | ⏳ Fase 3 |
-| **Cuerpo** | Mostrar a la mascota y recoger la interacción | ✅ Telegram · ✅ prototipo de escritorio |
+| **Cuerpo** | Mostrar a la mascota y recoger la interacción | ✅ Telegram · ✅ MCP · ✅ prototipo de escritorio |
 
 ## Contrato de eventos
 
-MEKA Core y sus clientes (mascota, app móvil) se comunican con mensajes JSON `{"type": ..., "data": {...}}` por WebSocket en `ws://127.0.0.1:8765/events`. La conexión solo escucha en local; el acceso remoto irá por Tailscale y con token. El prototipo de la mascota **ya implementa este contrato** (`pet/web/pet.js`).
+MEKA Core y sus clientes (mascota, app móvil) se comunican con mensajes JSON `{"type": ..., "data": {...}}` por WebSocket en `ws://127.0.0.1:8765/v1/events`. **MEKA Core ya implementa este contrato** (`server/app.py`) y la mascota también (`pet/web/pet.js`). Por defecto solo escucha en este equipo; para conectarse desde fuera (red local o Tailscale) hace falta `MEKA_API_TOKEN`, que se envía como `?token=` o en la cabecera `Authorization: Bearer`.
+
+Un agente externo puede publicar estos eventos con `POST /v1/events` o con las herramientas `pet_status` y `pet_emotion` del servidor MCP.
 
 ### De MEKA Core a los clientes
 
@@ -159,7 +164,7 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 | Fase | Entregable | Estado |
 |---|---|---|
 | 0 | Bot de Telegram estable, seguro y con tests | ✅ v1.1 |
-| 1 | **MEKA Core como servicio**: WebSocket con este contrato y adaptador de cerebro (Claude, Gemini, Ollama) | ⏳ Siguiente |
+| 1 | **MEKA Core como servicio**: servidor local con este contrato, Telegram y MCP como clientes · adaptador de cerebro (Claude, Gemini, Ollama) | ✅ |
 | 2 | **Mascota de escritorio** | ✅ Prototipo (`pet/`) |
 | 3 | Manos: carpetas autorizadas, lectura y luego escritura con git y confirmación | Pendiente |
 | 4 | Tamagotchi completo: logros, disfraces, rutinas | Pendiente |
@@ -169,6 +174,5 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 
 - **Nombre definitivo** de la mascota principal ("MEKA" es provisional).
 - **Estilo final:** stickers anime, pixel art dibujado a mano o Rive.
-- **Personalidad:** ¿Marin se queda en el bot de Telegram o la mascota tiene su propia personalidad?
 - **Cerebro por defecto:** Claude Haiku (≈ 1 $/mes), Gemini Flash gratis (con sus condiciones de privacidad) u Ollama local.
 - **Voz:** sustituir los audios de referencia actuales por una voz original.

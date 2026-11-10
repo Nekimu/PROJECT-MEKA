@@ -12,7 +12,7 @@ init(autoreset=True)
 
 
 def verify_ollama():
-    ai_config = settings.get("ai", {})
+    ai_config = settings.get("ai", {}).get("providers", {}).get("ollama", {})
     model_name = ai_config.get("model", "gemma3:12b")
     base_url = ai_config.get("base_url", "http://localhost:11434")
     client = Client(host=base_url)
@@ -56,7 +56,7 @@ def verify_ollama():
     try:
         response = client.chat(
             model=model_name,
-            messages=[{"role": "user", "content": 'Di "Hola Marin" si me escuchas.'}],
+            messages=[{"role": "user", "content": 'Di "Hola MEKA" si me escuchas.'}],
             keep_alive=0,
         )
         print(f"{Fore.GREEN}✅ Respuesta de {model_name}:")

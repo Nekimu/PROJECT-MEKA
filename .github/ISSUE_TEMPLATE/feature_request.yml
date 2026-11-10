@@ -1,5 +1,5 @@
 name: ✨ Proponer una mejora
-description: Una idea o funcionalidad nueva para Marin
+description: Una idea o funcionalidad nueva para MEKA
 labels: ["enhancement"]
 body:
   - type: textarea
