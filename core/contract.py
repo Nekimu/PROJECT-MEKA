@@ -25,9 +25,10 @@ Historial:
        `user.media` y `/v1/system` (T-044).
 - 1.8  Notificaciones de Windows: `system.notification`, `system.notification_removed`,
        `user.notification` y `/v1/system/notifications` (T-046).
+- 1.9  Modo concentración: `focus.started`, `focus.ended`, `user.focus` y `/v1/focus` (T-050).
 """
 
-CONTRACT_VERSION = "1.8"
+CONTRACT_VERSION = "1.9"
 
 EMOTIONS = frozenset({
     "idle", "happy", "working", "thinking", "sleeping", "eating", "error", "celebrate", "sad",
@@ -68,6 +69,13 @@ OUTBOUND: dict[str, dict[str, str]] = {
         "time": "float",  # Epoch en segundos
     },
     "system.notification_removed": {"id": "int"},
+    # Modo concentración (core/focus.py)
+    "focus.started": {"until": "float", "minutes": "int"},
+    "focus.ended": {
+        "reason": "str",
+        "held": "int",
+        "notifications": "int",
+    },  # reason: user | timeout
 }
 
 # De los clientes al núcleo (WebSocket /v1/events)
@@ -77,13 +85,14 @@ INBOUND: dict[str, dict[str, str]] = {
     "user.confirm": {"id": "str", "approved": "bool"},
     "user.media": {"action": "str"},  # play_pause | next | previous
     "user.notification": {"id": "int", "action": "str"},  # dismiss | open
+    "user.focus": {"action": "str", "minutes": "int?"},  # start | stop
 }
 
 # Solo los emite el núcleo: llevan un id del registro de confirmaciones (core/confirmations.py).
 # Un agente externo pide permiso con POST /v1/confirmations, no publicándolos a mano.
 CORE_ONLY_EVENTS = frozenset({
     "agent.confirm", "agent.confirmed", "system.media", "system.battery",
-    "system.notification", "system.notification_removed",
+    "system.notification", "system.notification_removed", "focus.started", "focus.ended",
 })  # fmt: skip
 
 

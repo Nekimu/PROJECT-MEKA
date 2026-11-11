@@ -69,11 +69,23 @@ class ClientSession:
                 audio=False,
                 private=bool(data.get("private")),
             )
-            if not self.engine.broadcast:  # Si no se difunde, al menos lo recibe quien habló
+            # Si no se difunde (o el modo concentración retiene la difusión), se le envía a quien habló
+            focused = self.engine.focus.active
+            if not self.engine.broadcast or focused:
                 text = " ".join(r.text for r in replies)
                 await self.websocket.send_json(
                     {"type": "message", "data": {"text": text, "emotion": "happy"}}
                 )
+                if focused and self.engine.broadcast:
+                    self.engine.focus.delivered("message")  # La respuesta sí te llegó
+        elif type_ == "user.focus":
+            try:
+                if data.get("action") == "stop":
+                    self.engine.focus.stop("user")
+                else:
+                    await self.engine.focus.start(data.get("minutes"))
+            except (ValueError, TypeError) as e:
+                logger.info(f"user.focus no válido: {e}")
         elif type_ == "user.notification" and data.get("id") is not None:
             try:
                 await self.engine.system.notification_action(

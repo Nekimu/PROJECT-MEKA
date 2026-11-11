@@ -6,6 +6,7 @@ Contrato: core/contract.py (también en GET /v1/contract) y docs/VISION.md. Cada
 
 import asyncio
 import contextlib
+from collections.abc import Callable
 
 from core.contract import CORE_ONLY_EVENTS, EMOTIONS, OUTBOUND
 from core.logger import setup_logger
@@ -28,6 +29,9 @@ class EventBus:
     def __init__(self, queue_size: int = 100):
         self.queue_size = queue_size
         self._subscribers: set[asyncio.Queue] = set()
+        # Filtro opcional (modo concentración, core/focus.py): si devuelve False, el evento
+        # se retiene en lugar de enviarse
+        self.gate: Callable[[str, dict], bool] | None = None
 
     @property
     def subscribers(self) -> int:
@@ -41,7 +45,11 @@ class EventBus:
     def unsubscribe(self, queue: asyncio.Queue):
         self._subscribers.discard(queue)
 
-    def publish(self, type_: str, **data):
+    def publish(self, type_: str, **data) -> bool:
+        """Envía el evento a todos los clientes. False si el filtro lo retuvo."""
+        if self.gate is not None and not self.gate(type_, data):
+            logger.debug(f"Evento {type_} retenido por el modo concentración")
+            return False
         message = event(type_, **data)
         for queue in list(self._subscribers):
             if queue.full():
@@ -50,3 +58,4 @@ class EventBus:
                     queue.get_nowait()
             queue.put_nowait(message)
         logger.debug(f"Evento {type_} enviado a {len(self._subscribers)} cliente(s)")
+        return True

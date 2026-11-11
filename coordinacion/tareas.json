@@ -181,7 +181,9 @@
         "tests/**"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "742af8debae7b25d1a56f57694159d8eb7e2eb44"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T19:30:00-06:00",
@@ -199,9 +201,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "core/hands/ (policy, reader): carpetas autorizadas con nombre, rutas resueltas (sin .. ni enlaces que escapen, probado con junction en Windows), protegidos siempre (.env, llaves, .git, gestores...), carpetas private ocultas al MCP. /v1/hands + 4 herramientas MCP, registro sin rutas ni contenido, eventos en búsquedas. Contrato 1.5. 16 tests + Postman (27/35)."
+        },
+        {
+          "fecha": "2026-11-11T12:00:40-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 742af8d: feat(backend): manos, Dynamic Island (música, batería, notificaciones) y filosof"
         }
       ],
-      "actualizada": "2026-11-11T10:29:19-06:00"
+      "actualizada": "2026-11-11T12:00:40-06:00"
     },
     {
       "id": "T-005",
@@ -219,7 +227,9 @@
         "T-003",
         "T-004"
       ],
-      "commits": [],
+      "commits": [
+        "742af8debae7b25d1a56f57694159d8eb7e2eb44"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T19:30:00-06:00",
@@ -243,9 +253,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "Código terminado y probado (17 tests) pero INACTIVO por decisión del usuario: ninguna carpeta con writable:true hasta resolver el aislamiento (T-042)."
+        },
+        {
+          "fecha": "2026-11-11T12:00:40-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 742af8d: feat(backend): manos, Dynamic Island (música, batería, notificaciones) y filosof"
         }
       ],
-      "actualizada": "2026-11-11T10:52:28-06:00"
+      "actualizada": "2026-11-11T12:00:40-06:00"
     },
     {
       "id": "T-006",
@@ -1582,7 +1598,9 @@
         "config.yml"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "742af8debae7b25d1a56f57694159d8eb7e2eb44"
+      ],
       "historial": [
         {
           "fecha": "2026-11-11T11:30:41-06:00",
@@ -1595,9 +1613,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "core/system/: música por SMTC de Windows (cualquier reproductor, winrt-Windows.Media.Control) y batería por psutil; publica solo cuando cambia (la posición no cuenta); user.media y POST /v1/system/media (play_pause/next/previous); GET /v1/system para clientes que llegan tarde. Contrato 1.7. 11 tests. Probado en vivo: batería 37 % cargando."
+        },
+        {
+          "fecha": "2026-11-11T12:00:40-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 742af8d: feat(backend): manos, Dynamic Island (música, batería, notificaciones) y filosof"
         }
       ],
-      "actualizada": "2026-11-11T11:30:41-06:00"
+      "actualizada": "2026-11-11T12:00:40-06:00"
     },
     {
       "id": "T-045",
@@ -1650,7 +1674,9 @@
         "config.yml"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "742af8debae7b25d1a56f57694159d8eb7e2eb44"
+      ],
       "historial": [
         {
           "fecha": "2026-11-11T11:47:13-06:00",
@@ -1668,9 +1694,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "core/system/notifications.py + inbox.py: UserNotificationListener (funciona sin empaquetar, probado con 25 reales); apps permitidas/bloqueadas, códigos ocultos, sensibles ocultos (ai/privacy), sin aumid hacia fuera; descartar y abrir (solo sobre notificaciones visibles). Contrato 1.8. 18 tests + Postman 35/44."
+        },
+        {
+          "fecha": "2026-11-11T12:00:40-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 742af8d: feat(backend): manos, Dynamic Island (música, batería, notificaciones) y filosof"
         }
       ],
-      "actualizada": "2026-11-11T11:54:24-06:00"
+      "actualizada": "2026-11-11T12:00:40-06:00"
     },
     {
       "id": "T-047",
@@ -1747,6 +1779,68 @@
         }
       ],
       "actualizada": "2026-11-11T11:59:09-06:00"
+    },
+    {
+      "id": "T-050",
+      "titulo": "Modo concentración: retener lo que distrae, dejar pasar permisos y lo importante, resumen al terminar",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "",
+      "archivos": [
+        "core/focus.py",
+        "core/events.py",
+        "core/engine.py",
+        "core/contract.py",
+        "server/routes/**",
+        "tests/**",
+        "config.yml"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T12:03:47-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T12:03:47-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T12:09:57-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "core/focus.py: sesiones con duración (25 min por defecto), filtro del bus que retiene notificaciones, música, batería normal, message de otros canales y agent.working/done; pasan permisos, errores, emotion, allow_apps y batería crítica; resumen en focus.ended; el chat de la mascota responde directo. Contrato 1.9. 7 tests (estables 3/3) + Postman 40/49 + prueba en vivo."
+        }
+      ],
+      "actualizada": "2026-11-11T12:09:57-06:00"
+    },
+    {
+      "id": "T-051",
+      "titulo": "Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen",
+      "responsable": "antigravity",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "descripcion": "Backend listo (T-050, contrato 1.9). Enviar user.focus {action: start, minutes?} / {action: stop}, o POST/DELETE /v1/focus. Recibir focus.started {until, minutes} → mostrar cuenta atrás discreta y dejar la isla quieta; focus.ended {reason, held, notifications} → una tarjeta: 'Mientras te concentrabas: N notificaciones' (detalle con GET /v1/system/notifications). Durante la sesión el Core ya no envía lo que distrae; los permisos (agent.confirm) y errores siguen llegando. Alineado con la filosofía: ayuda, no distrae.",
+      "archivos": [
+        "pet/web/**",
+        "pet/desktop/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T12:09:57-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-11T12:09:57-06:00"
     }
   ]
 }

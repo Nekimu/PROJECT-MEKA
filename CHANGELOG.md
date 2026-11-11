@@ -6,6 +6,7 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ### Filosofía: compañera de productividad
 - El Tamagotchi pasa a ser solo **inspiración para interactuar y conversar** con el asistente. Sin mecánicas de cuidado (alimentar, energía, saciedad, ánimo, afecto, desbloqueos): MEKA ayuda, no distrae. `docs/VISION.md` actualizado.
+- **Modo concentración** (`core/focus.py`, `/v1/focus`): durante un bloque de trabajo el núcleo retiene notificaciones, música y avisos de agentes, deja pasar permisos, errores, apps importantes y la batería crítica, y al terminar envía un resumen de lo que esperó (`focus.started` / `focus.ended`, contrato 1.9).
 
 ### Dynamic Island: datos del sistema (backend)
 - **Música en reproducción** de cualquier reproductor de Windows (SMTC) y **batería**: eventos `system.media` y `system.battery`, solo cuando cambian; controles con `user.media` (pausa, siguiente, anterior).

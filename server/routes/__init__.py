@@ -5,6 +5,7 @@ from server.routes import (
     contract,
     conversation,
     events,
+    focus,
     hands,
     memory,
     runs,
@@ -24,4 +25,5 @@ ROUTERS = [
     confirmations.router,
     hands.router,
     system.router,
+    focus.router,
 ]

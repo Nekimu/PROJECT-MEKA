@@ -20,6 +20,7 @@ FINGERPRINTS = {
     "1.6": "0e5f228573640fe0",
     "1.7": "d59efebe67ae41cc",
     "1.8": "b150bda941daf0ec",
+    "1.9": "43fc58691fefe816",
 }
 
 
@@ -49,6 +50,7 @@ def test_contract_is_public_and_complete(tmp_path):
         "user.confirm",
         "user.media",
         "user.notification",
+        "user.focus",
     }
     rest = {(r["method"], r["path"]): r["auth"] for r in document["rest"]}
     assert rest[("GET", "/v1/health")] is False and rest[("GET", "/v1/contract")] is False

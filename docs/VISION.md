@@ -137,7 +137,7 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 | Reducir interrupciones: notificaciones privadas y filtradas | Rachas, recompensas o castigos por abrir la app |
 
 **Ideas en esta línea:**
-- **Modo concentración:** silenciar notificaciones y animaciones durante un bloque de trabajo.
+- ✅ **Modo concentración** (backend listo): retiene lo que distrae durante un bloque de trabajo y deja pasar permisos, errores y lo que marques como importante.
 - **Resumen del día** con lo que hicieron los agentes y lo que quedó pendiente.
 - Frases que cambian según el contexto de trabajo (no según "su ánimo").
 

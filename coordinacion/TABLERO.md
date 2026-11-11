@@ -2,14 +2,14 @@
 
 > ⚠️ **Archivo generado automáticamente.** No lo edites a mano: usa `python scripts/tareas.py` (ver [README](README.md)). Fuente: `tareas.json`.
 
-_Última actualización: 2026-11-11T11:59:09-06:00_
+_Última actualización: 2026-11-11T12:09:57-06:00_
 
 ## Resumen
 
 | Agente | Rol | ⬜ pendiente | 🔄 en_progreso | ⛔ bloqueada | 👀 en_revision | ✅ hecha | 🚫 descartada |
 |---|---|---|---|---|---|---|---|
-| **Claude Code** | Backend, IA, agente y canales | 5 | 0 | 0 | 0 | 20 | 1 |
-| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 3 | 0 | 0 | 0 | 20 | 0 |
+| **Claude Code** | Backend, IA, agente y canales | 5 | 0 | 0 | 0 | 21 | 1 |
+| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 4 | 0 | 0 | 0 | 20 | 0 |
 
 ## Claude Code
 
@@ -23,7 +23,7 @@ _Última actualización: 2026-11-11T11:59:09-06:00_
 | T-001 | ✅ hecha | alta | Entorno local de backend: Python 3.12, venv, dependencias, lint y tests | — | 2026-11-11 10:07 |
 | T-002 | ✅ hecha | alta | Tablero compartido de tareas y protección de áreas (este sistema) | — | 2026-11-11 10:07 |
 | T-003 | ✅ hecha | alta | Confirmación de acciones: agent.confirm con id y user.confirm en el WebSocket | — | 2026-11-11 10:07 |
-| T-004 | ✅ hecha | alta | Fase 3 · Manos (solo lectura): carpetas autorizadas, listar, leer y buscar | — | 2026-11-11 10:29 |
+| T-004 | ✅ hecha | alta | Fase 3 · Manos (solo lectura): carpetas autorizadas, listar, leer y buscar | — | 2026-11-11 12:00 |
 | T-015 | ✅ hecha | alta | Modularidad: dividir server/app.py en routers (seguridad, esquemas, rutas por dominio) | — | 2026-11-11 10:07 |
 | T-016 | ✅ hecha | alta | Modularidad: motores TTS como paquete con interfaz común (edge, piper, qwen) | — | 2026-11-11 10:07 |
 | T-019 | ✅ hecha | alta | Filosofía 5.3: enrutamiento por tarea y privacidad (documentos/sensibles a local) | — | 2026-11-11 10:07 |
@@ -31,8 +31,9 @@ _Última actualización: 2026-11-11T11:59:09-06:00_
 | T-026 | ✅ hecha | alta | Pruebas del canal MCP con clientes reales (SDK stdio, Claude Code, Gemini CLI) | — | 2026-11-11 10:07 |
 | T-028 | ✅ hecha | alta | Bug: emojis en la consola de Windows con salida redirigida daban HTTP 500 en /v1/chat | — | 2026-11-11 10:07 |
 | T-031 | ✅ hecha | alta | Privacidad de la memoria larga: recuerdos guardados en una conversación privada no deben ir a prompts en la nube | — | 2026-11-11 10:07 |
-| T-046 | ✅ hecha | alta | Notificaciones de Windows para la isla: system.notification privado, apps permitidas, códigos ocultos, descartar y abrir | — | 2026-11-11 11:54 |
-| T-005 | ✅ hecha | media | Fase 3 · Manos (escritura): punto de restauración git + confirmación + deshacer | T-003, T-004 | 2026-11-11 10:52 |
+| T-046 | ✅ hecha | alta | Notificaciones de Windows para la isla: system.notification privado, apps permitidas, códigos ocultos, descartar y abrir | — | 2026-11-11 12:00 |
+| T-050 | ✅ hecha | alta | Modo concentración: retener lo que distrae, dejar pasar permisos y lo importante, resumen al terminar | — | 2026-11-11 12:09 |
+| T-005 | ✅ hecha | media | Fase 3 · Manos (escritura): punto de restauración git + confirmación + deshacer | T-003, T-004 | 2026-11-11 12:00 |
 | T-006 | 🚫 descartada | media | Estado de la mascota en el núcleo: GET/PUT /v1/pet/state persistido en SQLite | — | 2026-11-11 11:59 |
 | T-007 | ✅ hecha | media | Contrato publicado y versionado: GET /v1/contract (eventos, emociones, versión) | — | 2026-11-11 10:07 |
 | T-017 | ✅ hecha | media | Modularidad: extraer almacén de audios del motor e historial de conversación del servicio de IA | — | 2026-11-11 10:07 |
@@ -40,7 +41,7 @@ _Última actualización: 2026-11-11T11:59:09-06:00_
 | T-021 | ✅ hecha | media | Filosofía 5.2: eventos normalizados para el avatar (error y fin de respuesta) | — | 2026-11-11 10:07 |
 | T-029 | ✅ hecha | media | Modularidad: core/engine.py está en 290 líneas (límite 300); separar análisis de archivos y voz | — | 2026-11-11 10:07 |
 | T-037 | ✅ hecha | media | Pruebas de la API con Postman CLI (colección generada + entorno local) | — | 2026-11-11 10:07 |
-| T-044 | ✅ hecha | media | Datos del sistema para la Dynamic Island: system.media, system.battery y user.media (contrato 1.7) | — | 2026-11-11 11:30 |
+| T-044 | ✅ hecha | media | Datos del sistema para la Dynamic Island: system.media, system.battery y user.media (contrato 1.7) | — | 2026-11-11 12:00 |
 
 ## Antigravity (Gemini)
 
@@ -49,6 +50,7 @@ _Última actualización: 2026-11-11T11:59:09-06:00_
 | T-047 | ⬜ pendiente | alta | Pila de tarjetas tipo Brief en la isla con animaciones (música, batería, notificaciones, agentes, permisos, mensajes de MEKA) | — | 2026-11-11 11:47 |
 | T-049 | ⬜ pendiente | alta | Quitar las mecánicas de cuidado del prototipo: alimentar, energía, saciedad, ánimo, afecto y desbloqueos | — | 2026-11-11 11:59 |
 | T-048 | ⬜ pendiente | media | Modo compañero al desplegar la isla: avatar flotante y chat con MEKA | — | 2026-11-11 11:59 |
+| T-051 | ⬜ pendiente | media | Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen | — | 2026-11-11 12:09 |
 | T-013 | ✅ hecha | alta | Rediseño visual del escenario de la mascota y HUD Tamagotchi (glassmorphism, animaciones y menú contextual) | — | 2026-11-09 19:30 |
 | T-014 | ✅ hecha | alta | Dashboard de control y simulador en navegador (tema oscuro/claro, log de eventos, selector visual de skins y estado Core) | — | 2026-11-09 19:30 |
 | T-022 | ✅ hecha | alta | Integración de assets Pixel Art animados (Hana y Clawd), herramienta pixelize.py y GUI minimalista estilo Apple con ventana emergente | — | 2026-11-09 21:14 |
@@ -114,7 +116,9 @@ Registro de confirmaciones pendientes en MEKA Core: `agent.confirm` pasa a lleva
 
 **Archivos:** `core/**`, `server/app.py`, `channels/mcp/**`, `config.yml`, `tests/**`
 
-**Última nota (claude):** core/hands/ (policy, reader): carpetas autorizadas con nombre, rutas resueltas (sin .. ni enlaces que escapen, probado con junction en Windows), protegidos siempre (.env, llaves, .git, gestores...), carpetas private ocultas al MCP. /v1/hands + 4 herramientas MCP, registro sin rutas ni contenido, eventos en búsquedas. Contrato 1.5. 16 tests + Postman (27/35).
+**Commits:** `742af8d`
+
+**Última nota (git (Nekimu)):** commit 742af8d: feat(backend): manos, Dynamic Island (música, batería, notificaciones) y filosof
 
 ### T-005 · Fase 3 · Manos (escritura): punto de restauración git + confirmación + deshacer
 
@@ -126,7 +130,9 @@ Antes de mover/renombrar/borrar: commit de restauración en la carpeta autorizad
 
 **Depende de:** T-003, T-004
 
-**Última nota (claude):** Código terminado y probado (17 tests) pero INACTIVO por decisión del usuario: ninguna carpeta con writable:true hasta resolver el aislamiento (T-042).
+**Commits:** `742af8d`
+
+**Última nota (git (Nekimu)):** commit 742af8d: feat(backend): manos, Dynamic Island (música, batería, notificaciones) y filosof
 
 ### T-006 · Estado de la mascota en el núcleo: GET/PUT /v1/pet/state persistido en SQLite
 
@@ -524,7 +530,9 @@ Propuesta de Claude Code en coordinacion/propuestas/dynamic-island-go.md. Diagn�
 
 **Archivos:** `core/system/**`, `core/contract.py`, `server/routes/system.py`, `tests/test_system.py`, `requirements.txt`, `config.yml`
 
-**Última nota (claude):** core/system/: música por SMTC de Windows (cualquier reproductor, winrt-Windows.Media.Control) y batería por psutil; publica solo cuando cambia (la posición no cuenta); user.media y POST /v1/system/media (play_pause/next/previous); GET /v1/system para clientes que llegan tarde. Contrato 1.7. 11 tests. Probado en vivo: batería 37 % cargando.
+**Commits:** `742af8d`
+
+**Última nota (git (Nekimu)):** commit 742af8d: feat(backend): manos, Dynamic Island (música, batería, notificaciones) y filosof
 
 ### T-045 · Isla: mostrar la música en reproducción y la batería (eventos system.* del Core)
 
@@ -542,7 +550,9 @@ Ya disponible en el Core (contrato 1.7): system.media {playing, title?, artist?,
 
 **Archivos:** `core/system/**`, `core/contract.py`, `server/routes/**`, `tests/**`, `requirements.txt`, `config.yml`
 
-**Última nota (claude):** core/system/notifications.py + inbox.py: UserNotificationListener (funciona sin empaquetar, probado con 25 reales); apps permitidas/bloqueadas, códigos ocultos, sensibles ocultos (ai/privacy), sin aumid hacia fuera; descartar y abrir (solo sobre notificaciones visibles). Contrato 1.8. 18 tests + Postman 35/44.
+**Commits:** `742af8d`
+
+**Última nota (git (Nekimu)):** commit 742af8d: feat(backend): manos, Dynamic Island (música, batería, notificaciones) y filosof
 
 ### T-047 · Pila de tarjetas tipo Brief en la isla con animaciones (música, batería, notificaciones, agentes, permisos, mensajes de MEKA)
 
@@ -571,5 +581,23 @@ Idea del usuario: al expandir la isla aparece el avatar y pasa a modo compañero
 Decisión del usuario (2026-11-11): el Tamagotchi es solo inspiración para INTERACTUAR y CONVERSAR con el asistente; no se le alimenta ni se le cuida. Filosofía: productividad y ayuda, no distraer. Quitar del prototipo las estadísticas (HUD de energía/saciedad/ánimo/afecto), alimentar/acariciar/jugar, el progreso offline, dormirse sola y los personajes desbloqueables por afecto (todos disponibles). Las emociones se quedan para comunicar lo que hace el asistente (pensando, trabajando, error, celebra una tarea). La emoción 'eating' queda heredada en el contrato; si ya no se usa, avísame y la retiro en un cambio de versión mayor. Ver la sección «Compañera, no mascota que cuidar» de docs/VISION.md.
 
 **Archivos:** `pet/web/**`, `pet/desktop/**`, `pet/README.md`
+
+**Última nota (claude):** creada
+
+### T-050 · Modo concentración: retener lo que distrae, dejar pasar permisos y lo importante, resumen al terminar
+
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** alta
+
+**Archivos:** `core/focus.py`, `core/events.py`, `core/engine.py`, `core/contract.py`, `server/routes/**`, `tests/**`, `config.yml`
+
+**Última nota (claude):** core/focus.py: sesiones con duración (25 min por defecto), filtro del bus que retiene notificaciones, música, batería normal, message de otros canales y agent.working/done; pasan permisos, errores, emotion, allow_apps y batería crítica; resumen en focus.ended; el chat de la mascota responde directo. Contrato 1.9. 7 tests (estables 3/3) + Postman 40/49 + prueba en vivo.
+
+### T-051 · Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen
+
+**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** media
+
+Backend listo (T-050, contrato 1.9). Enviar user.focus {action: start, minutes?} / {action: stop}, o POST/DELETE /v1/focus. Recibir focus.started {until, minutes} → mostrar cuenta atrás discreta y dejar la isla quieta; focus.ended {reason, held, notifications} → una tarjeta: 'Mientras te concentrabas: N notificaciones' (detalle con GET /v1/system/notifications). Durante la sesión el Core ya no envía lo que distrae; los permisos (agent.confirm) y errores siguen llegando. Alineado con la filosofía: ayuda, no distrae.
+
+**Archivos:** `pet/web/**`, `pet/desktop/**`
 
 **Última nota (claude):** creada

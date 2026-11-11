@@ -59,5 +59,9 @@ class NotificationAction(BaseModel):
     action: str = Field(description="dismiss | open")
 
 
+class FocusRequest(BaseModel):
+    minutes: int | None = Field(None, ge=1, le=1440, description="Vacío = focus.default_minutes")
+
+
 class MediaAction(BaseModel):
     action: str = Field(description="play_pause | next | previous")

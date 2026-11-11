@@ -6,7 +6,7 @@ con el cerebro real (Ollama, Claude o Gemini, según `config.yml`).
 
 | Archivo | Qué es |
 |---|---|
-| `meka-core.postman_collection.json` | La colección: 35 peticiones y 44 comprobaciones en 8 carpetas |
+| `meka-core.postman_collection.json` | La colección: 40 peticiones y 49 comprobaciones en 9 carpetas |
 | `local.postman_environment.json` | Entorno `MEKA local`: `baseUrl` y `token` |
 | `generar_coleccion.py` | Genera los dos JSON. **Edita este archivo**, no el JSON |
 
@@ -33,7 +33,8 @@ Con `MEKA_API_TOKEN` configurado, pásalo sin guardarlo en el archivo:
 | 5 · Permisos | Pendientes, id inexistente (404) y permiso sin respuesta = **no** |
 | 6 · Manos | Carpetas autorizadas; carpeta desconocida (404), escapes y escrituras rechazados; ninguna carpeta `writable` (escritura pospuesta) |
 | 7 · Sistema | `/v1/system` (música y batería) y notificaciones sin identificadores internos; acción no válida (422); `system.*` solo los emite el núcleo |
-| 8 · Registro y seguridad | `/v1/runs` sin texto de conversaciones; una web ajena (Origin) recibe 403 |
+| 8 · Concentración | Estado, duración no válida (422), empezar, un aviso retenido y el resumen al terminar |
+| 9 · Registro y seguridad | `/v1/runs` sin texto de conversaciones; una web ajena (Origin) recibe 403 |
 
 Usa el usuario de memoria `postman-test` y lo borra al final: **no toca tus recuerdos**.
 El chat con el modelo ligero de pruebas tarda unos segundos por petición (~1 minuto en total).

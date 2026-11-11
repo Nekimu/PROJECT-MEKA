@@ -18,6 +18,7 @@ from core.audio_store import AudioStore
 from core.config import resolve_path
 from core.confirmations import ConfirmationRegistry
 from core.events import EventBus
+from core.focus import FocusMode
 from core.hands import Hands
 from core.hands.restore import RestorePoints
 from core.logger import setup_logger
@@ -75,6 +76,8 @@ class MekaEngine(MediaMixin):
         self.confirmations = ConfirmationRegistry(
             self.bus, config.get("server", {}).get("confirm_timeout_seconds", 120)
         )
+        # Modo concentración: retiene lo que distrae (core/focus.py)
+        self.focus = FocusMode(config, self.bus)
         # Música y batería para la Dynamic Island (core/system/); arranca con el servidor
         self.system = SystemMonitor(config, self.bus)
         # Manos (fase 3): carpetas autorizadas; los cambios piden permiso y dejan un punto de
@@ -135,6 +138,7 @@ class MekaEngine(MediaMixin):
         self.tts.unload()
         self.audio.clear()
         self.confirmations.cancel_all()
+        self.focus.close()
         gc.collect()
 
     # ------------------------------------------------------------------ eventos

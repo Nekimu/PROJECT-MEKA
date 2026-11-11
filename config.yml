@@ -97,6 +97,12 @@ system:                      # Música y batería para la Dynamic Island (evento
     max_items: 20
     interval: 3              # Segundos entre lecturas
 
+focus:                       # Modo concentración: retiene lo que distrae durante un bloque de trabajo
+  default_minutes: 25
+  max_minutes: 240
+  allow_apps: []             # Notificaciones que pasan igual (p. ej. ["Teams"] para llamadas)
+  battery_alert: 15          # La batería por debajo de este % (sin cargar) avisa igual
+
 hands:                       # Las "manos" de MEKA (fase 3): leer carpetas que tú autorizas
   enabled: true
   folders: {}                # Fuera de estas carpetas, nada. Ejemplos:

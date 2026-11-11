@@ -282,6 +282,7 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 | `ai.privacy.provider` | `ollama` | Cerebro local para lo privado. Lo privado **nunca** va a la nube, ni como respaldo; si no hay proveedor local, no se envía. |
 | `ai.privacy.documents` / `detect_sensitive` | `true` / `true` | Documentos siempre privados; contraseñas, llaves de API, tokens, tarjetas o CURP vuelven privada la conversación hasta reiniciarla. Lo que pidas recordar en privado solo vuelve a prompts de proveedores locales y nunca sale por MCP ni Telegram. |
 | `system.notifications.apps` / `blocked` / `hide_codes` | `["*"]` / `[]` / `true` | Notificaciones de Windows que ve la isla. Son privadas: nunca van a la nube ni al MCP, y los códigos de verificación se ocultan. |
+| `focus.default_minutes` / `allow_apps` / `battery_alert` | `25` / `[]` / `15` | **Modo concentración**: retiene notificaciones, música y avisos de agentes; los permisos, los errores, las apps de `allow_apps` y la batería crítica pasan igual. Al terminar, resumen de lo que esperó. |
 | `hands.folders` | `{}` | Carpetas que MEKA puede **leer** (nombre: ruta, o `{path, private}`). Fuera de ellas nada; `.env`, llaves, `.git` y similares nunca, aunque estén dentro. La escritura (`writable: true`, con permiso y deshacer) existe pero está **pospuesta** hasta aislar el sistema: no la actives todavía. |
 | `ai.history_size` | `20` | Mensajes recientes que recuerda por chat. |
 | `ai.providers.ollama.model` | `gemma3:12b` | Modelo de Ollama. Debe ser **multimodal** para ver fotos. |

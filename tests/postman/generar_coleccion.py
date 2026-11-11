@@ -308,6 +308,42 @@ pm.test("Nunca sale el identificador interno de la app", () => n.forEach(x => pm
     ),
 ]
 
+CONCENTRACION = [
+    request(
+        "Estado",
+        "GET",
+        "/v1/focus",
+        'pm.test("Tiene active y remaining", () => { const f = pm.response.json(); pm.expect(f).to.have.property("active"); pm.expect(f).to.have.property("remaining"); });',
+    ),
+    request(
+        "Duración no válida → 422",
+        "POST",
+        "/v1/focus",
+        'pm.test("422", () => pm.response.to.have.status(422));',
+        body={"minutes": 0},
+    ),
+    request(
+        "Empezar 5 minutos",
+        "POST",
+        "/v1/focus",
+        'pm.test("Activo", () => { pm.response.to.have.status(200); pm.expect(pm.response.json().active).to.be.true; });',
+        body={"minutes": 5},
+    ),
+    request(
+        "agent.done durante la concentración → retenido",
+        "POST",
+        "/v1/events",
+        'pm.test("Aceptado pero no entregado a nadie", () => { pm.response.to.have.status(202); });',
+        body={"type": "agent.done", "data": {"summary": "Prueba de Postman"}},
+    ),
+    request(
+        "Terminar → resumen",
+        "DELETE",
+        "/v1/focus",
+        'pm.test("Resumen con lo retenido", () => { const s = pm.response.json(); pm.expect(s.reason).to.eql("user"); pm.expect(s.held).to.be.at.least(1); });',
+    ),
+]
+
 REGISTRO_Y_SEGURIDAD = [
     request(
         "Registro de ejecución (sin contenido)",
@@ -362,7 +398,8 @@ COLLECTION = {
         folder("5 · Permisos", "agent.confirm / user.confirm. Sin respuesta = no.", PERMISOS),
         folder("6 · Manos (solo lectura)", "Carpetas autorizadas en hands.folders.", MANOS),
         folder("7 · Sistema (Dynamic Island)", "Música y batería.", SISTEMA),
-        folder("8 · Registro y seguridad", "", REGISTRO_Y_SEGURIDAD),
+        folder("8 · Concentración", "Retiene lo que distrae; resumen al terminar.", CONCENTRACION),
+        folder("9 · Registro y seguridad", "", REGISTRO_Y_SEGURIDAD),
     ],
 }
 
