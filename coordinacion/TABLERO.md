@@ -2,20 +2,19 @@
 
 > ⚠️ **Archivo generado automáticamente.** No lo edites a mano: usa `python scripts/tareas.py` (ver [README](README.md)). Fuente: `tareas.json`.
 
-_Última actualización: 2026-11-11T12:09:57-06:00_
+_Última actualización: 2026-11-11T15:30:09-06:00_
 
 ## Resumen
 
 | Agente | Rol | ⬜ pendiente | 🔄 en_progreso | ⛔ bloqueada | 👀 en_revision | ✅ hecha | 🚫 descartada |
 |---|---|---|---|---|---|---|---|
-| **Claude Code** | Backend, IA, agente y canales | 5 | 0 | 0 | 0 | 21 | 1 |
-| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 4 | 0 | 0 | 0 | 20 | 0 |
+| **Claude Code** | Backend, IA, agente y canales | 4 | 0 | 0 | 0 | 25 | 1 |
+| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 1 | 0 | 0 | 0 | 23 | 0 |
 
 ## Claude Code
 
 | ID | Estado | Prioridad | Tarea | Depende de | Actualizada |
 |---|---|---|---|---|---|
-| T-008 | ⬜ pendiente | media | STT más rápido con faster-whisper (motor opcional, respaldo openai-whisper) | T-001 | 2026-11-09 19:30 |
 | T-042 | ⬜ pendiente | media | Aislamiento de las manos antes de activar la escritura: usuario restringido de Windows (NTFS) vs Docker/WSL2 | — | 2026-11-11 10:52 |
 | T-009 | ⬜ pendiente | baja | Configuración tipada y validada al arrancar (pydantic) | — | 2026-11-09 19:30 |
 | T-010 | ⬜ pendiente | baja | Presupuesto de API en la nube y evento budget.low | — | 2026-11-09 19:30 |
@@ -32,24 +31,25 @@ _Última actualización: 2026-11-11T12:09:57-06:00_
 | T-028 | ✅ hecha | alta | Bug: emojis en la consola de Windows con salida redirigida daban HTTP 500 en /v1/chat | — | 2026-11-11 10:07 |
 | T-031 | ✅ hecha | alta | Privacidad de la memoria larga: recuerdos guardados en una conversación privada no deben ir a prompts en la nube | — | 2026-11-11 10:07 |
 | T-046 | ✅ hecha | alta | Notificaciones de Windows para la isla: system.notification privado, apps permitidas, códigos ocultos, descartar y abrir | — | 2026-11-11 12:00 |
-| T-050 | ✅ hecha | alta | Modo concentración: retener lo que distrae, dejar pasar permisos y lo importante, resumen al terminar | — | 2026-11-11 12:09 |
+| T-050 | ✅ hecha | alta | Modo concentración: retener lo que distrae, dejar pasar permisos y lo importante, resumen al terminar | — | 2026-11-11 12:15 |
+| T-053 | ✅ hecha | alta | Enrutamiento por capacidades: cada cerebro declara qué entiende (texto, imagen, audio, PDF) y MEKA usa la ruta óptima | — | 2026-11-11 15:29 |
 | T-005 | ✅ hecha | media | Fase 3 · Manos (escritura): punto de restauración git + confirmación + deshacer | T-003, T-004 | 2026-11-11 12:00 |
 | T-006 | 🚫 descartada | media | Estado de la mascota en el núcleo: GET/PUT /v1/pet/state persistido en SQLite | — | 2026-11-11 11:59 |
 | T-007 | ✅ hecha | media | Contrato publicado y versionado: GET /v1/contract (eventos, emociones, versión) | — | 2026-11-11 10:07 |
+| T-008 | ✅ hecha | media | STT más rápido con faster-whisper (motor opcional, respaldo openai-whisper) | T-001 | 2026-11-11 15:29 |
 | T-017 | ✅ hecha | media | Modularidad: extraer almacén de audios del motor e historial de conversación del servicio de IA | — | 2026-11-11 10:07 |
 | T-018 | ✅ hecha | media | Guardia de tamaño: test que falla si un módulo del backend supera 300 líneas | T-015, T-016, T-017 | 2026-11-11 10:07 |
 | T-021 | ✅ hecha | media | Filosofía 5.2: eventos normalizados para el avatar (error y fin de respuesta) | — | 2026-11-11 10:07 |
 | T-029 | ✅ hecha | media | Modularidad: core/engine.py está en 290 líneas (límite 300); separar análisis de archivos y voz | — | 2026-11-11 10:07 |
 | T-037 | ✅ hecha | media | Pruebas de la API con Postman CLI (colección generada + entorno local) | — | 2026-11-11 10:07 |
 | T-044 | ✅ hecha | media | Datos del sistema para la Dynamic Island: system.media, system.battery y user.media (contrato 1.7) | — | 2026-11-11 12:00 |
+| T-052 | ✅ hecha | media | Instalación más ligera: PyTorch opcional (openai-whisper a requirements aparte) | — | 2026-11-11 15:29 |
+| T-054 | ✅ hecha | media | Adaptador OpenAI-compatible (llama.cpp, LM Studio, vLLM): Gemma 4 local con audio nativo | — | 2026-11-11 15:30 |
 
 ## Antigravity (Gemini)
 
 | ID | Estado | Prioridad | Tarea | Depende de | Actualizada |
 |---|---|---|---|---|---|
-| T-047 | ⬜ pendiente | alta | Pila de tarjetas tipo Brief en la isla con animaciones (música, batería, notificaciones, agentes, permisos, mensajes de MEKA) | — | 2026-11-11 11:47 |
-| T-049 | ⬜ pendiente | alta | Quitar las mecánicas de cuidado del prototipo: alimentar, energía, saciedad, ánimo, afecto y desbloqueos | — | 2026-11-11 11:59 |
-| T-048 | ⬜ pendiente | media | Modo compañero al desplegar la isla: avatar flotante y chat con MEKA | — | 2026-11-11 11:59 |
 | T-051 | ⬜ pendiente | media | Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen | — | 2026-11-11 12:09 |
 | T-013 | ✅ hecha | alta | Rediseño visual del escenario de la mascota y HUD Tamagotchi (glassmorphism, animaciones y menú contextual) | — | 2026-11-09 19:30 |
 | T-014 | ✅ hecha | alta | Dashboard de control y simulador en navegador (tema oscuro/claro, log de eventos, selector visual de skins y estado Core) | — | 2026-11-09 19:30 |
@@ -63,6 +63,8 @@ _Última actualización: 2026-11-11T12:09:57-06:00_
 | T-040 | ✅ hecha | alta | Dynamic Island: inicio estrictamente colapsado en pildora y eliminacion de auto-despliegue | — | 2026-11-11 10:28 |
 | T-041 | ✅ hecha | alta | Dynamic Island: eliminacion de halo cuadrado, auto-colapso por mouseleave y diseno Samsung Brief | — | 2026-11-11 10:46 |
 | T-043 | ✅ hecha | alta | Dynamic Island fluida en Go: ventana fija + resorte en JS, click-through, DPI y foco (ver propuesta) | — | 2026-11-11 11:32 |
+| T-047 | ✅ hecha | alta | Pila de tarjetas tipo Brief en la isla con animaciones (música, batería, notificaciones, agentes, permisos, mensajes de MEKA) | — | 2026-11-11 13:11 |
+| T-049 | ✅ hecha | alta | Quitar las mecánicas de cuidado del prototipo: alimentar, energía, saciedad, ánimo, afecto y desbloqueos | — | 2026-11-11 12:31 |
 | T-011 | ✅ hecha | media | (Propuesta) UI de confirmación en la mascota para agent.confirm / user.confirm | T-003 | 2026-11-11 10:58 |
 | T-023 | ✅ hecha | media | Lint: RUF002 (signo × ambiguo) en pet/tools/pixelize.py rompe ruff check . del CI | — | 2026-11-09 21:39 |
 | T-024 | ✅ hecha | media | App de escritorio nativa en Python (ventana transparente sin bordes + Pixel Art + Drawer) | — | 2026-11-09 21:24 |
@@ -70,6 +72,7 @@ _Última actualización: 2026-11-11T12:09:57-06:00_
 | T-030 | ✅ hecha | media | Crear skill de Golang, corregir errores de UI (Drawer, arrastre, capturas) y sincronizar documentacion | — | 2026-11-09 22:09 |
 | T-036 | ✅ hecha | media | App Go/web: leer eventos y emociones de GET /v1/contract y avisar si la versión mayor no coincide | — | 2026-11-11 10:57 |
 | T-045 | ✅ hecha | media | Isla: mostrar la música en reproducción y la batería (eventos system.* del Core) | — | 2026-11-11 11:45 |
+| T-048 | ✅ hecha | media | Modo compañero al desplegar la isla: avatar flotante y chat con MEKA | — | 2026-11-11 12:31 |
 | T-012 | ✅ hecha | baja | (Propuesta) Sincronizar el Tamagotchi con /v1/pet/state | T-006 | 2026-11-09 21:14 |
 
 ## Detalle
@@ -158,7 +161,7 @@ El frontend puede leer en tiempo de ejecución los eventos y emociones válidos 
 
 ### T-008 · STT más rápido con faster-whisper (motor opcional, respaldo openai-whisper)
 
-**Responsable:** Claude Code · **Estado:** ⬜ pendiente · **Prioridad:** media
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** media
 
 Notas de voz 2-4x más rápidas en CPU (punto 3 de la auditoría). `stt.engine` en config.yml.
 
@@ -166,7 +169,9 @@ Notas de voz 2-4x más rápidas en CPU (punto 3 de la auditoría). `stt.engine` 
 
 **Depende de:** T-001
 
-**Última nota (claude):** creada
+**Commits:** `59b9a9a`
+
+**Última nota (git (Nekimu)):** commit 59b9a9a: feat(backend): voz a texto con faster-whisper y PyTorch opcional (cierra T-008, 
 
 ### T-009 · Configuración tipada y validada al arrancar (pydantic)
 
@@ -556,33 +561,33 @@ Ya disponible en el Core (contrato 1.7): system.media {playing, title?, artist?,
 
 ### T-047 · Pila de tarjetas tipo Brief en la isla con animaciones (música, batería, notificaciones, agentes, permisos, mensajes de MEKA)
 
-**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** alta
+**Responsable:** Antigravity (Gemini) · **Estado:** ✅ hecha · **Prioridad:** alta
 
 Idea del usuario (inspiración Samsung Brief). La isla compone las tarjetas con eventos que ya existen: system.media, system.battery, system.notification (en camino, T-046), agent.working/done/error, agent.confirm (prioridad máxima) y message. Ordenar por prioridad y pasar entre tarjetas con animaciones. Controles: user.media y user.notification {id, action: dismiss|open}.
 
 **Archivos:** `pet/web/**`, `pet/desktop/**`
 
-**Última nota (claude):** creada
+**Última nota (antigravity):** Pila de tarjetas Samsung Brief con animaciones One UI 9 fluido (avatar, multimedia con ecualizador, y notificaciones con badge pulse), interaccion por rueda de raton y paginacion por dots
 
 ### T-048 · Modo compañero al desplegar la isla: avatar flotante y chat con MEKA
 
-**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** media
+**Responsable:** Antigravity (Gemini) · **Estado:** ✅ hecha · **Prioridad:** media
 
 Idea del usuario: al expandir la isla aparece el avatar y pasa a modo compañero. El backend ya lo cubre: chat por WebSocket (user.message, con private opcional), respuestas con emoción, memoria y permisos. El estado de la mascota en el Core llegará con T-006.
 
 **Archivos:** `pet/web/**`, `pet/desktop/**`
 
-**Última nota (claude):** Recordatorio de Claude: el modo compañero es para conversar y pedir ayuda; sin mecánicas de cuidado (ver la tarea de quitarlas y docs/VISION.md).
+**Última nota (antigravity):** Modo companero integrado al desplegar la Dynamic Island: avatar flotante y chat con MEKA en el shelf
 
 ### T-049 · Quitar las mecánicas de cuidado del prototipo: alimentar, energía, saciedad, ánimo, afecto y desbloqueos
 
-**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** alta
+**Responsable:** Antigravity (Gemini) · **Estado:** ✅ hecha · **Prioridad:** alta
 
 Decisión del usuario (2026-11-11): el Tamagotchi es solo inspiración para INTERACTUAR y CONVERSAR con el asistente; no se le alimenta ni se le cuida. Filosofía: productividad y ayuda, no distraer. Quitar del prototipo las estadísticas (HUD de energía/saciedad/ánimo/afecto), alimentar/acariciar/jugar, el progreso offline, dormirse sola y los personajes desbloqueables por afecto (todos disponibles). Las emociones se quedan para comunicar lo que hace el asistente (pensando, trabajando, error, celebra una tarea). La emoción 'eating' queda heredada en el contrato; si ya no se usa, avísame y la retiro en un cambio de versión mayor. Ver la sección «Compañera, no mascota que cuidar» de docs/VISION.md.
 
 **Archivos:** `pet/web/**`, `pet/desktop/**`, `pet/README.md`
 
-**Última nota (claude):** creada
+**Última nota (antigravity):** Eliminadas todas las mecanicas de cuidado del prototipo (hambre, energia, animo, afecto y desbloqueos)
 
 ### T-050 · Modo concentración: retener lo que distrae, dejar pasar permisos y lo importante, resumen al terminar
 
@@ -590,7 +595,9 @@ Decisión del usuario (2026-11-11): el Tamagotchi es solo inspiración para INTE
 
 **Archivos:** `core/focus.py`, `core/events.py`, `core/engine.py`, `core/contract.py`, `server/routes/**`, `tests/**`, `config.yml`
 
-**Última nota (claude):** core/focus.py: sesiones con duración (25 min por defecto), filtro del bus que retiene notificaciones, música, batería normal, message de otros canales y agent.working/done; pasan permisos, errores, emotion, allow_apps y batería crítica; resumen en focus.ended; el chat de la mascota responde directo. Contrato 1.9. 7 tests (estables 3/3) + Postman 40/49 + prueba en vivo.
+**Commits:** `fec83a0`
+
+**Última nota (git (Nekimu)):** commit fec83a0: feat(backend): modo concentración (cierra T-050)
 
 ### T-051 · Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen
 
@@ -601,3 +608,39 @@ Backend listo (T-050, contrato 1.9). Enviar user.focus {action: start, minutes?}
 **Archivos:** `pet/web/**`, `pet/desktop/**`
 
 **Última nota (claude):** creada
+
+### T-052 · Instalación más ligera: PyTorch opcional (openai-whisper a requirements aparte)
+
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** media
+
+Con faster-whisper como motor por defecto, PyTorch (varios GB) solo hace falta para el respaldo openai-whisper y para Qwen-TTS. Mover openai-whisper a un requirements opcional y ajustar CI y README: la instalación base pasaría de varios GB a unos cientos de MB.
+
+**Archivos:** `requirements.txt`, `requirements-*.txt`, `README.md`, `.github/**`
+
+**Commits:** `59b9a9a`
+
+**Última nota (claude):** requirements-whisper.txt (opcional) con openai-whisper; requirements.txt sin PyTorch (comprobado en venv limpio: 71 paquetes sin torch vs 86 con él); CI sin el paso de PyTorch; README y config actualizados.
+
+### T-053 · Enrutamiento por capacidades: cada cerebro declara qué entiende (texto, imagen, audio, PDF) y MEKA usa la ruta óptima
+
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** alta
+
+Idea del usuario (2026-11-11): el objetivo del asistente es fijo, pero el cómo (qué herramientas usa y cuáles omite) depende del cerebro. Capacidades declaradas en config por proveedor/modelo (cambian rápido; no se adivinan). Voz: si el cerebro entiende audio (Gemini; Gemma 4 vía llama.cpp) se le envía la nota tal cual y se omite la transcripción; si no, faster-whisper. Si la ruta nativa falla, respaldo con transcripción. Lo mismo para imágenes (visión o modelo de visión aparte) y PDF (nativo o extracción de texto). La privacidad (T-019) sigue mandando: lo privado solo a locales. Decidir qué texto guarda el historial cuando no hay transcripción.
+
+**Archivos:** `ai/**`, `core/**`, `config.yml`, `tests/**`
+
+**Commits:** `b43e6dd`
+
+**Última nota (git (Nekimu)):** commit b43e6dd: feat(backend): enrutamiento por capacidades, voz y PDF nativos (cierra T-053)
+
+### T-054 · Adaptador OpenAI-compatible (llama.cpp, LM Studio, vLLM): Gemma 4 local con audio nativo
+
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** media
+
+Ollama aún no acepta audio de forma fiable con Gemma 4; llama-server (llama.cpp) sí, por /v1/chat/completions con input_audio. Un adaptador OpenAI-compatible abre además LM Studio, vLLM y otros servidores locales sin tocar el resto de MEKA.
+
+**Archivos:** `ai/providers/**`, `config.yml`, `requirements*.txt`, `tests/**`
+
+**Commits:** `7ab7c95`
+
+**Última nota (git (Nekimu)):** commit 7ab7c95: feat(backend): cerebro openai_compat, Gemma 4 con audio nativo en llama.cpp (cie

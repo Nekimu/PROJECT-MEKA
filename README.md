@@ -85,7 +85,7 @@ El documento completo, con las iteraciones previstas (Google Home, Home Assistan
 |:---:|---|---|
 | 🎭 | **Personajes intercambiables** | D.Va, Marin o Yotsuba, o el tuyo propio: [paquetes en `personas/`](personas/README.md) que se eligen con una línea de configuración. |
 | 🧠 | **Cerebro a elegir** | Ollama en local (por defecto `gemma3:12b`), Claude o Gemini, con un cerebro distinto para imágenes, uno de respaldo y un modo `local_only` que no deja salir nada del equipo. |
-| 🎙️ | **Escucha tus audios** | Transcribe las notas de voz con Whisper y responde como a un mensaje escrito. |
+| 🎙️ | **Escucha tus audios** | Transcribe las notas de voz con faster-whisper (3 veces menos RAM que Whisper, sin PyTorch) y responde como a un mensaje escrito. |
 | 🔊 | **Habla** | Cada personaje tiene su voz (Edge-TTS por defecto; Qwen3-TTS y Piper opcionales). Llega como nota de voz nativa (OGG/Opus). |
 | 🖼️ | **Ve tus fotos** | Comenta las imágenes con un modelo multimodal. |
 | 📄 | **Lee documentos** | PDF, DOCX (con tablas), XLSX, TXT, MD y CSV. |
@@ -114,7 +114,9 @@ cp .env.example .env
 ```
 
 > [!TIP]
-> En Linux sin GPU NVIDIA, instala antes PyTorch para CPU y te ahorrarás varios GB de librerías CUDA:
+> La instalación base **no incluye PyTorch**: la voz usa faster-whisper. Solo hace falta para el respaldo
+> `openai-whisper` (`pip install -r requirements-whisper.txt`) o para Qwen3-TTS. En Linux sin GPU NVIDIA,
+> instala antes PyTorch para CPU y te ahorrarás varios GB de librerías CUDA:
 > `pip install torch --index-url https://download.pytorch.org/whl/cpu`
 
 </details>
@@ -138,6 +140,7 @@ ollama pull gemma3:12b                  # 1. Descarga el modelo
 ollama pull embeddinggemma              #    y el de la memoria semántica (~600 MB)
 pip install -r requirements-qwen.txt    # 2. Opcional: Qwen3-TTS (clonar tu propia voz)
 pip install -r requirements-cloud.txt   #    Opcional: Claude y Gemini como cerebro
+pip install -r requirements-whisper.txt #    Opcional: respaldo openai-whisper (instala PyTorch)
 python run.py                           # 3. ¡A charlar! (MEKA Core + Telegram)
 ```
 
@@ -165,7 +168,7 @@ ALLOWED_USER_IDS=123456789
 |---|---|---|
 | **RAM** | 8 GB (`gemma3:4b` + `edge-tts`) | 16 GB (`gemma3:12b` + Qwen3-TTS en CPU) |
 | **GPU** | No necesaria | ≥ 8 GB de VRAM para respuestas fluidas |
-| **Disco** | ~6 GB | ~15 GB (modelos de Ollama, Whisper y Qwen) |
+| **Disco** | ~4 GB | ~15 GB (modelos de Ollama, Whisper y Qwen) |
 
 </details>
 
@@ -290,7 +293,12 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 | `ai.providers.ollama.*` | — | `base_url`, `temperature`, `options` y `vision_options` de Ollama. |
 | `ai.providers.claude.model` / `effort` | `claude-opus-5-5` / `low` | Modelo de Claude y cuánto piensa (`low` a `max`). Requiere `ANTHROPIC_API_KEY`. |
 | `ai.providers.gemini.model` | `gemini-flash-latest` | Modelo de Gemini. Requiere `GEMINI_API_KEY`. |
-| `stt.model_size` | `base` | Whisper: `tiny`, `base`, `small`, `medium`, `large`, `turbo`. |
+| `stt.mode` | `auto` | `auto`: si el cerebro entiende audio, la nota de voz va tal cual y se omite la transcripción; `always`: transcribir siempre. |
+| `ai.providers.<cerebro>.capabilities` | por cerebro | Lo que entiende de forma nativa: `text`, `vision`, `audio`, `pdf` (Ollama: texto e imagen · Claude: + PDF · Gemini: + audio y PDF). Corrígelo por modelo. MEKA usa la ruta nativa si existe y, si no o si falla, la clásica (transcribir, extraer texto). |
+| `ai.providers.openai_compat` | — | Cualquier servidor compatible con OpenAI: **llama.cpp**, LM Studio, vLLM u Ollama (`/v1`). Solo cuenta como local si `base_url` es de este equipo. Úsalo como `ai.provider: openai_compat`. |
+| `ai.privacy.audio_to_cloud` | `false` | Las notas de voz sin transcribir no pasan por el detector de datos sensibles: por defecto solo van a cerebros locales. |
+| `stt.engine` / `fallback_engine` | `faster-whisper` / `whisper` | Motor de voz a texto y su respaldo. faster-whisper usa ~3 veces menos RAM con el mismo resultado. |
+| `stt.model_size` | `base` | Whisper: `tiny`, `base`, `small`, `medium`, `large-v3`, `turbo`. |
 | `stt.unload_after_use` | `true` | Libera Whisper de la RAM tras cada nota de voz. |
 | `tts.engine` | `edge-tts` | `edge-tts`, `qwen-tts` o `piper`. La voz de edge-tts la pone cada personaje. |
 | `tts.fallback_engine` | `""` | Motor de respaldo si falla el principal. |
@@ -341,6 +349,41 @@ La RAM necesaria es algo mayor que el tamaño de descarga. Consulta los tamaños
 
 </details>
 
+<details>
+<summary><b>🎙️ Gemma 4 con audio nativo (llama.cpp)</b></summary>
+
+Gemma 4 (E2B, E4B, 12B) entiende audio de forma nativa, así que MEKA puede saltarse la transcripción
+(`stt.mode: auto`). Ollama aún no le pasa el audio de forma fiable; **llama.cpp** sí, con su proyector
+multimodal (`mmproj`, que `-hf` descarga solo). Probado con el build 12282 en Windows:
+
+```bash
+winget install ggml.llamacpp
+llama-server -hf ggml-org/gemma-4-E2B-it-GGUF:Q4_0 --port 8080 -c 8192 --jinja
+```
+
+La primera vez descarga unos 3,5 GB. En el registro debe aparecer `init_audio` (el audio aún es
+*experimental* en llama.cpp). Ese repositorio trae `Q4_0`, `Q8_0` y `BF16`, no `Q4_K_M`.
+
+```yaml
+ai:
+  provider: "openai_compat"
+  providers:
+    openai_compat:
+      base_url: "http://127.0.0.1:8080"
+      model: "gemma-4-e2b"
+      capabilities: [text, vision, audio]
+      thinking: false      # Sin esto, Gemma 4 gasta los tokens razonando y la respuesta llega vacía
+```
+
+Medido en un equipo con 16 GB de RAM y solo CPU, con una nota de voz de 6 s: ~30 s la llamada
+directa y ~70 s dentro de MEKA (el prompt del personaje y la memoria pesan). Sin GPU, E2B es la
+opción más holgada; con GPU, prueba E4B.
+
+> La ruta nativa responde a lo que oye, pero no hay texto que analizar: *«recuerda esto: …»* no se
+> guarda como recuerdo ni se buscan recuerdos por palabras. Si los necesitas por voz, `stt.mode: always`.
+
+</details>
+
 ## 🧠 Cómo funciona
 
 ```mermaid
@@ -352,7 +395,7 @@ flowchart LR
     PET([Mascota pet/]) <-->|WebSocket /v1/events| API
     subgraph CORE[MEKA Core · 127.0.0.1:8765]
         API[server/<br/>FastAPI · routes/ · token · origen] --> ENG[core/engine.py]
-        ENG --> STT[ai/stt.py<br/>Whisper]
+        ENG --> STT[ai/stt/<br/>faster-whisper · Whisper]
         ENG --> DOC[core/documents.py]
         ENG --> AI[ai/service.py]
         ENG --> TTS[ai/tts/<br/>Edge-TTS · Qwen3-TTS · Piper]
@@ -403,7 +446,7 @@ PROJECT-MEKA/
 ├── docs/                   # Filosofía híbrida, visión, auditoría e imágenes
 ├── config.yml              # Configuración general
 ├── .env.example            # Plantilla de secretos
-└── requirements*.txt       # Dependencias: base, nube, MCP, Qwen3-TTS y desarrollo
+└── requirements*.txt       # Dependencias: base, nube, MCP, Whisper, Qwen3-TTS y desarrollo
 ```
 
 Se generan al ejecutar o son personales (ignorados por git): `data/` (la base de datos), `temp/`, `logs/`, `models/` y `voices/`.
@@ -491,7 +534,7 @@ python -m scripts.semantic_check "¿qué te conté de mi mascota?"   # Similitud
 - [ ] Gestionar carpetas autorizadas desde el móvil, con confirmación y git
 - [ ] Compañera de productividad: tarjetas tipo Brief, modo concentración y resumen del día (sin mecánicas de cuidado: MEKA ayuda, no distrae)
 - [ ] App móvil: Android con burbuja flotante, iOS con widget
-- [ ] Transcripción más rápida con [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
+- [x] Transcripción más ligera con [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
 
 La dirección del proyecto está en la [filosofía híbrida](docs/FILOSOFIA_HIBRIDA.md) y la [visión](docs/VISION.md); las alternativas técnicas evaluadas, en la [auditoría](docs/AUDITORIA.md).
 

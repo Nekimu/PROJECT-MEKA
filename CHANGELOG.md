@@ -13,6 +13,21 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 - **Notificaciones de Windows**: `system.notification` / `system.notification_removed`, con apps permitidas o bloqueadas, **códigos de verificación ocultos** y textos sensibles ocultos. Privadas: nunca van a la nube, a la memoria ni al MCP. Se pueden descartar o abrir la app.
 - `GET /v1/system` y `GET /v1/system/notifications` para los clientes que se conectan tarde.
 
+### Enrutamiento por capacidades
+- Cada cerebro declara lo que entiende de forma nativa (`text`, `vision`, `audio`, `pdf`) y `config.yml` lo corrige por modelo. El objetivo del asistente es fijo; la ruta interna se elige según el cerebro:
+  - **Notas de voz**: si el cerebro oye (Gemini; Gemma 4 vía llama.cpp, T-054), la nota va tal cual y **se omite la transcripción**; si no, faster-whisper.
+  - **PDF**: si el cerebro lo lee (Claude, Gemini), va el documento entero (tablas y maquetación); si no, se extrae el texto.
+  - Si la ruta nativa falla, se usa la clásica. `stt.mode: always` fuerza la transcripción.
+- El audio sin transcribir no pasa por el detector de datos sensibles: solo va a cerebros locales salvo `ai.privacy.audio_to_cloud: true`.
+- Telegram ya no dice "no te entendí" cuando la respuesta llega sin transcripción.
+
+### Servidores compatibles con OpenAI
+- Nuevo cerebro `openai_compat`: **llama.cpp** (`llama-server`), LM Studio, vLLM u Ollama por `/v1`. Envía imágenes (`image_url`) y audio (`input_audio`): la vía para usar **Gemma 4 con audio nativo** en local (probado con Gemma 4 E2B en llama.cpp: la nota de voz llega sin transcribir). `thinking: false` evita que los modelos que razonan devuelvan la respuesta vacía; si solo llega razonamiento, cuenta como fallo y se usa la ruta clásica. Cuenta tokens, y solo se considera local si su dirección es de este equipo.
+
+### Voz a texto
+- **faster-whisper** pasa a ser el motor por defecto (`ai/stt/`, un módulo por motor como el TTS) y openai-whisper queda de respaldo. Medido con la misma nota de voz: misma transcripción, ~15-20 % más rápido y **~3 veces menos RAM** (179 MB frente a 536 MB). El audio se decodifica con FFmpeg, así que no depende de PyAV.
+- **Instalación base sin PyTorch**: openai-whisper pasa a `requirements-whisper.txt` (opcional). La instalación base resuelve 71 paquetes sin PyTorch, frente a 86 con él; el CI ya no instala PyTorch.
+
 ### Manos (fase 3)
 - **Lectura** de carpetas autorizadas (`hands.folders`): listar, leer (también PDF, DOCX y XLSX) y buscar, por API y MCP. Sin escapes (`..`, enlaces simbólicos), archivos sensibles siempre protegidos y carpetas `private` ocultas al MCP.
 - **Escritura** (escribir, mover, borrar, crear carpetas) con permiso por cambio, punto de restauración en un git "sombra" y deshacer. **Inactiva** hasta resolver el aislamiento del sistema (T-042).

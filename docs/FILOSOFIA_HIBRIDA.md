@@ -60,7 +60,7 @@ Revisión del repositorio (noviembre de 2026). Esto es lo que **existe hoy** y s
 | Canales | Telegram (`channels/telegram/`) y MCP (`channels/mcp/`), ambos clientes de MEKA Core; la mascota se conecta por WebSocket |
 | Personalidad | **Paquetes de personaje** en `personas/` (D.Va/MEKA, Marin, Yotsuba), seleccionables por configuración |
 | Inferencia | Adaptadores en `ai/providers/`: Ollama (por defecto, Gemma 3 12B), Claude y Gemini, con enrutamiento por tarea (`ai.provider`, `ai.vision_provider`), respaldo (`ai.fallback_provider`) y modo `ai.local_only` |
-| Voz a texto | `openai-whisper` (`ai/stt.py`) |
+| Voz a texto | `faster-whisper` (`ai/stt/`, int8 en CPU); `openai-whisper` opcional como respaldo. Si el cerebro oye audio (Gemma 4 en llama.cpp, Gemini), la transcripción se omite |
 | Texto a voz | Edge-TTS por defecto; Qwen3-TTS y Piper opcionales (`ai/tts/`, un módulo por motor) |
 | Memoria | SQLite (`data/meka.db`, `core/memory.py`): recuerdos por usuario con búsqueda FTS5 y **semántica** (embeddings locales con `embeddinggemma` + `sqlite-vec`) e historial persistente por chat. Evaluación en [MEMORIA.md](MEMORIA.md) |
 | Avatar | Mascota de escritorio propia en `pet/` (web + Tauri), que ya implementa el contrato de eventos por WebSocket |

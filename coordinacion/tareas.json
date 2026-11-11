@@ -347,7 +347,7 @@
       "id": "T-008",
       "titulo": "STT más rápido con faster-whisper (motor opcional, respaldo openai-whisper)",
       "responsable": "claude",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "media",
       "descripcion": "Notas de voz 2-4x más rápidas en CPU (punto 3 de la auditoría). `stt.engine` en config.yml.",
       "archivos": [
@@ -358,16 +358,35 @@
       "depende_de": [
         "T-001"
       ],
-      "commits": [],
+      "commits": [
+        "59b9a9a80e3aea763f6e663a0220214c2b566c6d"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T19:30:00-06:00",
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T13:00:46-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T13:06:13-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "ai/stt/ (base, faster, openai_whisper) con respaldo; faster-whisper int8 + VAD por defecto; decodifica con FFmpeg (evita la incompatibilidad de PyAV 19 con faster-whisper 1.2.1). Medido: 2,7 s vs 3,2 s y +179 MB vs +536 MB, misma transcripción. 7 tests + nota de voz real por /v1/voice."
+        },
+        {
+          "fecha": "2026-11-11T15:29:41-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 59b9a9a: feat(backend): voz a texto con faster-whisper y PyTorch opcional (cierra T-008, "
         }
       ],
-      "actualizada": "2026-11-09T19:30:00-06:00"
+      "actualizada": "2026-11-11T15:29:41-06:00"
     },
     {
       "id": "T-009",
@@ -1708,7 +1727,7 @@
       "id": "T-047",
       "titulo": "Pila de tarjetas tipo Brief en la isla con animaciones (música, batería, notificaciones, agentes, permisos, mensajes de MEKA)",
       "responsable": "antigravity",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "alta",
       "descripcion": "Idea del usuario (inspiración Samsung Brief). La isla compone las tarjetas con eventos que ya existen: system.media, system.battery, system.notification (en camino, T-046), agent.working/done/error, agent.confirm (prioridad máxima) y message. Ordenar por prioridad y pasar entre tarjetas con animaciones. Controles: user.media y user.notification {id, action: dismiss|open}.",
       "archivos": [
@@ -1723,15 +1742,21 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T13:11:59-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Pila de tarjetas Samsung Brief con animaciones One UI 9 fluido (avatar, multimedia con ecualizador, y notificaciones con badge pulse), interaccion por rueda de raton y paginacion por dots"
         }
       ],
-      "actualizada": "2026-11-11T11:47:14-06:00"
+      "actualizada": "2026-11-11T13:11:59-06:00"
     },
     {
       "id": "T-048",
       "titulo": "Modo compañero al desplegar la isla: avatar flotante y chat con MEKA",
       "responsable": "antigravity",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "media",
       "descripcion": "Idea del usuario: al expandir la isla aparece el avatar y pasa a modo compañero. El backend ya lo cubre: chat por WebSocket (user.message, con private opcional), respuestas con emoción, memoria y permisos. El estado de la mascota en el Core llegará con T-006.",
       "archivos": [
@@ -1752,15 +1777,21 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "Recordatorio de Claude: el modo compañero es para conversar y pedir ayuda; sin mecánicas de cuidado (ver la tarea de quitarlas y docs/VISION.md)."
+        },
+        {
+          "fecha": "2026-11-11T12:31:16-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Modo companero integrado al desplegar la Dynamic Island: avatar flotante y chat con MEKA en el shelf"
         }
       ],
-      "actualizada": "2026-11-11T11:59:09-06:00"
+      "actualizada": "2026-11-11T12:31:16-06:00"
     },
     {
       "id": "T-049",
       "titulo": "Quitar las mecánicas de cuidado del prototipo: alimentar, energía, saciedad, ánimo, afecto y desbloqueos",
       "responsable": "antigravity",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "alta",
       "descripcion": "Decisión del usuario (2026-11-11): el Tamagotchi es solo inspiración para INTERACTUAR y CONVERSAR con el asistente; no se le alimenta ni se le cuida. Filosofía: productividad y ayuda, no distraer. Quitar del prototipo las estadísticas (HUD de energía/saciedad/ánimo/afecto), alimentar/acariciar/jugar, el progreso offline, dormirse sola y los personajes desbloqueables por afecto (todos disponibles). Las emociones se quedan para comunicar lo que hace el asistente (pensando, trabajando, error, celebra una tarea). La emoción 'eating' queda heredada en el contrato; si ya no se usa, avísame y la retiro en un cambio de versión mayor. Ver la sección «Compañera, no mascota que cuidar» de docs/VISION.md.",
       "archivos": [
@@ -1776,9 +1807,15 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T12:31:23-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Eliminadas todas las mecanicas de cuidado del prototipo (hambre, energia, animo, afecto y desbloqueos)"
         }
       ],
-      "actualizada": "2026-11-11T11:59:09-06:00"
+      "actualizada": "2026-11-11T12:31:23-06:00"
     },
     {
       "id": "T-050",
@@ -1797,7 +1834,9 @@
         "config.yml"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "fec83a0335c2d1a4356798be7d16e85f4dd53926"
+      ],
       "historial": [
         {
           "fecha": "2026-11-11T12:03:47-06:00",
@@ -1815,9 +1854,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "core/focus.py: sesiones con duración (25 min por defecto), filtro del bus que retiene notificaciones, música, batería normal, message de otros canales y agent.working/done; pasan permisos, errores, emotion, allow_apps y batería crítica; resumen en focus.ended; el chat de la mascota responde directo. Contrato 1.9. 7 tests (estables 3/3) + Postman 40/49 + prueba en vivo."
+        },
+        {
+          "fecha": "2026-11-11T12:15:51-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit fec83a0: feat(backend): modo concentración (cierra T-050)"
         }
       ],
-      "actualizada": "2026-11-11T12:09:57-06:00"
+      "actualizada": "2026-11-11T12:15:51-06:00"
     },
     {
       "id": "T-051",
@@ -1841,6 +1886,138 @@
         }
       ],
       "actualizada": "2026-11-11T12:09:57-06:00"
+    },
+    {
+      "id": "T-052",
+      "titulo": "Instalación más ligera: PyTorch opcional (openai-whisper a requirements aparte)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "Con faster-whisper como motor por defecto, PyTorch (varios GB) solo hace falta para el respaldo openai-whisper y para Qwen-TTS. Mover openai-whisper a un requirements opcional y ajustar CI y README: la instalación base pasaría de varios GB a unos cientos de MB.",
+      "archivos": [
+        "requirements.txt",
+        "requirements-*.txt",
+        "README.md",
+        ".github/**"
+      ],
+      "depende_de": [],
+      "commits": [
+        "59b9a9a80e3aea763f6e663a0220214c2b566c6d"
+      ],
+      "historial": [
+        {
+          "fecha": "2026-11-11T13:06:13-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T13:11:55-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T13:14:36-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "requirements-whisper.txt (opcional) con openai-whisper; requirements.txt sin PyTorch (comprobado en venv limpio: 71 paquetes sin torch vs 86 con él); CI sin el paso de PyTorch; README y config actualizados."
+        }
+      ],
+      "actualizada": "2026-11-11T15:29:41-06:00"
+    },
+    {
+      "id": "T-053",
+      "titulo": "Enrutamiento por capacidades: cada cerebro declara qué entiende (texto, imagen, audio, PDF) y MEKA usa la ruta óptima",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Idea del usuario (2026-11-11): el objetivo del asistente es fijo, pero el cómo (qué herramientas usa y cuáles omite) depende del cerebro. Capacidades declaradas en config por proveedor/modelo (cambian rápido; no se adivinan). Voz: si el cerebro entiende audio (Gemini; Gemma 4 vía llama.cpp) se le envía la nota tal cual y se omite la transcripción; si no, faster-whisper. Si la ruta nativa falla, respaldo con transcripción. Lo mismo para imágenes (visión o modelo de visión aparte) y PDF (nativo o extracción de texto). La privacidad (T-019) sigue mandando: lo privado solo a locales. Decidir qué texto guarda el historial cuando no hay transcripción.",
+      "archivos": [
+        "ai/**",
+        "core/**",
+        "config.yml",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [
+        "b43e6dd9407215b14ce3b8e5e355958a90f382ab"
+      ],
+      "historial": [
+        {
+          "fecha": "2026-11-11T13:15:09-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T14:33:31-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T14:48:01-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "Capacidades por cerebro (default por adaptador + config), Router.order(need=...) y can(); voz nativa con conversión a WAV y respaldo STT (stt.mode auto|always); PDF nativo con respaldo de extracción; audio a la nube solo con ai.privacy.audio_to_cloud; Telegram acepta respuesta sin transcripción. 12 tests (SDK reales de Claude y Gemini) + nota de voz real (cerebro sin audio → faster-whisper). Ruta nativa no probada en vivo: falta un cerebro con audio (Gemini con clave o T-054)."
+        },
+        {
+          "fecha": "2026-11-11T15:29:56-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit b43e6dd: feat(backend): enrutamiento por capacidades, voz y PDF nativos (cierra T-053)"
+        }
+      ],
+      "actualizada": "2026-11-11T15:29:56-06:00"
+    },
+    {
+      "id": "T-054",
+      "titulo": "Adaptador OpenAI-compatible (llama.cpp, LM Studio, vLLM): Gemma 4 local con audio nativo",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "Ollama aún no acepta audio de forma fiable con Gemma 4; llama-server (llama.cpp) sí, por /v1/chat/completions con input_audio. Un adaptador OpenAI-compatible abre además LM Studio, vLLM y otros servidores locales sin tocar el resto de MEKA.",
+      "archivos": [
+        "ai/providers/**",
+        "config.yml",
+        "requirements*.txt",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [
+        "7ab7c95dc3a732238e6e710d12df00c659741999"
+      ],
+      "historial": [
+        {
+          "fecha": "2026-11-11T13:15:10-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T14:54:10-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T14:58:45-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "ai/providers/openai_compat.py: llama.cpp, LM Studio, vLLM, Ollama /v1; imágenes (image_url) y audio (input_audio); tokens; local solo si base_url es de este equipo (o local: true declarado); capacidades prudentes por defecto (solo text). 11 tests + prueba real contra Ollama /v1 (gemma3:270m) como cerebro de MEKA. Pendiente: probar Gemma 4 con audio real en llama.cpp (requiere instalar llama.cpp y descargar el modelo)."
+        },
+        {
+          "fecha": "2026-11-11T15:18:14-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "Probado en vivo: llama.cpp b12282 + ggml-org/gemma-4-E2B-it-GGUF:Q4_0 (mmproj con init_audio). La nota de voz llega como input_audio y Gemma la entiende: MEKA responde con transcription=None sin cargar Whisper (~70 s en CPU, ~30 s llamada directa). Hallazgo: con --jinja Gemma 4 razona y vacía content; nueva opción thinking: false (chat_template_kwargs) y respuesta solo con razonamiento = ProviderError (ruta clásica). 13 tests. Limitación documentada: por audio nativo no se activa 'recuerda esto:'."
+        },
+        {
+          "fecha": "2026-11-11T15:30:09-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 7ab7c95: feat(backend): cerebro openai_compat, Gemma 4 con audio nativo en llama.cpp (cie"
+        }
+      ],
+      "actualizada": "2026-11-11T15:30:09-06:00"
     }
   ]
 }
