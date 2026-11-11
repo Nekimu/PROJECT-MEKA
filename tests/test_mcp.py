@@ -24,7 +24,8 @@ class FakeCore:
         self.facts.append(fact)
         return True
 
-    async def memories(self, user, query=None):
+    async def memories(self, user, query=None, include_private=True):
+        assert include_private is False  # El MCP nunca pide recuerdos privados
         return list(self.facts)
 
 
@@ -77,7 +78,14 @@ def test_mcp_server_registers_tools():
 
     server = build_mcp({"mcp": {"user": "42"}}, core=FakeCore())
     names = {tool.name for tool in run(server.list_tools())}
-    assert names == {"chat", "pet_status", "pet_emotion", "remember", "memories"}
+    assert names == {
+        "chat",
+        "pet_status",
+        "pet_emotion",
+        "remember",
+        "memories",
+        "ask_permission",
+    }
 
 
 def test_mcp_reports_expected_errors_to_the_agent():
@@ -95,3 +103,61 @@ def test_mcp_reports_expected_errors_to_the_agent():
     ok, bad = run(scenario())
     assert not ok.is_error
     assert bad.is_error and "furiosa" in bad.content[0].text
+
+
+def test_stdout_is_reserved_for_the_protocol(tmp_path):
+    """`python run.py mcp` no puede escribir nada en stdout que no sea JSON-RPC: un log
+    al importar la configuración rompía el protocolo en clientes estrictos."""
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    pytest.importorskip("mcp")
+    root = Path(__file__).resolve().parent.parent
+    # Un config_local.yml provoca un log al importar core.config (el caso que fallaba)
+    hello = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": "2025-06-18",
+            "capabilities": {},
+            "clientInfo": {"name": "test", "version": "1"},
+        },
+    }
+    result = subprocess.run(
+        [sys.executable, str(root / "run.py"), "mcp"],
+        input=json.dumps(hello) + "\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=root,
+        timeout=60,
+        check=False,
+    )
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    assert lines, f"El servidor no respondió. stderr:\n{result.stderr[-2000:]}"
+    for line in lines:
+        message = json.loads(line)  # Falla si se cuela un log u otro texto
+        assert message.get("jsonrpc") == "2.0"
+    assert json.loads(lines[0])["result"]["serverInfo"]["name"] == "MEKA"
+
+
+def test_ask_permission_tool():
+    class PermissionCore(FakeCore):
+        def __init__(self, approved):
+            super().__init__()
+            self.approved = approved
+            self.asked = []
+
+        async def ask_permission(self, action, *, timeout=120, details=None):
+            self.asked.append((action, timeout))
+            return self.approved
+
+    yes, no = PermissionCore(True), PermissionCore(False)
+    assert run(MekaTools(yes, "mcp", "42").ask_permission("borrar logs", 9999)).startswith(
+        "APROBADO"
+    )
+    assert yes.asked == [("borrar logs", 600)]  # Nunca más de 10 minutos
+    assert run(MekaTools(no, "mcp", "42").ask_permission("borrar logs")).startswith("DENEGADO")

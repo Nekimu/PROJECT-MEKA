@@ -77,5 +77,6 @@ def test_persona_voice_overrides_tts_config(tmp_path):
         "tts": {"enabled": True, "voice": "es-ES-ElviraNeural", "rate": "+0%", "pitch": "+0Hz"}
     }
     tts = TTSService(config, voice=load_persona("yotsuba").voice)
-    assert (tts.voice, tts.rate, tts.pitch) == ("es-MX-DaliaNeural", "+8%", "+6Hz")
-    assert TTSService(config, voice={}).voice == "es-ES-ElviraNeural"
+    edge = tts.engines["edge-tts"]
+    assert (edge.voice, edge.rate, edge.pitch) == ("es-MX-DaliaNeural", "+8%", "+6Hz")
+    assert TTSService(config, voice={}).engines["edge-tts"].voice == "es-ES-ElviraNeural"

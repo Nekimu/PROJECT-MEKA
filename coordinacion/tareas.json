@@ -1,0 +1,1216 @@
+{
+  "version": 1,
+  "agentes": {
+    "claude": {
+      "nombre": "Claude Code",
+      "rol": "Backend, IA, agente y canales"
+    },
+    "antigravity": {
+      "nombre": "Antigravity (Gemini)",
+      "rol": "Frontend, UI/UX y arte"
+    }
+  },
+  "prioridad_areas": [
+    "antigravity",
+    "claude"
+  ],
+  "areas": {
+    "antigravity": {
+      "rutas": [
+        "pet/web/**",
+        "pet/desktop/**",
+        "pet/src-tauri/**",
+        "pet/tools/**",
+        "pet/README.md",
+        "docs/assets/**",
+        "docs/screenshots/**",
+        "tests/test_pet_skins.py"
+      ]
+    },
+    "claude": {
+      "rutas": [
+        "core/**",
+        "ai/**",
+        "server/**",
+        "channels/**",
+        "personas/**",
+        "scripts/**",
+        "run.py",
+        "config.yml",
+        "tests/**",
+        ".claude/**"
+      ]
+    }
+  },
+  "tareas": [
+    {
+      "id": "T-001",
+      "titulo": "Entorno local de backend: Python 3.12, venv, dependencias, lint y tests",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Python 3.12 (el proyecto soporta 3.11-3.13), PyTorch CPU (sin GPU NVIDIA), requirements-dev.txt, `ruff check .` y `pytest` en verde. Pendiente fuera de pip: Ollama (+ gemma3:12b y embeddinggemma) y FFmpeg.",
+      "archivos": [],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "en_progreso",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T19:26:39-06:00",
+          "estado": "en_progreso",
+          "por": "claude",
+          "nota": "venv 3.12 + deps OK; ruff OK; 142 tests OK, 1 omitido por FFmpeg. Faltan Ollama y FFmpeg."
+        },
+        {
+          "fecha": "2026-11-09T20:57:05-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "FFmpeg 9.0.2 y Ollama 0.40.15 instalados; modelos gemma3:270m (pruebas) y embeddinggemma. config_local.yml (ignorado por git) soportado en core/config.py. 144 tests OK."
+        }
+      ],
+      "actualizada": "2026-11-09T20:57:05-06:00"
+    },
+    {
+      "id": "T-002",
+      "titulo": "Tablero compartido de tareas y protección de áreas (este sistema)",
+      "responsable": "claude",
+      "estado": "en_revision",
+      "prioridad": "alta",
+      "descripcion": "`coordinacion/` + `scripts/tareas.py`, hooks de git (commit-msg y post-commit) y hooks de Claude Code (SessionStart, PreToolUse, Stop).",
+      "archivos": [
+        "scripts/tareas.py",
+        "coordinacion/**",
+        ".githooks/**",
+        ".claude/settings.json"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "en_progreso",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T19:26:40-06:00",
+          "estado": "en_revision",
+          "por": "claude",
+          "nota": "Listo; hooks de Claude Code activos desde la próxima sesión. Sin commit todavía."
+        }
+      ],
+      "actualizada": "2026-11-09T19:26:40-06:00"
+    },
+    {
+      "id": "T-003",
+      "titulo": "Confirmación de acciones: agent.confirm con id y user.confirm en el WebSocket",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Registro de confirmaciones pendientes en MEKA Core: `agent.confirm` pasa a llevar `{id, action, expires_at}`; el cliente responde `user.confirm {id, approved}` por WebSocket o `POST /v1/confirmations/{id}` (para Telegram/móvil). Caducidad configurable y evento de resultado. Cambio de contrato ADITIVO: se avisa en coordinacion/README.md antes de publicarlo.",
+      "archivos": [
+        "core/events.py",
+        "core/engine.py",
+        "server/app.py",
+        "tests/test_server.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T09:17:31-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T09:23:55-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "core/confirmations.py (registro con caducidad: sin respuesta = no), evento agent.confirmed, user.confirm por WebSocket, GET/POST /v1/confirmations, herramienta MCP ask_permission. Probado en real: agente MCP pide permiso y la mascota (WebSocket) aprueba/rechaza. Contrato en coordinacion/README.md."
+        }
+      ],
+      "actualizada": "2026-11-11T09:23:55-06:00"
+    },
+    {
+      "id": "T-004",
+      "titulo": "Fase 3 · Manos (solo lectura): carpetas autorizadas, listar, leer y buscar",
+      "responsable": "claude",
+      "estado": "pendiente",
+      "prioridad": "alta",
+      "descripcion": "`hands.folders` en config.yml; nada fuera de ellas (resolución de rutas, sin symlinks que escapen). API `/v1/workspace/...` y herramientas MCP. Emite `agent.working`/`agent.done`/`agent.error` para que la mascota reaccione. Registro de cada acción.",
+      "archivos": [
+        "core/**",
+        "server/app.py",
+        "channels/mcp/**",
+        "config.yml",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-09T19:30:00-06:00"
+    },
+    {
+      "id": "T-005",
+      "titulo": "Fase 3 · Manos (escritura): punto de restauración git + confirmación + deshacer",
+      "responsable": "claude",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "descripcion": "Antes de mover/renombrar/borrar: commit de restauración en la carpeta autorizada, `agent.confirm` (T-003) y operación `undo`.",
+      "archivos": [
+        "core/**",
+        "server/app.py",
+        "tests/**"
+      ],
+      "depende_de": [
+        "T-003",
+        "T-004"
+      ],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-09T19:30:00-06:00"
+    },
+    {
+      "id": "T-006",
+      "titulo": "Estado de la mascota en el núcleo: GET/PUT /v1/pet/state persistido en SQLite",
+      "responsable": "claude",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "descripcion": "Guardar energía, saciedad, ánimo, afecto y desbloqueos en el Core para que escritorio, móvil y Telegram compartan la misma mascota. Las reglas del Tamagotchi siguen en el frontend; el Core solo almacena y difunde un evento `pet.state` (nuevo, aditivo).",
+      "archivos": [
+        "core/memory.py",
+        "server/app.py",
+        "core/events.py",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-09T19:30:00-06:00"
+    },
+    {
+      "id": "T-007",
+      "titulo": "Contrato publicado y versionado: GET /v1/contract (eventos, emociones, versión)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "El frontend puede leer en tiempo de ejecución los eventos y emociones válidos (`OUTBOUND_EVENTS`, `EMOTIONS`, eventos de entrada) y la versión del contrato, en lugar de duplicarlos a mano. Test que falle si cambia el contrato sin subir la versión.",
+      "archivos": [
+        "server/app.py",
+        "core/events.py",
+        "tests/test_server.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T09:27:23-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T09:34:16-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "core/contract.py fuente única (versión 1.4, campos y tipos de cada evento, historial); GET /v1/contract público con rutas REST generadas desde los routers; /v1/health incluye contract; POST /v1/events valida campos; test con huella que obliga a subir la versión (probado con mutación) y test de que todo evento emitido cumple el contrato."
+        }
+      ],
+      "actualizada": "2026-11-11T09:34:16-06:00"
+    },
+    {
+      "id": "T-008",
+      "titulo": "STT más rápido con faster-whisper (motor opcional, respaldo openai-whisper)",
+      "responsable": "claude",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "descripcion": "Notas de voz 2-4x más rápidas en CPU (punto 3 de la auditoría). `stt.engine` en config.yml.",
+      "archivos": [
+        "ai/stt.py",
+        "config.yml",
+        "tests/**"
+      ],
+      "depende_de": [
+        "T-001"
+      ],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-09T19:30:00-06:00"
+    },
+    {
+      "id": "T-009",
+      "titulo": "Configuración tipada y validada al arrancar (pydantic)",
+      "responsable": "claude",
+      "estado": "pendiente",
+      "prioridad": "baja",
+      "descripcion": "Errores de config.yml detectados al iniciar con mensajes claros (punto 6 de la auditoría). pydantic ya llega como dependencia.",
+      "archivos": [
+        "core/config.py",
+        "tests/test_config.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-09T19:30:00-06:00"
+    },
+    {
+      "id": "T-010",
+      "titulo": "Presupuesto de API en la nube y evento budget.low",
+      "responsable": "claude",
+      "estado": "pendiente",
+      "prioridad": "baja",
+      "descripcion": "Contar tokens/coste de Claude y Gemini por mes, límite en config.yml y emitir `budget.low` (ya está en el contrato, pero nadie lo publica todavía).",
+      "archivos": [
+        "ai/**",
+        "core/engine.py",
+        "config.yml",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-09T19:30:00-06:00"
+    },
+    {
+      "id": "T-011",
+      "titulo": "(Propuesta) UI de confirmación en la mascota para agent.confirm / user.confirm",
+      "responsable": "antigravity",
+      "estado": "en_revision",
+      "prioridad": "media",
+      "descripcion": "Propuesta de Claude Code como contraparte de T-003: diálogo Aprobar/Rechazar en la mascota que envía `user.confirm {id, approved}`. Antigravity puede aceptarla, cambiarla o descartarla.",
+      "archivos": [
+        "pet/web/**"
+      ],
+      "depende_de": [
+        "T-003"
+      ],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "propuesta, pendiente de que Antigravity la confirme"
+        },
+        {
+          "fecha": "2026-11-09T19:26:21-06:00",
+          "estado": "en_progreso",
+          "por": "antigravity",
+          "nota": "Aceptada propuesta: incluyendo diálogo Aprobar/Rechazar en el bocadillo para agent.confirm"
+        },
+        {
+          "fecha": "2026-11-09T19:30:35-06:00",
+          "estado": "en_revision",
+          "por": "antigravity",
+          "nota": "UI de confirmación Aprobar/Rechazar lista en el bocadillo (envía user.confirm {id, approved}); lista para integrarse cuando T-003 esté en Core"
+        }
+      ],
+      "actualizada": "2026-11-09T19:30:35-06:00"
+    },
+    {
+      "id": "T-012",
+      "titulo": "(Propuesta) Sincronizar el Tamagotchi con /v1/pet/state",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "baja",
+      "descripcion": "Propuesta de Claude Code como contraparte de T-006: la mascota lee/guarda su estado en el Core (con almacenamiento local como respaldo sin conexión).",
+      "archivos": [
+        "pet/web/**"
+      ],
+      "depende_de": [
+        "T-006"
+      ],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:30:00-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "propuesta, pendiente de que Antigravity la confirme"
+        },
+        {
+          "fecha": "2026-11-09T21:14:30-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Se omitió la mecánica de estado vital/hambre por decisión de diseño (enfoque Soul-of-Waifu + FILOSOFIA_HIBRIDA.md: avatares intercambiables sin mecánicas punitivas)"
+        }
+      ],
+      "actualizada": "2026-11-09T21:14:30-06:00"
+    },
+    {
+      "id": "T-013",
+      "titulo": "Rediseño visual del escenario de la mascota y HUD Tamagotchi (glassmorphism, animaciones y menú contextual)",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Renovación visual completa de la mascota (bocadillo anime con estado, barras HUD con gradientes y glow, menú contextual moderno con iconos, input de chat estilizado y ciclo visual día/noche).",
+      "archivos": [
+        "pet/web/index.html",
+        "pet/web/pet.css",
+        "pet/web/pet.js"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:26:03-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T19:26:19-06:00",
+          "estado": "en_progreso",
+          "por": "antigravity",
+          "nota": "Iniciando rediseño visual del escenario y HUD"
+        },
+        {
+          "fecha": "2026-11-09T19:30:33-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Escenario rediseñado con aura reactiva por estado, cabecera HUD, dock de acciones rápidas y transiciones suaves (@starting-style + allow-discrete)"
+        }
+      ],
+      "actualizada": "2026-11-09T19:30:33-06:00"
+    },
+    {
+      "id": "T-014",
+      "titulo": "Dashboard de control y simulador en navegador (tema oscuro/claro, log de eventos, selector visual de skins y estado Core)",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Transformar el panel lateral del navegador en un Dashboard moderno con tarjetas de skins desbloqueables, consola de eventos en tiempo real, estado de conexión con /v1/health y /v1/persona, y controles Tamagotchi.",
+      "archivos": [
+        "pet/web/index.html",
+        "pet/web/pet.css",
+        "pet/web/pet.js"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T19:26:06-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T19:26:20-06:00",
+          "estado": "en_progreso",
+          "por": "antigravity",
+          "nota": "Iniciando rediseño del panel de control en navegador"
+        },
+        {
+          "fecha": "2026-11-09T19:30:34-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Panel Studio rediseñado con selector visual de skins, tema claro/oscuro, barras de estadísticas, inspector /v1/health y consola de eventos en vivo"
+        }
+      ],
+      "actualizada": "2026-11-09T19:30:34-06:00"
+    },
+    {
+      "id": "T-015",
+      "titulo": "Modularidad: dividir server/app.py en routers (seguridad, esquemas, rutas por dominio)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "server/app.py (397 líneas) concentra seguridad, modelos, 15 rutas y el WebSocket en un solo create_app. T-003, T-004, T-006 y T-007 añaden rutas aquí: se divide antes. Sin cambios de contrato.",
+      "archivos": [
+        "server/**",
+        "tests/test_server.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:01:08-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:03:00-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "server/ dividido en app, security, schemas, deps y routes/ (status, conversation, voice, memory, events). Mismas rutas (comparado el OpenAPI)."
+        }
+      ],
+      "actualizada": "2026-11-09T21:03:00-06:00"
+    },
+    {
+      "id": "T-016",
+      "titulo": "Modularidad: motores TTS como paquete con interfaz común (edge, piper, qwen)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "ai/tts.py (315 líneas) mezcla 3 motores, la conversión a OGG y el respaldo. Interfaz TTSEngine (pendiente de la auditoría) y un módulo por motor: añadir uno nuevo no toca los demás.",
+      "archivos": [
+        "ai/tts.py",
+        "ai/tts/**",
+        "tests/test_tts.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:01:08-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:04:51-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "ai/tts/ con interfaz TTSEngine (base.py), un módulo por motor (edge, piper, qwen), audio.py (OGG) y service.py (respaldo)."
+        }
+      ],
+      "actualizada": "2026-11-09T21:04:51-06:00"
+    },
+    {
+      "id": "T-017",
+      "titulo": "Modularidad: extraer almacén de audios del motor e historial de conversación del servicio de IA",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "MekaEngine y AIService tienen responsabilidades secundarias (audios temporales, historial) que crecerán con T-003/T-005.",
+      "archivos": [
+        "core/engine.py",
+        "core/audio_store.py",
+        "ai/service.py",
+        "core/history.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:01:08-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:09:49-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "core/audio_store.py (AudioStore) y core/history.py (ConversationStore). Además core/memory.py dividido: core/textsearch.py y core/legacy_import.py."
+        }
+      ],
+      "actualizada": "2026-11-09T21:09:49-06:00"
+    },
+    {
+      "id": "T-018",
+      "titulo": "Guardia de tamaño: test que falla si un módulo del backend supera 300 líneas",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "",
+      "archivos": [
+        "tests/test_modularidad.py"
+      ],
+      "depende_de": [
+        "T-015",
+        "T-016",
+        "T-017"
+      ],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:01:09-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:09:49-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "tests/test_modularidad.py: máx. 300 líneas en core, ai, server, channels, scripts y run.py. scripts/tareas.py dividido en scripts/tablero/."
+        }
+      ],
+      "actualizada": "2026-11-09T21:09:49-06:00"
+    },
+    {
+      "id": "T-019",
+      "titulo": "Filosofía 5.3: enrutamiento por tarea y privacidad (documentos/sensibles a local)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Hoy solo hay ai.local_only global. Falta: proveedor por tarea (chat, visión, documentos) y marca 'privado' por petición que obligue a un proveedor local, como pide la tabla de enrutamiento.",
+      "archivos": [
+        "ai/**",
+        "core/engine.py",
+        "config.yml",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:01:09-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T22:07:18-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-09T22:13:48-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "ai/routing.py (cerebro por tarea; lo privado solo local, nunca de respaldo en la nube), ai/privacy.py (credenciales, llaves, JWT, tarjetas con Luhn, CURP), privacidad persistente por sesión en SQLite hasta el reset, documentos privados por defecto, 'private' en API y WebSocket. 22 tests + prueba real."
+        }
+      ],
+      "actualizada": "2026-11-09T22:13:48-06:00"
+    },
+    {
+      "id": "T-020",
+      "titulo": "Filosofía 5.1/8: respuesta normalizada del proveedor (texto, modelo, uso) y registro de ejecución sin contenido",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Provider.chat devuelve solo texto. Normalizar a ProviderResult(text, provider, model, tokens, latency) y guardar en SQLite proveedor, modelo, hora, tarea y resultado SIN el texto de la conversación. Base de T-010 (budget.low).",
+      "archivos": [
+        "ai/providers/**",
+        "ai/service.py",
+        "core/**",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:01:09-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:56:17-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-09T22:03:16-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "ProviderReply (texto + tokens) en Ollama, Claude y Gemini; Answer con ok/proveedor/modelo/latencia; core/runs.py (tabla runs sin contenido, máx. 5000) y GET /v1/runs. Probado con Ollama real."
+        }
+      ],
+      "actualizada": "2026-11-09T22:03:16-06:00"
+    },
+    {
+      "id": "T-021",
+      "titulo": "Filosofía 5.2: eventos normalizados para el avatar (error y fin de respuesta)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "Si el cerebro falla, la mascota no se entera (solo se publica thinking y message). Publicar emotion=error / agent.error al fallar y volver a idle al terminar. Cambio aditivo del contrato: avisar a Antigravity.",
+      "archivos": [
+        "core/engine.py",
+        "core/events.py",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:01:09-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:56:17-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-09T22:03:16-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "message con emotion=error si el cerebro falla; emotion=error si el núcleo revienta; sad si no entiende el audio. Avisado en coordinacion/README.md (contrato)."
+        }
+      ],
+      "actualizada": "2026-11-09T22:03:16-06:00"
+    },
+    {
+      "id": "T-022",
+      "titulo": "Integración de assets Pixel Art animados (Hana y Clawd), herramienta pixelize.py y GUI minimalista estilo Apple con ventana emergente",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Migración de animaciones a WebP Pixel Art nativos ultraligeros (3-6 KB) desde Stickers e Imagenes, rediseño minimalista estilo macOS/Apple con lanzamiento en popup transparente y conexión automática con el agente.",
+      "archivos": [
+        "pet/web/index.html",
+        "pet/web/pet.css",
+        "pet/web/pet.js",
+        "pet/web/skins/manifest.js",
+        "pet/web/skins/dva_pixel/**",
+        "pet/web/skins/clawd_pixel/**",
+        "pet/tools/pixelize.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:03:51-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:04:08-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Integrados los sprites Pixel Art animados en WebP de Hana (dva_pixel) y Clawd (clawd_pixel), herramienta pet/tools/pixelize.py y GUI minimalista estilo macOS/Apple con lanzamiento en popup emergente"
+        },
+        {
+          "fecha": "2026-11-09T21:14:31-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Implementada barra lateral oculta desplegable (Navigation Drawer) estilo Soul-of-Waifu + Apple Minimalist, eliminando barras de estado vital y dejando todos los avatares desbloqueados e intercambiables"
+        }
+      ],
+      "actualizada": "2026-11-09T21:14:31-06:00"
+    },
+    {
+      "id": "T-023",
+      "titulo": "Lint: RUF002 (signo × ambiguo) en pet/tools/pixelize.py rompe ruff check . del CI",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "Aviso de Claude Code: ruff marca 4 RUF002 en el docstring (64×64, 256×256, 512×512). Cambiar × por x o añadir # noqa: RUF002. El CI ejecuta ruff check . sobre todo el repo.",
+      "archivos": [
+        "pet/tools/pixelize.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:09:49-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:39:27-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Corregidos caracteres RUF002 en el docstring de pet/tools/pixelize.py (ruff check en verde)"
+        }
+      ],
+      "actualizada": "2026-11-09T21:39:27-06:00"
+    },
+    {
+      "id": "T-024",
+      "titulo": "App de escritorio nativa en Python (ventana transparente sin bordes + Pixel Art + Drawer)",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "",
+      "archivos": [
+        "pet/tools/desktop.py",
+        "pet/README.md"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:24:12-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:24:38-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Implementado pet/tools/desktop.py (Tkinter + Pillow + WebSockets) con ventana sin bordes transparente, Pixel Art 64x64 escalado NEAREST, Dynamic Island, confirmaciones agent.confirm y cajón lateral de personajes"
+        }
+      ],
+      "actualizada": "2026-11-09T21:24:38-06:00"
+    },
+    {
+      "id": "T-025",
+      "titulo": "Decisión: mascota de escritorio en Go con Wails v2 (reemplaza a Tauri y al prototipo Tkinter)",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "El usuario eligió Go. Entorno listo en este equipo: Go 1.27.3, Wails CLI v2.17.1, WebView2 y Node/npm (wails doctor: OK). Wails reutiliza pet/web tal cual (HTML/CSS/JS) dentro de una ventana Frameless + AlwaysOnTop con transparencia (BackgroundColour RGBA 0,0,0,0 y en Windows WebviewIsTransparent + WindowIsTranslucent). Por definir: carpeta del proyecto Go (p. ej. pet/desktop/) y añadirla al área de Antigravity en coordinacion/tareas.json; qué hacer con pet/src-tauri y pet/tools/desktop.py. El backend no cambia: misma conexión WebSocket a /v1/events.",
+      "archivos": [],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:37:48-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:39:28-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Implementado cliente de escritorio nativo en Go (pet/desktop/) con WebView2 transparente sin bordes, puente JS (mekaStartDrag, mekaSetDrawerExpanded, mekaCloseWindow), pruebas go test en verde y binario meka-desktop.exe. Eliminados pet/src-tauri y pet/tools/desktop.py"
+        }
+      ],
+      "actualizada": "2026-11-09T21:39:28-06:00"
+    },
+    {
+      "id": "T-026",
+      "titulo": "Pruebas del canal MCP con clientes reales (SDK stdio, Claude Code, Gemini CLI)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "",
+      "archivos": [
+        "run.py",
+        "tests/test_mcp.py",
+        "README.md"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:44:09-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:44:10-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "5 herramientas OK por stdio contra MEKA Core real; la mascota (WebSocket) recibe los eventos. Claude Code 2.x y Gemini CLI 0.62: Connected. Corregido: un log al importar core.config se colaba en stdout y rompía el JSON-RPC (test de regresión)."
+        }
+      ],
+      "actualizada": "2026-11-09T21:44:10-06:00"
+    },
+    {
+      "id": "T-027",
+      "titulo": "Ventana fija no redimensionable, flotante (Always on Top), fondo transparente nativo en Go y animaciones mejoradas",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "",
+      "archivos": [
+        "pet/desktop/window_windows.go",
+        "pet/desktop/main.go",
+        "pet/desktop/main_test.go",
+        "pet/web/pet.css",
+        "pet/web/pet.js",
+        "pet/README.md"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T21:56:30-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T21:56:35-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Configurada ventana fija 300x390 no redimensionable (HintFixed + WS_POPUP), AlwaysOnTop persistente con reafirmación en drag, fondo 100% transparente en WebView2 con ICoreWebView2Controller2::PutDefaultBackgroundColor y DWM, sombreado dinámico reactivo, squash/stretch y tacto al clic"
+        }
+      ],
+      "actualizada": "2026-11-09T21:56:35-06:00"
+    },
+    {
+      "id": "T-028",
+      "titulo": "Bug: emojis en la consola de Windows con salida redirigida daban HTTP 500 en /v1/chat",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "",
+      "archivos": [
+        "core/logger.py",
+        "tests/test_text_utils.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T22:03:16-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T22:03:17-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "UnicodeEncodeError (cp1252) en log_conversation. Consola tolerante (backslashreplace) y log_conversation nunca rompe una respuesta. Test de regresión."
+        }
+      ],
+      "actualizada": "2026-11-09T22:03:17-06:00"
+    },
+    {
+      "id": "T-029",
+      "titulo": "Modularidad: core/engine.py está en 290 líneas (límite 300); separar análisis de archivos y voz",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "",
+      "archivos": [
+        "core/**",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T22:03:17-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T22:11:51-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "core/engine.py 290 -> 179 líneas: core/media.py (voz, archivos, audios) y core/replies.py (Reply, UnsupportedFileError)."
+        }
+      ],
+      "actualizada": "2026-11-09T22:11:51-06:00"
+    },
+    {
+      "id": "T-030",
+      "titulo": "Crear skill de Golang, corregir errores de UI (Drawer, arrastre, capturas) y sincronizar documentacion",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "",
+      "archivos": [
+        "pet/desktop/window_windows.go",
+        "pet/desktop/main_test.go",
+        "pet/web/index.html",
+        "pet/web/pet.js",
+        "pet/web/pet.css",
+        "pet/README.md",
+        "docs/VISION.md",
+        "docs/FILOSOFIA_HIBRIDA.md",
+        "README.md",
+        "CHANGELOG.md"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T22:09:01-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T22:09:07-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Creado skill golang en ~/.gemini/config/skills/golang/SKILL.md. Corregidos bugs de UI: Drawer simplificado con transicion popover sin cierres accidentales de IntersectionObserver, arrastre Dynamic Island con stageTop y liberacion de puntero, tarjetas de avatares en columna unica, DataPath persistente en WebView2, y documentacion sincronizada sin referencias legadas a Tauri"
+        }
+      ],
+      "actualizada": "2026-11-09T22:09:07-06:00"
+    },
+    {
+      "id": "T-031",
+      "titulo": "Privacidad de la memoria larga: recuerdos guardados en una conversación privada no deben ir a prompts en la nube",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Hoy la privacidad cubre la petición y el historial, pero un 'recuerda esto' dicho en modo privado se guarda como recuerdo normal y puede añadirse después al prompt de Claude/Gemini. Marcar recuerdos como privados y filtrarlos cuando el proveedor no es local.",
+      "archivos": [
+        "core/memory.py",
+        "ai/service.py",
+        "core/semantic.py",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T22:13:48-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T22:15:58-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-09T22:21:58-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "facts.private (migración automática, probada con la base real; respaldo en %TEMP%). Recuerdos privados solo en prompts cuando todos los proveedores (respaldo incluido) son locales; MCP y Telegram nunca los reciben (include_private=false). ai/recall.py separado (service.py 244 líneas) y core/memory_sessions.py (memory.py 264). 7 tests nuevos."
+        }
+      ],
+      "actualizada": "2026-11-09T22:21:58-06:00"
+    },
+    {
+      "id": "T-032",
+      "titulo": "Telegram: comando /privado para activar el modo privado de la conversación",
+      "responsable": "claude",
+      "estado": "pendiente",
+      "prioridad": "baja",
+      "descripcion": "",
+      "archivos": [
+        "channels/telegram/**",
+        "tests/test_telegram.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T22:13:48-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-09T22:13:48-06:00"
+    },
+    {
+      "id": "T-033",
+      "titulo": "Corrección de fondo blanco en ventana Win32/DWM, bocadillo de diálogo no intrusivo y animaciones squash & stretch",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "",
+      "archivos": [
+        "pet/desktop/window_windows.go",
+        "pet/web/pet.css",
+        "pet/web/pet.js"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-09T22:31:01-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-09T22:31:10-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "pet(desktop+web): transparencia DWM sin fondo blanco, clamp en bocadillo y animaciones squash & stretch"
+        }
+      ],
+      "actualizada": "2026-11-09T22:31:10-06:00"
+    },
+    {
+      "id": "T-034",
+      "titulo": "Diálogo de permisos: usar timeout del evento, cerrar con agent.confirmed y pedir pendientes al conectar",
+      "responsable": "antigravity",
+      "estado": "pendiente",
+      "prioridad": "alta",
+      "descripcion": "Aviso de Claude Code: T-003 ya está en el Core. agent.confirm trae {id, action, timeout, expires_at, details?}; hoy pet.js cierra el diálogo a los 25 s fijos aunque el Core espera 'timeout'. Nuevo evento agent.confirmed {id, approved, by} para cerrar el diálogo si se resolvió en otro cliente o caducó (by: timeout). Al conectar: GET /v1/confirmations. user.confirm no cambia. Además: .gitignore actualizado por Claude: *.exe (meka-desktop.exe) y .gemini/ quedan fuera del repo; se quitaron las líneas de pet/src-tauri.",
+      "archivos": [
+        "pet/web/**",
+        "pet/desktop/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T09:23:56-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-11T09:23:56-06:00"
+    },
+    {
+      "id": "T-035",
+      "titulo": "Notch superior centrado estilo Apple Dynamic Island con negro profundo, retroiluminación morada tenue y despliegue elástico",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "",
+      "archivos": [
+        "pet/desktop/main.go",
+        "pet/desktop/window_windows.go",
+        "pet/desktop/main_test.go",
+        "pet/web/index.html",
+        "pet/web/pet.css",
+        "pet/web/pet.js",
+        "pet/README.md"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T09:31:30-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T09:31:34-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "pet(desktop+web): notch superior estilo Apple Dynamic Island en negro profundo, aura tenue morada y despliegue elástico hacia abajo"
+        }
+      ],
+      "actualizada": "2026-11-11T09:31:34-06:00"
+    },
+    {
+      "id": "T-036",
+      "titulo": "App Go/web: leer eventos y emociones de GET /v1/contract y avisar si la versión mayor no coincide",
+      "responsable": "antigravity",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "descripcion": "Aviso de Claude Code (T-007): GET /v1/contract es público y devuelve version (1.4), events.outbound/inbound con campos y tipos, emotions y rest. /v1/health trae contract. Sugerencia: al conectar, si la versión mayor difiere, mostrar aviso en vez de fallar en silencio.",
+      "archivos": [
+        "pet/web/**",
+        "pet/desktop/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T09:34:17-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-11T09:34:17-06:00"
+    },
+    {
+      "id": "T-037",
+      "titulo": "Pruebas de la API con Postman CLI (colección generada + entorno local)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "",
+      "archivos": [
+        "tests/postman/**",
+        "README.md"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T09:42:36-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T09:42:38-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "postman-cli 1.87 instalado (npm -g). tests/postman: 24 peticiones / 32 comprobaciones en 6 carpetas, generadas desde generar_coleccion.py. Pasan todas contra el Core real con Ollama."
+        }
+      ],
+      "actualizada": "2026-11-11T09:42:38-06:00"
+    },
+    {
+      "id": "T-038",
+      "titulo": "Dynamic Island: despliegue solo por clic, iluminacion/animacion al hover y auto-evasion de Snipping Tool",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Separar hover y click en Dynamic Island: hover intensifica retroiluminacion morada y anima mini-avatar/chevron sin desplegar; click despliega y repliega. Auto-dodge en Go para Snipping Tool evitando sobreposicion.",
+      "archivos": [
+        "pet/web/pet.js",
+        "pet/web/pet.css",
+        "pet/desktop/window_windows.go",
+        "pet/desktop/main_test.go"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T09:47:25-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T09:47:43-06:00",
+          "estado": "en_progreso",
+          "por": "antigravity",
+          "nota": "Iniciando implementacion de despliegue exclusivo por clic, iluminacion/animacion al hover y auto-dodge para Snipping Tool"
+        },
+        {
+          "fecha": "2026-11-11T10:03:24-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Completado: hover ya no despliega, intensifica iluminacion morada de fondo y anima mini-avatar/chevron; clic despliega/repliega exclusivamente. Auto-dodge en Go para Snipping Tool (Win+Shift+S) evitando sobreposicion."
+        }
+      ],
+      "actualizada": "2026-11-11T10:03:24-06:00"
+    }
+  ]
+}

@@ -55,7 +55,7 @@ flowchart TB
 
 ## Contrato de eventos
 
-MEKA Core y sus clientes (mascota, app móvil) se comunican con mensajes JSON `{"type": ..., "data": {...}}` por WebSocket en `ws://127.0.0.1:8765/v1/events`. **MEKA Core ya implementa este contrato** (`server/app.py`) y la mascota también (`pet/web/pet.js`). Por defecto solo escucha en este equipo; para conectarse desde fuera (red local o Tailscale) hace falta `MEKA_API_TOKEN`, que se envía como `?token=` o en la cabecera `Authorization: Bearer`.
+MEKA Core y sus clientes (mascota, app móvil) se comunican con mensajes JSON `{"type": ..., "data": {...}}` por WebSocket en `ws://127.0.0.1:8765/v1/events`. **MEKA Core ya implementa este contrato** (definido en `core/contract.py` y publicado en `GET /v1/contract`, con su versión) y la mascota también (`pet/web/pet.js`). Por defecto solo escucha en este equipo; para conectarse desde fuera (red local o Tailscale) hace falta `MEKA_API_TOKEN`, que se envía como `?token=` o en la cabecera `Authorization: Bearer`.
 
 Un agente externo puede publicar estos eventos con `POST /v1/events` o con las herramientas `pet_status` y `pet_emotion` del servidor MCP.
 
@@ -66,7 +66,8 @@ Un agente externo puede publicar estos eventos con `POST /v1/events` o con las h
 | `agent.working` | `{"task": "Ordenar Descargas"}` | Se pone a trabajar (animación continua) |
 | `agent.done` | `{"summary": "Ordené 42 archivos"}` | Celebra; sube el ánimo y el afecto |
 | `agent.error` | `{"message": "No pude abrir..."}` | Se agobia; baja un poco el ánimo |
-| `agent.confirm` | `{"action": "borrar 3 duplicados"}` | Pide permiso (se confirma desde el móvil o la mascota) |
+| `agent.confirm` | `{"id": "a1b2", "action": "borrar 3 duplicados", "timeout": 120, "expires_at": ...}` | Pide permiso (se confirma desde el móvil o la mascota); sin respuesta a tiempo = no |
+| `agent.confirmed` | `{"id": "a1b2", "approved": true, "by": "pet"}` | Cierra el diálogo: el permiso ya se resolvió |
 | `message` | `{"text": "...", "emotion": "happy"}` | Dice el texto con la emoción indicada |
 | `emotion` | `{"emotion": "thinking"}` | Cambia de expresión |
 | `budget.low` | `{}` | Se pone triste: se acaban los créditos de la API |
@@ -79,7 +80,7 @@ Emociones válidas: `idle`, `happy`, `working`, `thinking`, `sleeping`, `eating`
 |---|---|---|
 | `client.hello` | `{"client": "pet", "skin": "meka"}` | Presentarse al conectar |
 | `user.message` | `{"text": "..."}` | Lo que escribes en la mascota |
-| `user.confirm` *(próximamente)* | `{"id": "...", "approved": true}` | Responder a `agent.confirm` |
+| `user.confirm` | `{"id": "...", "approved": true}` | Responder a `agent.confirm` (también `POST /v1/confirmations/{id}`) |
 
 ## Personajes
 

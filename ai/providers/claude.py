@@ -4,7 +4,7 @@ import base64
 import importlib.util
 import os
 
-from ai.providers.base import ProviderError, RefusalError, image_bytes
+from ai.providers.base import ProviderError, ProviderReply, RefusalError, image_bytes
 from core.logger import setup_logger
 
 logger = setup_logger("Claude")
@@ -53,7 +53,9 @@ class ClaudeProvider:
         blocks.append({"type": "text", "text": message["content"]})
         return blocks
 
-    async def chat(self, system: str, messages: list[dict], *, vision: bool = False) -> str:
+    async def chat(
+        self, system: str, messages: list[dict], *, vision: bool = False
+    ) -> ProviderReply:
         request = {
             "model": self.model,
             "max_tokens": self.max_tokens,
@@ -79,7 +81,12 @@ class ClaudeProvider:
             raise RefusalError(f"Claude declinó responder (categoría: {category})")
         if response.stop_reason == "max_tokens":
             logger.warning("La respuesta de Claude se cortó por max_tokens")
-        return "".join(b.text for b in response.content if b.type == "text").strip()
+        usage = getattr(response, "usage", None)
+        return ProviderReply(
+            text="".join(b.text for b in response.content if b.type == "text").strip(),
+            input_tokens=getattr(usage, "input_tokens", None),
+            output_tokens=getattr(usage, "output_tokens", None),
+        )
 
     def check_health(self) -> bool:
         if importlib.util.find_spec("anthropic") is None:

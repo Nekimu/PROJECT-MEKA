@@ -113,8 +113,12 @@ class CoreClient:
 
     # ------------------------------------------------------------------ memoria
 
-    async def memories(self, user: str, query: str | None = None) -> list[str]:
-        params = {"q": query} if query else None
+    async def memories(
+        self, user: str, query: str | None = None, *, include_private: bool = True
+    ) -> list[str]:
+        params = {"q": query} if query else {}
+        if not include_private:
+            params["include_private"] = "false"
         return (
             await self._json("GET", f"/v1/users/{quote(user, safe='')}/memories", params=params)
         )["memories"]
@@ -125,6 +129,14 @@ class CoreClient:
                 "POST", f"/v1/users/{quote(user, safe='')}/memories", json={"fact": fact}
             )
         )["added"]
+
+    async def ask_permission(
+        self, action: str, *, timeout: float = 120, details: dict | None = None
+    ) -> bool:
+        """Pide permiso al usuario (la mascota muestra el diálogo) y espera su respuesta."""
+        body = {"action": action, "timeout": timeout, "details": details or {}}
+        response = await self._json("POST", "/v1/confirmations", json=body, timeout=timeout + 15)
+        return response["approved"]
 
     async def forget(self, user: str) -> int:
         return (await self._json("DELETE", f"/v1/users/{quote(user, safe='')}/memories"))["removed"]

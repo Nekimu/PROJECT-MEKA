@@ -49,6 +49,16 @@ def is_valid_token(token: str | None) -> bool:
     return bool(token) and token not in PLACEHOLDER_TOKENS
 
 
+def deep_merge(base: dict, override: dict) -> dict:
+    """Mezcla `override` sobre `base` (in situ): los diccionarios se combinan, el resto se reemplaza."""
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
 def load_config(config_path: str | os.PathLike | None = None) -> dict:
     """
     Carga la configuración desde un archivo YAML y superpone variables de entorno.
@@ -59,6 +69,13 @@ def load_config(config_path: str | os.PathLike | None = None) -> dict:
 
     with path.open("r", encoding="utf-8") as f:
         config = yaml.safe_load(f) or {}
+
+    # Ajustes de este equipo (no van al repositorio): config_local.yml junto a config.yml
+    local_path = path.with_name(f"{path.stem}_local{path.suffix}")
+    if local_path.is_file():
+        with local_path.open("r", encoding="utf-8") as f:
+            deep_merge(config, yaml.safe_load(f) or {})
+        logger.info(f"Ajustes locales aplicados desde {local_path.name}")
 
     # Superponer secretos desde variables de entorno
     telegram = config.setdefault("telegram", {})

@@ -10,29 +10,26 @@ La memoria semántica (recordar por significado) guarda un vector por recuerdo e
 en Python (de sobra para miles de recuerdos).
 """
 
-import contextlib
-import json
-import math
-import re
+import functools
 import sqlite3
 import threading
 import time
-import unicodedata
-from array import array
 from pathlib import Path
 
+from core.legacy_import import import_legacy_json
 from core.logger import setup_logger
+from core.memory_sessions import SessionsMixin
+from core.textsearch import (
+    extract_keywords,
+    normalize_text,
+    pack,
+    stem,
+    unpack,
+)
 
 logger = setup_logger("Memory")
 
-SCHEMA_VERSION = 2
-
-# Palabras a ignorar en la búsqueda (conectores y disparadores), ya normalizadas sin tildes.
-STOPWORDS = {
-    "recuerdas", "recuerda", "acuerdas", "sabes", "dijiste", "sobre", "esto", "esta", "este",
-    "donde", "cual", "cuales", "como", "cuando", "porque", "para", "algo", "nada", "todo",
-    "tengo", "tienes", "mucho", "cosas", "dime", "eres", "estas", "quien",
-}  # fmt: skip
+SCHEMA_VERSION = 3  # 3: facts.private
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (
@@ -40,6 +37,7 @@ CREATE TABLE IF NOT EXISTS facts (
     user_id    TEXT NOT NULL,
     fact       TEXT NOT NULL,
     created_at REAL NOT NULL,
+    private    INTEGER NOT NULL DEFAULT 0,  -- Dicho en una conversación privada: solo local
     UNIQUE (user_id, fact)
 );
 CREATE INDEX IF NOT EXISTS facts_user ON facts (user_id, id);
@@ -52,6 +50,11 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS messages_session ON messages (session, id);
+
+CREATE TABLE IF NOT EXISTS private_sessions (
+    session TEXT PRIMARY KEY,   -- Conversaciones en modo privado: solo proveedores locales
+    since   REAL NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS fact_vectors (
     fact_id INTEGER PRIMARY KEY REFERENCES facts (id) ON DELETE CASCADE,
@@ -73,37 +76,7 @@ END;
 """
 
 
-def normalize_text(text: str) -> str:
-    """Minúsculas, sin tildes y sin signos de puntuación (¿recuérdas? -> recuerdas)."""
-    text = unicodedata.normalize("NFKD", text.lower())
-    text = "".join(ch for ch in text if not unicodedata.combining(ch))
-    return re.sub(r"[^\w\s]", " ", text)
-
-
-def extract_keywords(text: str) -> list[str]:
-    return [w for w in normalize_text(text).split() if len(w) > 3 and w not in STOPWORDS]
-
-
-def pack(vector: list[float]) -> bytes:
-    """Vector normalizado en float32: el mismo formato que usa sqlite-vec."""
-    norm = math.sqrt(sum(x * x for x in vector)) or 1.0
-    return array("f", (x / norm for x in vector)).tobytes()
-
-
-def unpack(blob: bytes) -> array:
-    return array("f", blob)
-
-
-def stem(word: str) -> str:
-    """Quita el plural para buscar por prefijo: juegos -> juego*, canciones -> cancion*."""
-    if len(word) > 5 and word.endswith("es"):
-        return word[:-2]
-    if len(word) > 4 and word.endswith("s"):
-        return word[:-1]
-    return word
-
-
-class MemoryStore:
+class MemoryStore(SessionsMixin):
     def __init__(self, db_path: str | Path, *, legacy_json: Path | None = None, legacy_owner=None):
         self.db_path = Path(db_path)
         self._lock = threading.Lock()
@@ -114,12 +87,19 @@ class MemoryStore:
         self.db.execute("PRAGMA journal_mode=WAL")  # Lecturas sin bloquear escrituras
         self.db.execute("PRAGMA foreign_keys=ON")
         self.db.executescript(SCHEMA)
+        self._migrate()
         self.fts = self._create_fts()
         self.vec = self._load_sqlite_vec()
         self.db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
         self.db.commit()
         if legacy_json is not None:
             self.import_json(Path(legacy_json), legacy_owner)
+
+    def _migrate(self):
+        """Bases creadas por versiones anteriores: añade las columnas que falten."""
+        columns = {row[1] for row in self.db.execute("PRAGMA table_info(facts)")}
+        if "private" not in columns:
+            self.db.execute("ALTER TABLE facts ADD COLUMN private INTEGER NOT NULL DEFAULT 0")
 
     def _create_fts(self) -> bool:
         try:
@@ -146,24 +126,33 @@ class MemoryStore:
 
     # ------------------------------------------------------------------ recuerdos
 
-    def add_fact(self, user_id: int | str, fact: str) -> bool:
-        """Añade un hecho a la memoria del usuario. False si estaba vacío o repetido."""
+    def add_fact(self, user_id: int | str, fact: str, *, private: bool = False) -> bool:
+        """Añade un hecho a la memoria del usuario. False si estaba vacío o repetido.
+
+        Con `private`, solo podrá llegar a proveedores locales. Si ya existía, pasa a privado.
+        """
         fact = fact.strip()
         if not fact:
             return False
         with self._lock, self.db:
             cursor = self.db.execute(
-                "INSERT OR IGNORE INTO facts (user_id, fact, created_at) VALUES (?, ?, ?)",
-                (str(user_id), fact, time.time()),
+                "INSERT OR IGNORE INTO facts (user_id, fact, created_at, private) VALUES (?, ?, ?, ?)",
+                (str(user_id), fact, time.time(), int(private)),
             )
+            if private and not cursor.rowcount:
+                self.db.execute(
+                    "UPDATE facts SET private = 1 WHERE user_id = ? AND fact = ?",
+                    (str(user_id), fact),
+                )
         if cursor.rowcount:
             logger.info(f"Nuevo hecho recordado para el usuario {user_id}")
         return bool(cursor.rowcount)
 
-    def get_facts(self, user_id: int | str) -> list[str]:
+    def get_facts(self, user_id: int | str, *, include_private: bool = True) -> list[str]:
         with self._lock:
             rows = self.db.execute(
-                "SELECT fact FROM facts WHERE user_id = ? ORDER BY id", (str(user_id),)
+                "SELECT fact FROM facts WHERE user_id = ? AND (private = 0 OR ?) ORDER BY id",
+                (str(user_id), int(include_private)),
             ).fetchall()
         return [row[0] for row in rows]
 
@@ -181,36 +170,41 @@ class MemoryStore:
         with self._lock, self.db:
             return self.db.execute("DELETE FROM facts WHERE user_id = ?", (str(user_id),)).rowcount
 
-    def search(self, user_id: int | str, query: str, limit: int = 5) -> list[str]:
+    def search(
+        self, user_id: int | str, query: str, limit: int = 5, *, include_private: bool = True
+    ) -> list[str]:
         """Recuerdos relevantes del usuario, del más al menos relevante."""
         keywords = extract_keywords(query)
+        facts = functools.partial(self.get_facts, user_id, include_private=include_private)
         if not keywords:
-            # Sin palabras clave claras, los últimos recuerdos
-            return self.get_facts(user_id)[-limit:]
-        found = self._search_fts(user_id, keywords, limit) if self.fts else None
+            return facts()[-limit:]  # Sin palabras clave claras, los últimos recuerdos
+        found = self._search_fts(user_id, keywords, limit, include_private) if self.fts else None
         if found is None:
-            found = self._search_simple(user_id, keywords, limit)
-        return found or self.get_facts(user_id)[-3:]
+            found = self._search_simple(facts(), keywords, limit)
+        return found or facts()[-3:]
 
-    def _search_fts(self, user_id, keywords: list[str], limit: int) -> list[str] | None:
+    def _search_fts(
+        self, user_id, keywords: list[str], limit: int, include_private: bool
+    ) -> list[str] | None:
         # "color"* encuentra también "colores"; OR para que baste con una palabra
         match = " OR ".join(f'"{stem(word)}"*' for word in keywords)
         try:
             with self._lock:
                 rows = self.db.execute(
                     "SELECT f.fact FROM facts_fts JOIN facts f ON f.id = facts_fts.rowid "
-                    "WHERE facts_fts MATCH ? AND f.user_id = ? "
+                    "WHERE facts_fts MATCH ? AND f.user_id = ? AND (f.private = 0 OR ?) "
                     "ORDER BY bm25(facts_fts), f.id DESC LIMIT ?",
-                    (match, str(user_id), limit),
+                    (match, str(user_id), int(include_private), limit),
                 ).fetchall()
         except sqlite3.OperationalError as e:
             logger.warning(f"Búsqueda FTS fallida ({e}); se usa la simple")
             return None
         return [row[0] for row in rows]
 
-    def _search_simple(self, user_id, keywords: list[str], limit: int) -> list[str]:
+    @staticmethod
+    def _search_simple(facts: list[str], keywords: list[str], limit: int) -> list[str]:
         scored = []
-        for index, fact in enumerate(self.get_facts(user_id)):
+        for index, fact in enumerate(facts):
             normalized = normalize_text(fact)
             score = sum(1 for kw in keywords if stem(kw) in normalized)
             if score:
@@ -237,7 +231,7 @@ class MemoryStore:
             )
 
     def nearest(
-        self, user_id, model: str, query: list[float], limit: int
+        self, user_id, model: str, query: list[float], limit: int, include_private: bool = True
     ) -> list[tuple[str, float]]:
         """Los recuerdos más parecidos a `query`, con su similitud coseno (de -1 a 1)."""
         blob = pack(query)
@@ -246,14 +240,15 @@ class MemoryStore:
                 rows = self.db.execute(
                     "SELECT f.fact, 1 - vec_distance_cosine(v.vector, ?) AS similarity "
                     "FROM fact_vectors v JOIN facts f ON f.id = v.fact_id "
-                    "WHERE f.user_id = ? AND v.model = ? ORDER BY similarity DESC LIMIT ?",
-                    (blob, str(user_id), model, limit),
+                    "WHERE f.user_id = ? AND v.model = ? AND (f.private = 0 OR ?) "
+                    "ORDER BY similarity DESC LIMIT ?",
+                    (blob, str(user_id), model, int(include_private), limit),
                 ).fetchall()
                 return [(fact, float(similarity)) for fact, similarity in rows]
             rows = self.db.execute(
                 "SELECT f.fact, v.vector FROM fact_vectors v JOIN facts f ON f.id = v.fact_id "
-                "WHERE f.user_id = ? AND v.model = ?",
-                (str(user_id), model),
+                "WHERE f.user_id = ? AND v.model = ? AND (f.private = 0 OR ?)",
+                (str(user_id), model, int(include_private)),
             ).fetchall()
         target = unpack(blob)
         scored = [
@@ -262,65 +257,8 @@ class MemoryStore:
         scored.sort(key=lambda item: -item[1])
         return scored[:limit]
 
-    # ------------------------------------------------------------------ historial
-
-    def add_messages(self, session: str, messages: list[tuple[str, str]]):
-        now = time.time()
-        with self._lock, self.db:
-            self.db.executemany(
-                "INSERT INTO messages (session, role, content, created_at) VALUES (?, ?, ?, ?)",
-                [(str(session), role, content, now) for role, content in messages],
-            )
-
-    def recent_messages(self, session: str, limit: int) -> list[dict]:
-        with self._lock:
-            rows = self.db.execute(
-                "SELECT role, content FROM messages WHERE session = ? ORDER BY id DESC LIMIT ?",
-                (str(session), limit),
-            ).fetchall()
-        return [{"role": role, "content": content} for role, content in reversed(rows)]
-
-    def clear_messages(self, session: str) -> int:
-        with self._lock, self.db:
-            return self.db.execute(
-                "DELETE FROM messages WHERE session = ?", (str(session),)
-            ).rowcount
-
-    def prune_messages(self, session: str, keep: int):
-        """Conserva solo los `keep` mensajes más recientes de la conversación."""
-        with self._lock, self.db:
-            self.db.execute(
-                "DELETE FROM messages WHERE session = ? AND id NOT IN "
-                "(SELECT id FROM messages WHERE session = ? ORDER BY id DESC LIMIT ?)",
-                (str(session), str(session), keep),
-            )
-
     # ------------------------------------------------------------------ migración
 
     def import_json(self, path: Path, legacy_owner=None) -> int:
-        """Importa el antiguo memory.json y lo renombra a .migrated. Devuelve cuántos importó."""
-        if not path.is_file():
-            return 0
-        try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as e:
-            logger.error(f"No se pudo leer {path.name} para migrarlo ({e}); se deja como está")
-            return 0
-
-        facts = [(str(user), str(fact)) for user, items in (raw.get("users") or {}).items()
-                 for fact in items]  # fmt: skip
-        # Formato más antiguo: {"facts": [...]} compartido por todos los usuarios
-        legacy = list(raw.get("facts") or []) + list(raw.get("legacy_facts") or [])
-        if legacy and legacy_owner is None:
-            logger.warning(
-                f"{path.name} tiene {len(legacy)} recuerdos sin dueño. Define ALLOWED_USER_IDS "
-                "en .env para asignarlos al primer usuario; hasta entonces no se migra."
-            )
-            return 0
-        facts += [(str(legacy_owner), str(fact)) for fact in legacy]
-
-        imported = sum(self.add_fact(user, fact) for user, fact in facts)
-        with contextlib.suppress(OSError):
-            path.replace(path.with_name(path.name + ".migrated"))
-        logger.info(f"Migrados {imported} recuerdos de {path.name} a {self.db_path.name}")
-        return imported
+        """Importa el antiguo memory.json (ver core/legacy_import.py)."""
+        return import_legacy_json(self, path, legacy_owner)

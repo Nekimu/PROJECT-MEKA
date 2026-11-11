@@ -1,0 +1,4 @@
+#!/bin/sh
+# Actualiza el tablero (coordinacion/TABLERO.md) con las tareas T-XXX mencionadas en el commit.
+. "$(dirname "$0")/_python.sh"
+"$PY" scripts/tareas.py sync || true

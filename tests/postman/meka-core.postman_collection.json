@@ -1,0 +1,1003 @@
+{
+  "info": {
+    "name": "MEKA Core API",
+    "description": "Pruebas de la API local de MEKA Core. Contrato en GET /v1/contract.\nUsa el usuario de memoria `{{testUser}}` y lo borra al final: no toca tus recuerdos.\nEl chat llama al cerebro configurado (Ollama): puede tardar unos segundos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "testUser",
+      "value": "postman-test"
+    },
+    {
+      "key": "session",
+      "value": "postman-session"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 · Estado",
+      "description": "Salud, contrato y personaje.",
+      "item": [
+        {
+          "name": "Health (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 y status ok\", () => { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql(\"ok\"); });",
+                  "pm.test(\"Incluye la versión del contrato\", () => pm.expect(pm.response.json().contract).to.match(/^\\d+\\.\\d+$/));",
+                  "pm.collectionVariables.set(\"contractVersion\", pm.response.json().contract);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contrato (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/contract",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "contract"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const c = pm.response.json();",
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Misma versión que /v1/health\", () => pm.expect(c.version).to.eql(pm.collectionVariables.get(\"contractVersion\")));",
+                  "pm.test(\"Versión mayor 1 (la que entiende esta colección)\", () => pm.expect(c.version.split(\".\")[0]).to.eql(\"1\"));",
+                  "pm.test(\"Eventos y emociones\", () => {",
+                  "  pm.expect(c.events.outbound).to.have.property(\"agent.confirm\");",
+                  "  pm.expect(c.events.inbound).to.have.property(\"user.confirm\");",
+                  "  pm.expect(c.emotions).to.include.members([\"idle\", \"happy\", \"error\", \"thinking\"]);",
+                  "});",
+                  "pm.test(\"Lista las rutas REST\", () => pm.expect(c.rest.map(r => r.method + \" \" + r.path)).to.include(\"POST /v1/chat\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Personaje",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/persona",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "persona"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Tiene nombre y nunca expone el prompt\", () => {",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.name).to.be.a(\"string\");",
+                  "  pm.expect(p).to.not.have.property(\"prompt\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 · Memoria",
+      "description": "Recuerdos públicos y privados del usuario de pruebas.",
+      "item": [
+        {
+          "name": "Limpiar usuario de pruebas",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/users/{{testUser}}/memories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "{{testUser}}",
+                "memories"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Guardar recuerdo público",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/users/{{testUser}}/memories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "{{testUser}}",
+                "memories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fact\": \"Mi perro se llama Toby\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Guardado\", () => pm.expect(pm.response.json().added).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Guardar recuerdo privado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/users/{{testUser}}/memories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "{{testUser}}",
+                "memories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fact\": \"Mi cita médica es el jueves\",\n  \"private\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Guardado\", () => pm.expect(pm.response.json().added).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar todos (API local)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/users/{{testUser}}/memories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "{{testUser}}",
+                "memories"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Incluye el privado\", () => pm.expect(pm.response.json().memories).to.have.members([\"Mi perro se llama Toby\", \"Mi cita médica es el jueves\"]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar sin privados (como MCP y Telegram)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/users/{{testUser}}/memories?include_private=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "{{testUser}}",
+                "memories"
+              ],
+              "query": [
+                {
+                  "key": "include_private",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Oculta el privado\", () => pm.expect(pm.response.json().memories).to.eql([\"Mi perro se llama Toby\"]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar sin privados",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/users/{{testUser}}/memories?q=cita&include_private=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "{{testUser}}",
+                "memories"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "cita"
+                },
+                {
+                  "key": "include_private",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Nunca aparece el privado\", () => pm.expect(JSON.stringify(pm.response.json().memories)).to.not.include(\"cita\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 · Conversación y privacidad",
+      "description": "Llama al cerebro configurado.",
+      "item": [
+        {
+          "name": "Chat normal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "chat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session\": \"{{session}}-normal\",\n  \"user\": \"{{testUser}}\",\n  \"text\": \"Hola, ¿cómo estás?\",\n  \"audio\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 con respuestas\", () => { pm.response.to.have.status(200); pm.expect(pm.response.json().replies.length).to.be.above(0); });",
+                  "pm.test(\"No es privado\", () => pm.expect(pm.response.json().replies[0].private).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chat privado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "chat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session\": \"{{session}}\",\n  \"user\": \"{{testUser}}\",\n  \"text\": \"Esto es confidencial\",\n  \"audio\": false,\n  \"private\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Marcado como privado\", () => pm.expect(pm.response.json().replies[0].private).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "La sesión sigue privada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "chat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session\": \"{{session}}\",\n  \"user\": \"{{testUser}}\",\n  \"text\": \"¿Y qué opinas?\",\n  \"audio\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Privada hasta reiniciarla\", () => pm.expect(pm.response.json().replies[0].private).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dato sensible detectado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "chat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session\": \"{{session}}-sensible\",\n  \"user\": \"{{testUser}}\",\n  \"text\": \"mi contraseña es Gato.2026\",\n  \"audio\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Pasa a privado solo\", () => pm.expect(pm.response.json().replies[0].private).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reiniciar sesión privada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/sessions/{{session}}/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "sessions",
+                "{{session}}",
+                "reset"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 · Eventos",
+      "description": "Publicación validada contra el contrato.",
+      "item": [
+        {
+          "name": "agent.working",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"agent.working\",\n  \"data\": {\n    \"task\": \"Prueba de Postman\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"202\", () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "agent.done",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"agent.done\",\n  \"data\": {\n    \"summary\": \"Postman terminó\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"202\", () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Emoción no válida → 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"emotion\",\n  \"data\": {\n    \"emotion\": \"bailando\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"422 con mensaje claro\", () => { pm.response.to.have.status(422); pm.expect(pm.response.json().detail).to.include(\"emotion\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "agent.confirm a mano → 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"agent.confirm\",\n  \"data\": {\n    \"action\": \"x\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Solo lo emite el núcleo\", () => { pm.response.to.have.status(422); pm.expect(pm.response.json().detail).to.include(\"/v1/confirmations\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 · Permisos",
+      "description": "agent.confirm / user.confirm. Sin respuesta = no.",
+      "item": [
+        {
+          "name": "Pendientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/confirmations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "confirmations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Lista\", () => pm.expect(pm.response.json().pending).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Responder uno inexistente → 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/confirmations/no-existe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "confirmations",
+                "no-existe"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedir permiso sin respuesta → denegado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/confirmations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "confirmations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"Prueba de Postman (nadie responde)\",\n  \"timeout\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Caduca y la respuesta es NO\", () => { pm.response.to.have.status(200); pm.expect(pm.response.json().approved).to.be.false; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 · Registro y seguridad",
+      "description": "",
+      "item": [
+        {
+          "name": "Registro de ejecución (sin contenido)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/runs?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "runs"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.test(\"200 con resumen por proveedor\", () => { pm.response.to.have.status(200); pm.expect(r.summary).to.be.an(\"object\"); });",
+                  "pm.test(\"Nunca incluye texto de las conversaciones\", () => pm.expect(JSON.stringify(r)).to.not.include(\"confidencial\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Web ajena (Origin) → 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://malicioso.example"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Limpiar usuario de pruebas",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/users/{{testUser}}/memories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "{{testUser}}",
+                "memories"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

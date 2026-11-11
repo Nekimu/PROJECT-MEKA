@@ -79,7 +79,8 @@ async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def memories_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """/recuerdos: muestra los hechos guardados del usuario."""
     persona = _persona(context)
-    facts = await _core(context).memories(_ids(update)[1])
+    # Los recuerdos privados no se muestran: pasarían por los servidores de Telegram
+    facts = await _core(context).memories(_ids(update)[1], include_private=False)
     if not facts:
         text = persona.line("memories_empty")
     else:

@@ -22,7 +22,7 @@ ENV/
 *.swp
 *.swo
 
-# Project specific
+# Project specific (datos y ajustes de este equipo)
 temp/
 config_local.yml
 memory.json*
@@ -30,14 +30,41 @@ data/
 logs/
 *.log
 
+# Bases de datos locales (memoria, historial, registro de ejecución), estén donde estén
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Secretos que nunca deben subirse
+*.pem
+*.key
+
 # Models (if downloaded locally in project)
 models/
 *.onnx
 *.gguf
 
-# Mascota (Tauri)
-pet/src-tauri/target/
-pet/src-tauri/gen/
+# Mascota de escritorio (Go + Wails): binarios y builds se generan en cada equipo
+*.exe
+pet/desktop/build/bin/
+pet/desktop/frontend/dist/
+
+# Configuración local de agentes (rutas de este equipo). .claude/settings.json sí se comparte:
+# tiene los hooks del tablero de coordinación.
+.gemini/
+.claude/settings.local.json
+
+# Tablero de coordinación: bloqueo y escritura temporal de scripts/tareas.py
+coordinacion/.tareas.lock
+coordinacion/*.tmp
+
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
 
 # Voces de referencia personales para clonar (nunca al repositorio)
 voices/

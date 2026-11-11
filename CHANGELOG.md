@@ -4,6 +4,14 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ## [Sin publicar]
 
+### Modularidad (backend)
+- **`server/` dividido por responsabilidades**: `app.py` solo compone la aplicación; las rutas viven en `server/routes/` (estado, conversación, voz, memoria y eventos), la seguridad en `security.py`, los modelos en `schemas.py` y las dependencias en `deps.py`. Mismas rutas y contrato.
+- **Voz como paquete `ai/tts/`** con la interfaz `TTSEngine`: un módulo por motor (`edge.py`, `piper.py`, `qwen.py`), conversión a OGG en `audio.py` y respaldo entre motores en `service.py`. `TTSService.unload_qwen()` pasa a `unload()`.
+- Del motor y la memoria salen `core/audio_store.py` (audios pendientes de descarga), `core/history.py` (historial por conversación), `core/textsearch.py` (normalización y vectores) y `core/legacy_import.py` (migración de `memory.json`).
+- **Guardia de tamaño** (`tests/test_modularidad.py`): ningún módulo del backend supera 300 líneas.
+- `config_local.yml` (ignorado por git) se mezcla sobre `config.yml` para ajustes de un solo equipo, como un modelo ligero de pruebas.
+- **Coordinación entre agentes** (`coordinacion/`, `scripts/tareas.py`): tablero de tareas compartido con Antigravity, con estados automáticos desde git y protección de áreas.
+
 ### Cerebro intercambiable
 - **Adaptadores de IA** (`ai/providers/`): Ollama (local), **Claude** (SDK oficial de Anthropic, `claude-opus-5-5` con `effort: low`, reintento automático si un filtro lo rechaza) y **Gemini** (`google-genai`, `gemini-flash-latest`). Los tres reciben el mismo prompt del personaje.
 - **Enrutamiento** en `config.yml`: `ai.provider` (conversación), `ai.vision_provider` (imágenes), `ai.fallback_provider` (si el principal falla o se niega) y `ai.local_only` (nada sale del equipo).

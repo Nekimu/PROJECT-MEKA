@@ -5,6 +5,7 @@ import subprocess
 import pytest
 
 from ai.tts import TTSService
+from ai.tts.audio import to_ogg_opus
 
 
 def make_tts(tmp_path, **overrides):
@@ -24,18 +25,18 @@ def test_fallback_engine_is_used_when_primary_fails(tmp_path):
     tts = make_tts(tmp_path, engine="qwen-tts", fallback_engine="edge-tts", convert_to_ogg=False)
     used = []
 
-    async def failing(text):
+    async def failing(text, output_dir):
         used.append("qwen-tts")
         return None
 
-    async def working(text):
+    async def working(text, output_dir):
         used.append(("edge-tts", text))
         path = tmp_path / "audio.mp3"
         path.write_bytes(b"mp3")
         return path
 
-    tts._generate_qwen_tts = failing
-    tts._generate_edge_tts = working
+    tts.engines["qwen-tts"].synthesize = failing
+    tts.engines["edge-tts"].synthesize = working
     result = asyncio.run(tts.generate_audio("¡Hola! 😳 (nerviosa) [AUDIO]"))
     assert result == tmp_path / "audio.mp3"
     assert used == ["qwen-tts", ("edge-tts", "¡Hola!")]
@@ -52,8 +53,7 @@ def test_wav_is_converted_to_ogg_opus(tmp_path):
         ["ffmpeg", "-loglevel", "error", "-f", "lavfi", "-i", "sine=duration=0.3", str(wav)],
         check=True,
     )
-    tts = make_tts(tmp_path)
-    result = asyncio.run(tts._to_ogg_opus(wav))
+    result = asyncio.run(to_ogg_opus(wav))
     assert result.suffix == ".ogg" and result.exists() and not wav.exists()
     probe = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "stream=codec_name", "-of", "csv=p=0", str(result)],
@@ -83,14 +83,15 @@ def test_qwen_voice_prompt_is_computed_once_and_released(tmp_path, monkeypatch):
         engine="qwen-tts",
         qwen={"ref_audio": "voices/prueba.wav", "ref_text": "hola"},
     )
+    qwen = tts.engines["qwen-tts"]
     model = FakeQwenModel()
 
-    def fake_init():
-        tts.qwen_model = model
-        tts._qwen_voice_prompt = model.create_voice_clone_prompt()
+    def fake_load():
+        qwen.model = model
+        qwen.voice_prompt = model.create_voice_clone_prompt()
         return True
 
-    monkeypatch.setattr(tts, "_init_qwen", lambda: tts.qwen_model is not None or fake_init())
+    monkeypatch.setattr(qwen, "load", lambda: qwen.model is not None or fake_load())
     tts.convert_to_ogg = False
     for text in ("primera frase", "segunda frase"):
         assert asyncio.run(tts.generate_audio(text)).exists()
@@ -98,4 +99,4 @@ def test_qwen_voice_prompt_is_computed_once_and_released(tmp_path, monkeypatch):
     assert model.prompt_calls == 1
     assert all(k["voice_clone_prompt"] == ["prompt-item"] for k in model.generate_kwargs)
     tts.release()
-    assert tts.qwen_model is None and tts._qwen_voice_prompt is None
+    assert qwen.model is None and qwen.voice_prompt is None

@@ -2,12 +2,23 @@
 
 Todos reciben lo mismo: un prompt de sistema y una lista de mensajes
 `{"role": "user" | "assistant", "content": str, "images": [ruta, ...]}`,
-y devuelven texto. Cada adaptador traduce ese formato al de su API.
+y devuelven un `ProviderReply` normalizado: el texto y, si la API lo informa, el uso
+de tokens. Cada adaptador traduce ese formato al de su API.
 """
 
 import mimetypes
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
+
+
+@dataclass
+class ProviderReply:
+    """Respuesta normalizada: el resto de MEKA no sabe qué proveedor la generó."""
+
+    text: str
+    input_tokens: int | None = None
+    output_tokens: int | None = None
 
 
 class ProviderError(RuntimeError):
@@ -23,7 +34,9 @@ class Provider(Protocol):
     model: str
     local: bool  # True = la conversación no sale del equipo
 
-    async def chat(self, system: str, messages: list[dict], *, vision: bool = False) -> str: ...
+    async def chat(
+        self, system: str, messages: list[dict], *, vision: bool = False
+    ) -> ProviderReply: ...
 
     def check_health(self) -> bool: ...
 

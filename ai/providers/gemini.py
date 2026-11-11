@@ -7,7 +7,7 @@ para mejorar sus productos.
 import importlib.util
 import os
 
-from ai.providers.base import ProviderError, RefusalError, image_bytes
+from ai.providers.base import ProviderError, ProviderReply, RefusalError, image_bytes
 from core.logger import setup_logger
 
 logger = setup_logger("Gemini")
@@ -38,7 +38,9 @@ class GeminiProvider:
             self._client = genai.Client()  # Lee GEMINI_API_KEY (o GOOGLE_API_KEY) del entorno
         return self._client
 
-    async def chat(self, system: str, messages: list[dict], *, vision: bool = False) -> str:
+    async def chat(
+        self, system: str, messages: list[dict], *, vision: bool = False
+    ) -> ProviderReply:
         from google.genai import types
 
         contents = []
@@ -66,7 +68,12 @@ class GeminiProvider:
         feedback = getattr(response, "prompt_feedback", None)
         if feedback is not None and getattr(feedback, "block_reason", None):
             raise RefusalError(f"Gemini bloqueó la petición ({feedback.block_reason})")
-        return (response.text or "").strip()
+        usage = getattr(response, "usage_metadata", None)
+        return ProviderReply(
+            text=(response.text or "").strip(),
+            input_tokens=getattr(usage, "prompt_token_count", None),
+            output_tokens=getattr(usage, "candidates_token_count", None),
+        )
 
     def check_health(self) -> bool:
         try:

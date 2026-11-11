@@ -21,7 +21,9 @@ from core.events import EMOTIONS
 INSTRUCTIONS = (
     "MEKA es la compañera virtual del usuario: una mascota animada con personalidad. "
     "Usa pet_status al empezar ('working'), terminar ('done') o fallar ('error') una tarea "
-    "larga para que la mascota reaccione. Usa chat solo si el usuario quiere hablar con MEKA."
+    "larga para que la mascota reaccione. Antes de algo irreversible (borrar, enviar, publicar) "
+    "usa ask_permission: el usuario decide desde la mascota. Usa chat solo si el usuario quiere "
+    "hablar con MEKA."
 )
 
 STATES = {"working": "agent.working", "done": "agent.done", "error": "agent.error"}
@@ -64,11 +66,27 @@ class MekaTools:
 
     async def memories(self, query: str = "") -> list[str]:
         """Lo que MEKA recuerda del usuario. Con `query`, solo lo relacionado con ese tema
-        (busca por significado: "mascotas" encuentra "mi perro se llama Toby")."""
-        return await self.core.memories(self.user, query or None)
+        (busca por significado: "mascotas" encuentra "mi perro se llama Toby").
+        Nunca devuelve recuerdos privados: el agente los enviaría a su proveedor en la nube."""
+        return await self.core.memories(self.user, query or None, include_private=False)
+
+    async def ask_permission(self, action: str, timeout_seconds: int = 120) -> str:
+        """Pide permiso al usuario antes de una acción delicada (borrar, enviar, publicar...).
+        La mascota muestra el diálogo y esta herramienta espera la respuesta. Sin respuesta a
+        tiempo (máximo 600 s) la respuesta es NO: no hagas la acción."""
+        timeout = max(5, min(int(timeout_seconds), 600))
+        approved = await self.core.ask_permission(action, timeout=timeout)
+        return "APROBADO: puedes continuar." if approved else "DENEGADO: no hagas la acción."
 
     def all(self):
-        return [self.chat, self.pet_status, self.pet_emotion, self.remember, self.memories]
+        return [
+            self.chat,
+            self.pet_status,
+            self.pet_emotion,
+            self.remember,
+            self.memories,
+            self.ask_permission,
+        ]
 
 
 def _report_errors(tool, error_class):

@@ -10,7 +10,6 @@ import argparse
 import asyncio
 import contextlib
 
-from core.config import settings
 from core.logger import configure_logging, log_to_stderr, setup_logger
 
 logger = setup_logger("Run")
@@ -43,7 +42,11 @@ def main(argv: list[str] | None = None):
     args = parser.parse_args(argv)
 
     if args.mode == "mcp":
-        log_to_stderr()  # stdout es del protocolo MCP
+        # stdout es del protocolo MCP: los logs van a stderr ANTES de importar nada que
+        # pueda registrar algo al cargarse (core.config lo hace al leer la configuración)
+        log_to_stderr()
+    from core.config import settings
+
     configure_logging(settings.get("app", {}).get("log_level", "INFO"))
 
     with contextlib.suppress(KeyboardInterrupt):

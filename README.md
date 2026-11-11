@@ -209,14 +209,22 @@ Instala el SDK (`pip install -r requirements-mcp.txt`) y, con MEKA Core en march
 }
 ```
 
-En Claude Code también vale `claude mcp add meka -- python /ruta/a/PROJECT-MEKA/run.py mcp`. Usa el Python del entorno virtual del proyecto.
+O desde la terminal (usa siempre el **Python del entorno virtual**: `venv/Scripts/python.exe` en Windows, `venv/bin/python` en Linux/macOS):
+
+```bash
+claude mcp add meka -s local -- /ruta/a/PROJECT-MEKA/venv/Scripts/python.exe /ruta/a/PROJECT-MEKA/run.py mcp
+gemini mcp add -s project meka /ruta/a/PROJECT-MEKA/venv/Scripts/python.exe /ruta/a/PROJECT-MEKA/run.py mcp
+```
+
+Comprueba la conexión con `claude mcp list` o `gemini mcp list` (debe decir *Connected*). Las herramientas que tocan la mascota o la memoria necesitan MEKA Core en marcha; si está apagado, responden con un error claro en lugar de romper la conexión.
 
 | Herramienta | Qué hace |
 |---|---|
 | `pet_status` | Avisa a la mascota de que el agente empieza (`working`), termina (`done`) o falla (`error`) una tarea |
 | `pet_emotion` | Cambia la expresión de la mascota |
 | `chat` | Habla con el personaje (conversación propia, separada de Telegram) |
-| `remember` · `memories` | Guarda y consulta la memoria del usuario (`memories` acepta un tema y busca por significado) |
+| `remember` · `memories` | Guarda y consulta la memoria del usuario (`memories` acepta un tema y busca por significado; nunca devuelve recuerdos privados) |
+| `ask_permission` | Pide permiso antes de algo irreversible: la mascota muestra el diálogo y el agente espera tu respuesta (sin respuesta = no) |
 
 </details>
 
@@ -269,6 +277,9 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 | `ai.provider` | `ollama` | Cerebro de la conversación: `ollama`, `claude` o `gemini`. |
 | `ai.vision_provider` / `ai.fallback_provider` | `""` | Cerebro para imágenes y cerebro de respaldo si el principal falla o se niega. |
 | `ai.local_only` | `false` | `true` ignora los proveedores en la nube: nada sale del equipo. |
+| `ai.routing.chat` / `vision` / `document` | `""` | Cerebro por tarea (vacío = `ai.provider`). |
+| `ai.privacy.provider` | `ollama` | Cerebro local para lo privado. Lo privado **nunca** va a la nube, ni como respaldo; si no hay proveedor local, no se envía. |
+| `ai.privacy.documents` / `detect_sensitive` | `true` / `true` | Documentos siempre privados; contraseñas, llaves de API, tokens, tarjetas o CURP vuelven privada la conversación hasta reiniciarla. Lo que pidas recordar en privado solo vuelve a prompts de proveedores locales y nunca sale por MCP ni Telegram. |
 | `ai.history_size` | `20` | Mensajes recientes que recuerda por chat. |
 | `ai.providers.ollama.model` | `gemma3:12b` | Modelo de Ollama. Debe ser **multimodal** para ver fotos. |
 | `ai.providers.ollama.keep_alive` | `0` | `0` descarga el modelo tras responder (ahorra RAM); `"5m"` lo mantiene cargado (más rápido). |
@@ -336,11 +347,11 @@ flowchart LR
     MCP <-->|REST| API
     PET([Mascota pet/]) <-->|WebSocket /v1/events| API
     subgraph CORE[MEKA Core · 127.0.0.1:8765]
-        API[server/app.py<br/>FastAPI · token · origen] --> ENG[core/engine.py]
+        API[server/<br/>FastAPI · routes/ · token · origen] --> ENG[core/engine.py]
         ENG --> STT[ai/stt.py<br/>Whisper]
         ENG --> DOC[core/documents.py]
         ENG --> AI[ai/service.py]
-        ENG --> TTS[ai/tts.py<br/>Edge-TTS · Qwen3-TTS · Piper]
+        ENG --> TTS[ai/tts/<br/>Edge-TTS · Qwen3-TTS · Piper]
         ENG --> BUS((core/events.py))
         P[[personas/&lt;id&gt;]] -.-> ENG
         AI <-->|ai/providers| OL[(Ollama · Claude · Gemini)]
@@ -376,13 +387,14 @@ flowchart LR
 ```
 PROJECT-MEKA/
 ├── run.py                  # Punto de entrada: all | core | telegram | mcp
-├── server/                 # MEKA Core: API REST + WebSocket (FastAPI)
+├── server/                 # MEKA Core: app.py compone; routes/ (una por dominio), security.py
 ├── core/                   # Motor, eventos, configuración, memoria, documentos y personajes
-├── ai/                     # Proveedores de IA (ai/providers), STT, TTS, prompts y texto
+├── ai/                     # Proveedores de IA (ai/providers), STT, TTS (ai/tts/), prompts y texto
 ├── channels/               # Clientes del núcleo: Telegram, MCP y el cliente HTTP común
 ├── personas/               # Paquetes de personaje (D.Va, Marin, Yotsuba...)
 ├── pet/                    # Mascota de escritorio (web + Tauri), prototipo
-├── scripts/                # Herramientas de diagnóstico
+├── scripts/                # Diagnóstico y tablero de tareas (tareas.py + tablero/)
+├── coordinacion/           # Tablero compartido Claude Code ↔ Antigravity
 ├── tests/                  # Tests automatizados (pytest)
 ├── docs/                   # Filosofía híbrida, visión, auditoría e imágenes
 ├── config.yml              # Configuración general
@@ -402,7 +414,7 @@ Se generan al ejecutar o son personales (ignorados por git): `data/` (la base de
 - 👤 **`ALLOWED_USER_IDS`** decide quién puede hablar con el bot.
 - 🧱 El **historial** se separa por chat y los **recuerdos** por usuario: nadie puede leer lo que otra persona le contó al asistente.
 - 🗑️ Las **fotos, documentos y notas de voz** se borran justo después de procesarse.
-- 🏠 Con Ollama la inferencia es **local**. Si eliges Claude o Gemini, el texto (y las fotos) de la conversación va a su API; `ai.local_only: true` lo impide. `edge-tts` sintetiza la voz en los servidores de Microsoft.
+- 🏠 Con Ollama la inferencia es **local**. Si eliges Claude o Gemini, el texto (y las fotos) de la conversación va a su API; `ai.local_only: true` lo impide del todo, y `"private": true` (o un dato sensible detectado) lo impide para una conversación. `edge-tts` sintetiza la voz en los servidores de Microsoft.
 - 🤐 Los errores internos no se muestran al usuario y los logs no incluyen el contenido de los mensajes (salvo con `app.log_conversations`).
 
 > [!WARNING]
@@ -486,6 +498,8 @@ pip install -r requirements-dev.txt
 ruff check . && ruff format --check .
 pytest
 ```
+
+Pruebas de la API real con Postman (con MEKA Core en marcha): ver [`tests/postman/`](tests/postman/README.md).
 
 ¿Quieres contribuir? Lee [CONTRIBUTING.md](CONTRIBUTING.md) y abre un [issue](https://github.com/Nekimu/PROJECT-MEKA/issues/new/choose). Los cambios de cada versión están en el [CHANGELOG](CHANGELOG.md).
 

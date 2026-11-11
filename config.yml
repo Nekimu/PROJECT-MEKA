@@ -15,6 +15,7 @@ server:
   allowed_origins: []        # Webs extra que pueden conectarse (la mascota y localhost ya lo tienen)
   max_upload_mb: 20          # Tamaño máximo de notas de voz, imágenes y documentos
   broadcast_messages: true   # La mascota también dice lo que MEKA responde por Telegram o MCP
+  confirm_timeout_seconds: 120  # Espera máxima de un permiso (agent.confirm); sin respuesta = no
   audio_ttl_seconds: 300     # Tiempo que se guardan los audios generados hasta que un canal los pide
 
 paths:
@@ -43,6 +44,18 @@ ai:
   fallback_provider: ""      # Si el principal falla o se niega (p. ej. "ollama" como red local)
   local_only: false          # true = nada sale del equipo: se ignoran los proveedores en la nube
   history_size: 20           # Mensajes recientes que recuerda por chat
+
+  routing:                   # Cerebro por tarea (vacío = provider). Ej.: chat en la nube, documentos en local
+    chat: ""
+    vision: ""               # Si está vacío se usa vision_provider
+    document: ""
+
+  privacy:                   # Lo privado NUNCA sale del equipo, ni siquiera como respaldo
+    provider: "ollama"       # Cerebro local para lo privado; si no hay ninguno local, no se envía
+    documents: true          # Los documentos se tratan como privados (análisis privado = local)
+    detect_sensitive: true   # Contraseñas, llaves de API, tokens, tarjetas o CURP vuelven privada la conversación
+    # Una conversación privada lo sigue siendo hasta reiniciarla (/v1/sessions/{id}/reset):
+    # así su historial no viaja a la nube en el siguiente mensaje.
 
   providers:
     ollama:

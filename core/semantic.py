@@ -111,7 +111,9 @@ class SemanticMemory:
             logger.info(f"Indexados {done} recuerdo(s) del usuario {user_id} con {self.model}")
         return done
 
-    async def search(self, user_id, query: str, limit: int = 5) -> list[tuple[str, float]]:
+    async def search(
+        self, user_id, query: str, limit: int = 5, *, include_private: bool = True
+    ) -> list[tuple[str, float]]:
         """Recuerdos por significado con su similitud (0 a 1). Vacío si Ollama no responde."""
         if not self.store.has_facts(user_id):
             return []  # Sin recuerdos no hace falta llamar al modelo
@@ -124,4 +126,4 @@ class SemanticMemory:
                 self._warned = True
             return []
         self._warned = False
-        return self.store.nearest(user_id, self.model, vector, limit)
+        return self.store.nearest(user_id, self.model, vector, limit, include_private)

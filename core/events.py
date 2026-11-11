@@ -1,24 +1,21 @@
 """Bus de eventos de MEKA Core: lo que pasa en el núcleo llega a la mascota y a otros clientes.
 
-Contrato completo en docs/VISION.md («Contrato de eventos»). Cada evento es un JSON
+Contrato: core/contract.py (también en GET /v1/contract) y docs/VISION.md. Cada evento es un JSON
 `{"type": ..., "data": {...}}`.
 """
 
 import asyncio
 import contextlib
 
+from core.contract import CORE_ONLY_EVENTS, EMOTIONS, OUTBOUND
 from core.logger import setup_logger
+
+__all__ = ["CORE_ONLY_EVENTS", "EMOTIONS", "OUTBOUND_EVENTS", "EventBus", "event"]
 
 logger = setup_logger("Events")
 
-# Eventos que MEKA Core (o un agente externo, vía POST /v1/events) envía a los clientes
-OUTBOUND_EVENTS = frozenset({
-    "agent.working", "agent.done", "agent.error", "agent.confirm",
-    "message", "emotion", "budget.low",
-})  # fmt: skip
-EMOTIONS = frozenset({
-    "idle", "happy", "working", "thinking", "sleeping", "eating", "error", "celebrate", "sad",
-})  # fmt: skip
+# El contrato (eventos, campos y emociones) vive en core/contract.py
+OUTBOUND_EVENTS = frozenset(OUTBOUND)
 
 
 def event(type_: str, **data) -> dict:

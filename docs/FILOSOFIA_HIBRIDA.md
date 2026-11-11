@@ -61,14 +61,14 @@ Revisión del repositorio (noviembre de 2026). Esto es lo que **existe hoy** y s
 | Personalidad | **Paquetes de personaje** en `personas/` (D.Va/MEKA, Marin, Yotsuba), seleccionables por configuración |
 | Inferencia | Adaptadores en `ai/providers/`: Ollama (por defecto, Gemma 3 12B), Claude y Gemini, con enrutamiento por tarea (`ai.provider`, `ai.vision_provider`), respaldo (`ai.fallback_provider`) y modo `ai.local_only` |
 | Voz a texto | `openai-whisper` (`ai/stt.py`) |
-| Texto a voz | Edge-TTS por defecto; Qwen3-TTS y Piper opcionales (`ai/tts.py`) |
+| Texto a voz | Edge-TTS por defecto; Qwen3-TTS y Piper opcionales (`ai/tts/`, un módulo por motor) |
 | Memoria | SQLite (`data/meka.db`, `core/memory.py`): recuerdos por usuario con búsqueda FTS5 y **semántica** (embeddings locales con `embeddinggemma` + `sqlite-vec`) e historial persistente por chat. Evaluación en [MEMORIA.md](MEMORIA.md) |
 | Avatar | Mascota de escritorio propia en `pet/` (web + Tauri), que ya implementa el contrato de eventos por WebSocket |
 
 Y esto **todavía no existe**, aunque la versión 0.2 de este documento lo daba por hecho:
 
 - Open-LLM-VTuber: no está en el repositorio. La interfaz visual es `pet/`; Open-LLM-VTuber queda como referencia o alternativa.
-- WebRTC (voz en tiempo real): no existe. El servidor FastAPI con WebSocket sí (`server/app.py`).
+- WebRTC (voz en tiempo real): no existe. El servidor FastAPI con WebSocket sí (`server/routes/events.py`).
 - faster-whisper, Coqui y Bark: no se usan.
 - Módulo de planificación y herramientas: no existe.
 - PostgreSQL o una base vectorial aparte: no se usan; los vectores viven en la misma SQLite ([MEMORIA.md](MEMORIA.md)).
