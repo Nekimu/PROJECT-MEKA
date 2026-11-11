@@ -55,6 +55,7 @@ ai:
     provider: "ollama"       # Cerebro local para lo privado; si no hay ninguno local, no se envía
     documents: true          # Los documentos se tratan como privados (análisis privado = local)
     detect_sensitive: true   # Contraseñas, llaves de API, tokens, tarjetas o CURP vuelven privada la conversación
+    audio_to_cloud: false    # Notas de voz SIN transcribir a cerebros en la nube (no pasan por el detector)
     # Una conversación privada lo sigue siendo hasta reiniciarla (/v1/sessions/{id}/reset):
     # así su historial no viaja a la nube en el siguiente mensaje.
 
@@ -78,6 +79,17 @@ ai:
       effort: "low"          # low | medium | high | xhigh | max (más = piensa más y cuesta más)
       max_tokens: 16000
       fallbacks: true        # Si un filtro de seguridad la rechaza, la API reintenta con otro modelo
+    # Servidores compatibles con OpenAI: llama.cpp (llama-server), LM Studio, vLLM, Ollama /v1.
+    # Ejemplo: Gemma 4 con audio nativo en llama.cpp (ver README, «Gemma 4 con audio»):
+    # openai_compat:
+    #   base_url: "http://127.0.0.1:8080"    # Solo cuenta como local si es de este equipo
+    #   model: "gemma-4-e2b"
+    #   capabilities: [text, vision, audio]
+    #   thinking: false                     # Gemma 4 / Qwen: sin razonamiento previo
+    #   max_tokens: 1024
+    # Cada cerebro trae lo que entiende de forma nativa; corrígelo por modelo si hace falta:
+    #   capabilities: [text, vision, audio, pdf]
+    # (Ollama: text, vision · Claude: text, vision, pdf · Gemini: text, vision, audio, pdf)
     gemini:                  # Requiere GEMINI_API_KEY en .env y requirements-cloud.txt
       model: "gemini-flash-latest"  # Alias de la última versión de Flash
       temperature: 0.8
@@ -120,7 +132,12 @@ hands:                       # Las "manos" de MEKA (fase 3): leer carpetas que t
   max_write_chars: 200000    # Tamaño máximo de un archivo que MEKA escribe
 
 stt:
-  model_size: "base"         # tiny | base | small | medium | large | turbo
+  mode: "auto"               # auto: si el cerebro entiende audio, la nota va tal cual (sin transcribir) | always
+  engine: "faster-whisper"   # faster-whisper (menos RAM, sin PyTorch) | whisper
+  fallback_engine: "whisper" # Respaldo si el principal falla; requiere requirements-whisper.txt (PyTorch)
+  model_size: "base"         # tiny | base | small | medium | large-v3 | turbo
+  compute_type: "int8"       # faster-whisper en CPU: int8 (ligero) | float32 (algo más preciso)
+  vad: true                  # faster-whisper salta los silencios
   language: "es"
   unload_after_use: true     # Libera Whisper de la RAM tras cada nota de voz
 

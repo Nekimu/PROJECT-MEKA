@@ -70,6 +70,8 @@ class MekaEngine(MediaMixin):
         if self.ai.runs is None:
             self.ai.runs = self.runs
         self.stt = stt or STTService(config)
+        # auto: si el cerebro entiende audio, la nota de voz va tal cual (T-053) | always: transcribir
+        self.stt_mode = config.get("stt", {}).get("mode", "auto")
         self.tts = tts or TTSService(config, voice=self.persona.voice)
         self.bus = bus or EventBus()
         # Permisos antes de acciones delicadas (agent.confirm → user.confirm)

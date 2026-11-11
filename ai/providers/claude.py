@@ -4,7 +4,13 @@ import base64
 import importlib.util
 import os
 
-from ai.providers.base import ProviderError, ProviderReply, RefusalError, image_bytes
+from ai.providers.base import (
+    ProviderError,
+    ProviderReply,
+    RefusalError,
+    file_bytes,
+    image_bytes,
+)
 from core.logger import setup_logger
 
 logger = setup_logger("Claude")
@@ -16,6 +22,7 @@ FALLBACK_BETA = "server-side-fallback-2026-07-01"
 class ClaudeProvider:
     name = "claude"
     local = False
+    capabilities = frozenset({"text", "vision", "pdf"})  # Sin audio nativo
 
     def __init__(self, settings: dict, client=None):
         self.model = settings.get("model", "claude-opus-5-5")
@@ -40,10 +47,17 @@ class ClaudeProvider:
 
     @staticmethod
     def _content(message: dict):
-        if not message.get("images"):
+        if not message.get("images") and not message.get("documents"):
             return message["content"]
         blocks = []
-        for path in message["images"]:
+        for path in message.get("documents") or []:
+            data, mime = file_bytes(path, "application/pdf")
+            blocks.append({
+                "type": "document",
+                "source": {"type": "base64", "media_type": mime,
+                           "data": base64.standard_b64encode(data).decode()},
+            })  # fmt: skip
+        for path in message.get("images") or []:
             data, mime = image_bytes(path)
             blocks.append({
                 "type": "image",

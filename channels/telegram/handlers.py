@@ -130,7 +130,8 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Error procesando voz: {e}")
         transcription, replies = None, []
 
-    if not transcription:
+    # Con un cerebro que entiende audio no hay transcripción, pero sí respuesta (T-053)
+    if not transcription and not replies:
         await message.reply_text(persona.line("voice_fail"))
         return
     await _deliver(update, context, replies)

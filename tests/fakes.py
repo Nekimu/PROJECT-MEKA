@@ -72,8 +72,9 @@ class FakeTTS:
 class FakeProvider:
     """Un proveedor de IA (Claude, Gemini...) con respuestas programadas."""
 
-    def __init__(self, name, *replies, error=None, local=False):
+    def __init__(self, name, *replies, error=None, local=False, capabilities=("text", "vision")):
         self.name = name
+        self.capabilities = frozenset(capabilities)
         self.model = f"{name}-test"
         self.local = local
         self.replies = list(replies)

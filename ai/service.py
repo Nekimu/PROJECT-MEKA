@@ -1,14 +1,15 @@
 """Servicio de IA: personaje + memoria + el proveedor elegido (Ollama, Claude o Gemini)."""
 
 import time
-from dataclasses import dataclass, field
 
 from ai import privacy
+from ai.answer import Answer
+from ai.multimodal import MultimodalMixin
 from ai.prompts import build_system_prompt, build_vision_prompt
 from ai.providers import Provider, ProviderError, ProviderReply, build_provider
 from ai.recall import Recall
 from ai.routing import PrivacyError, Router
-from ai.text_utils import split_into_messages, split_paragraphs
+from ai.text_utils import split_into_messages
 from core.config import resolve_path, settings
 from core.history import ConversationStore
 from core.logger import log_conversation, setup_logger
@@ -20,19 +21,10 @@ from core.semantic import SemanticMemory
 logger = setup_logger("AI_Service")
 
 
-@dataclass
-class Answer:
-    """Respuesta del cerebro lista para el motor: mensajes y si todo salió bien."""
-
-    messages: list[str] = field(default_factory=list)
-    ok: bool = True
-    provider: str | None = None
-    model: str | None = None
-    latency_ms: int = 0
-    private: bool = False  # Atendida solo por proveedores locales
+__all__ = ["AIService", "Answer"]
 
 
-class AIService:
+class AIService(MultimodalMixin):
     def __init__(
         self,
         config: dict | None = None,
@@ -57,6 +49,8 @@ class AIService:
         privacy_config = ai_config.get("privacy") or {}
         self.private_documents = privacy_config.get("documents", True)
         self.detect_sensitive = privacy_config.get("detect_sensitive", True)
+        # El audio no pasa por el detector de datos sensibles: a la nube solo si se permite
+        self.audio_to_cloud = bool(privacy_config.get("audio_to_cloud", False))
 
         # Identidad: viene del paquete de personaje, no del proveedor de IA
         self.persona = persona if persona is not None else load_active_persona(config)
@@ -121,11 +115,18 @@ class AIService:
             logger.warning(f"No se pudo guardar el registro de ejecución: {e}")
 
     async def _chat(
-        self, system: str, messages: list[dict], *, task: str = "chat", private: bool = False
+        self,
+        system: str,
+        messages: list[dict],
+        *,
+        task: str = "chat",
+        private: bool = False,
+        need: str | None = None,
     ) -> tuple[ProviderReply, int, str]:
-        """Pregunta al proveedor que toque; si falla, al de respaldo (local si es privado)."""
+        """Pregunta al proveedor que toque; si falla, al de respaldo (local si es privado).
+        Con `need`, solo a los que entienden esa entrada de forma nativa (T-053)."""
         vision = task == "vision"
-        order = self.router.order(task, private=private)
+        order = self.router.order(task, private=private, need=need)
         for index, name in enumerate(order):
             start = time.perf_counter()
             try:
@@ -199,34 +200,6 @@ class AIService:
         logger.info(f"Respuesta generada en {latency_ms}ms | {used}")
         self._log(self.persona.name, f"({latency_ms}ms) " + " | ".join(bot_messages))
         return Answer(bot_messages, True, used, self.providers[used].model, latency_ms, private)
-
-    async def answer_image(
-        self, chat_id: int | str, user_text: str, image_path, *, private: bool = False
-    ) -> Answer:
-        """Analiza una imagen con el proveedor de visión."""
-        self._log("User (Multimodal)", f"{user_text} [Imagen]")
-        private = self._privacy(chat_id, user_text, private)
-        messages = [{"role": "user", "content": user_text, "images": [str(image_path)]}]
-
-        try:
-            logger.info("Enviando imagen al modelo para análisis...")
-            reply, latency_ms, used = await self._chat(
-                self.vision_prompt, messages, task="vision", private=private
-            )
-        except Exception as e:
-            logger.error(f"Error en análisis multimodal: {e}")
-            return Answer([self.persona.line("vision_error")], ok=False, private=private)
-
-        # El archivo de la imagen se borra tras procesarse: en el historial guardamos solo
-        # texto. Guardar la ruta hacía fallar todas las respuestas posteriores del chat.
-        self.history.add_exchange(chat_id, f"[Te envié una imagen] {user_text}", reply.text)
-
-        logger.info(f"Análisis multimodal completado en {latency_ms}ms | {used}")
-        self._log(f"{self.persona.name} (visión)", f"({latency_ms}ms) {reply.text}")
-        paragraphs = split_paragraphs(reply.text)
-        if not paragraphs:
-            return Answer([self.persona.line("empty_reply")], False, used, private=private)
-        return Answer(paragraphs, True, used, self.providers[used].model, latency_ms, private)
 
     # Compatibilidad: devuelven solo los mensajes
     async def generate_response(self, chat_id, user_id, user_text, *, use_memory=True) -> list[str]:

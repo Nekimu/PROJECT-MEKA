@@ -24,6 +24,10 @@ class PrivacyError(ProviderError):
     """Petición privada sin ningún proveedor local que la atienda."""
 
 
+class CapabilityError(ProviderError):
+    """Ningún cerebro de la ruta entiende lo que se le quiere enviar (audio, PDF...)."""
+
+
 class Router:
     def __init__(self, ai_config: dict, providers: dict[str, Provider]):
         primary = ai_config.get("provider", "ollama")
@@ -58,8 +62,29 @@ class Router:
         if self.fallback in cloud:
             self.fallback = None
 
-    def order(self, task: str = "chat", *, private: bool = False) -> list[str]:
-        """Proveedores a probar, en orden, para una tarea."""
+    def order(
+        self, task: str = "chat", *, private: bool = False, need: str | None = None
+    ) -> list[str]:
+        """Proveedores a probar, en orden, para una tarea. Con `need` ("audio", "pdf"...),
+        solo los que lo entienden de forma nativa."""
+        names = self._order(task, private=private)
+        if need is None:
+            return names
+        capable = [n for n in names if need in self.providers[n].capabilities]
+        if not capable:
+            raise CapabilityError(f"Ningún cerebro para '{task}' entiende '{need}'")
+        return capable
+
+    def can(self, task: str, need: str, *, private: bool = False, local_only: bool = False) -> bool:
+        """¿Hay ruta nativa para `need`? Con `local_only`, solo cuenta si TODOS los cerebros de
+        la ruta (respaldo incluido) son locales."""
+        try:
+            names = self.order(task, private=private, need=need)
+        except ProviderError:
+            return False
+        return not local_only or all(self._is_local(n) for n in names)
+
+    def _order(self, task: str, *, private: bool) -> list[str]:
         names = [self.routes.get(task, self.routes["chat"])]
         if self.fallback and self.fallback not in names:
             names.append(self.fallback)

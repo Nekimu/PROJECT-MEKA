@@ -20,6 +20,9 @@ DEFAULT_VISION_OPTIONS = {"temperature": 0.6, "num_predict": 1024}  # Menor temp
 class OllamaProvider:
     name = "ollama"
     local = True
+    # Ollama aún no pasa audio a los modelos de forma fiable (ni siquiera a Gemma 4) ni lee PDF.
+    # La visión depende del modelo (gemma3:270m no ve): corrígelo con `capabilities` si hace falta.
+    capabilities = frozenset({"text", "vision"})
 
     def __init__(self, settings: dict, client=None):
         self.model = settings.get("model", "gemma3:12b")
