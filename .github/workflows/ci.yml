@@ -42,8 +42,6 @@ jobs:
           cache-dependency-path: requirements*.txt
       - name: Instalar FFmpeg
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
-      - name: Instalar PyTorch (CPU) para no descargar las librerías CUDA
-        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
       - name: Tests
