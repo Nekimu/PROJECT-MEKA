@@ -21,6 +21,7 @@ server:
 paths:
   memory_db: "data/meka.db"  # Recuerdos e historial en SQLite (ignorado por git)
   temp_dir: "temp"           # Audios y archivos temporales (ignorado por git)
+  hands_dir: "data/hands"    # Puntos de restauración de las manos (git "sombra", ignorado por git)
 
 memory:
   remember_pattern: 'recuerda\s+esto\s*:\s*(.+)'   # "Recuerda esto: ..." guarda un recuerdo
@@ -81,6 +82,36 @@ ai:
       model: "gemini-flash-latest"  # Alias de la última versión de Flash
       temperature: 0.8
       max_output_tokens: 2048
+
+system:                      # Música y batería para la Dynamic Island (eventos system.*)
+  enabled: true
+  media: true                # Lo que suena en cualquier reproductor de Windows (API SMTC)
+  battery: true
+  media_interval: 2          # Segundos entre lecturas (solo se publica si algo cambia)
+  battery_interval: 60
+  notifications:             # Notificaciones de Windows en la isla (privadas: nunca a la nube ni al MCP)
+    enabled: true
+    apps: ["*"]              # Apps permitidas por nombre ("WhatsApp", "Outlook"...); "*" = todas
+    blocked: []              # Apps que nunca se muestran
+    hide_codes: true         # Oculta códigos de verificación (2FA, OTP, PIN)
+    max_items: 20
+    interval: 3              # Segundos entre lecturas
+
+hands:                       # Las "manos" de MEKA (fase 3): leer carpetas que tú autorizas
+  enabled: true
+  folders: {}                # Fuera de estas carpetas, nada. Ejemplos:
+  #  descargas: "~/Downloads"
+  #  notas: {path: "~/Documents/Notas", private: true}   # private: el MCP (nube) no la ve
+  # ⚠️ ESCRITURA POSPUESTA (T-042): no uses writable: true hasta resolver el aislamiento del
+  #    sistema (usuario restringido de Windows o Docker). El código existe y está probado, pero
+  #    por decisión del proyecto ninguna carpeta real admite cambios todavía.
+  #  ordenar: {path: "~/Ordenar", writable: true}       # Admite cambios: cada uno pide permiso
+  #                                                     # y deja un punto de restauración
+  deny: []                   # Patrones extra que nunca se tocan (ya protegidos: .env, llaves, .git...)
+  max_read_chars: 20000      # Caracteres máximos al leer un archivo
+  max_results: 200           # Resultados máximos al listar o buscar
+  max_scanned_files: 5000    # Archivos máximos que recorre una búsqueda
+  max_write_chars: 200000    # Tamaño máximo de un archivo que MEKA escribe
 
 stt:
   model_size: "base"         # tiny | base | small | medium | large | turbo

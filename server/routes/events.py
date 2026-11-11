@@ -74,6 +74,18 @@ class ClientSession:
                 await self.websocket.send_json(
                     {"type": "message", "data": {"text": text, "emotion": "happy"}}
                 )
+        elif type_ == "user.notification" and data.get("id") is not None:
+            try:
+                await self.engine.system.notification_action(
+                    int(data["id"]), str(data.get("action"))
+                )
+            except (ValueError, TypeError) as e:
+                logger.info(f"user.notification no válido: {e}")
+        elif type_ == "user.media":
+            try:
+                await self.engine.system.media_control(str(data.get("action")))
+            except ValueError as e:
+                logger.info(f"user.media no válido: {e}")
         elif type_ == "user.confirm" and data.get("id"):
             if not self.engine.confirmations.resolve(
                 str(data["id"]), bool(data.get("approved")), by=self.name

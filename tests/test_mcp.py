@@ -85,6 +85,15 @@ def test_mcp_server_registers_tools():
         "remember",
         "memories",
         "ask_permission",
+        "list_folders",
+        "list_files",
+        "read_file",
+        "search_files",
+        "write_file",
+        "move_file",
+        "delete_file",
+        "make_folder",
+        "undo_last_change",
     }
 
 
@@ -161,3 +170,46 @@ def test_ask_permission_tool():
     )
     assert yes.asked == [("borrar logs", 600)]  # Nunca más de 10 minutos
     assert run(MekaTools(no, "mcp", "42").ask_permission("borrar logs")).startswith("DENEGADO")
+
+
+def test_file_tools_never_ask_for_private_folders():
+    class HandsCore(FakeCore):
+        def __init__(self):
+            super().__init__()
+            self.calls = []
+
+        async def hands(self, action, folder=None, **params):
+            assert params["include_private"] is False  # El agente lo enviaría a la nube
+            self.calls.append((action, folder, params))
+            return {"folders": []} if action == "folders" else {"ok": True}
+
+    core = HandsCore()
+    tools = MekaTools(core, "mcp", "42")
+    run(tools.list_folders())
+    run(tools.list_files("docs", pattern="*.pdf"))
+    run(tools.read_file("docs", "a.txt"))
+    run(tools.search_files("docs", "factura"))
+    assert [c[0] for c in core.calls] == ["folders", "list", "read", "search"]
+    assert core.calls[1][2]["pattern"] == "*.pdf" and core.calls[3][2]["q"] == "factura"
+
+
+def test_change_tools_never_touch_private_folders():
+    class ChangeCore(FakeCore):
+        def __init__(self):
+            super().__init__()
+            self.calls = []
+
+        async def hands_change(self, action, folder, body=None, *, include_private=True):
+            assert include_private is False
+            self.calls.append((action, folder, body))
+            return {"op": action}
+
+    core = ChangeCore()
+    tools = MekaTools(core, "mcp", "42")
+    run(tools.write_file("orden", "a.txt", "hola"))
+    run(tools.move_file("orden", "a.txt", "b.txt"))
+    run(tools.delete_file("orden", "b.txt"))
+    run(tools.make_folder("orden", "nueva"))
+    run(tools.undo_last_change("orden"))
+    assert [c[0] for c in core.calls] == ["write", "move", "delete", "mkdir", "undo"]
+    assert core.calls[0][2] == {"path": "a.txt", "content": "hola", "overwrite": False}

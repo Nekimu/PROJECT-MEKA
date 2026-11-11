@@ -30,6 +30,21 @@ class EventRequest(BaseModel):
     data: dict[str, Any] = Field(default_factory=dict)
 
 
+class HandsWrite(BaseModel):
+    path: str = Field(min_length=1, max_length=500)
+    content: str = Field(max_length=1_000_000)
+    overwrite: bool = Field(False, description="Reemplazar si ya existe")
+
+
+class HandsMove(BaseModel):
+    src: str = Field(min_length=1, max_length=500)
+    dest: str = Field(min_length=1, max_length=500)
+
+
+class HandsPath(BaseModel):
+    path: str = Field(min_length=1, max_length=500)
+
+
 class ConfirmationRequest(BaseModel):
     action: str = Field(min_length=1, max_length=300, description="Qué se va a hacer")
     timeout: float | None = Field(None, ge=1, le=600, description="Segundos de espera")
@@ -38,3 +53,11 @@ class ConfirmationRequest(BaseModel):
 
 class ConfirmationAnswer(BaseModel):
     approved: bool
+
+
+class NotificationAction(BaseModel):
+    action: str = Field(description="dismiss | open")
+
+
+class MediaAction(BaseModel):
+    action: str = Field(description="play_pause | next | previous")

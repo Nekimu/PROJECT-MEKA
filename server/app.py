@@ -42,12 +42,14 @@ def create_app(
         engine.clear_temp()
         if startup_checks:
             await asyncio.to_thread(engine.check_health)
+        await engine.system.start()
         logger.info(f"MEKA Core listo con {engine.persona.name} ({engine.persona.id})")
         if not token:
             logger.warning("Sin MEKA_API_TOKEN: solo este equipo puede usar la API.")
         try:
             yield
         finally:
+            await engine.system.stop()
             engine.close()
             logger.info(f"{engine.persona.name} se ha ido a descansar.")
 

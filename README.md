@@ -225,6 +225,7 @@ Comprueba la conexión con `claude mcp list` o `gemini mcp list` (debe decir *Co
 | `chat` | Habla con el personaje (conversación propia, separada de Telegram) |
 | `remember` · `memories` | Guarda y consulta la memoria del usuario (`memories` acepta un tema y busca por significado; nunca devuelve recuerdos privados) |
 | `ask_permission` | Pide permiso antes de algo irreversible: la mascota muestra el diálogo y el agente espera tu respuesta (sin respuesta = no) |
+| `list_folders` · `list_files` · `read_file` · `search_files` | Leen las carpetas que autorizaste en `hands.folders` (solo lectura; nunca las marcadas `private`) |
 
 </details>
 
@@ -280,6 +281,8 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 | `ai.routing.chat` / `vision` / `document` | `""` | Cerebro por tarea (vacío = `ai.provider`). |
 | `ai.privacy.provider` | `ollama` | Cerebro local para lo privado. Lo privado **nunca** va a la nube, ni como respaldo; si no hay proveedor local, no se envía. |
 | `ai.privacy.documents` / `detect_sensitive` | `true` / `true` | Documentos siempre privados; contraseñas, llaves de API, tokens, tarjetas o CURP vuelven privada la conversación hasta reiniciarla. Lo que pidas recordar en privado solo vuelve a prompts de proveedores locales y nunca sale por MCP ni Telegram. |
+| `system.notifications.apps` / `blocked` / `hide_codes` | `["*"]` / `[]` / `true` | Notificaciones de Windows que ve la isla. Son privadas: nunca van a la nube ni al MCP, y los códigos de verificación se ocultan. |
+| `hands.folders` | `{}` | Carpetas que MEKA puede **leer** (nombre: ruta, o `{path, private}`). Fuera de ellas nada; `.env`, llaves, `.git` y similares nunca, aunque estén dentro. La escritura (`writable: true`, con permiso y deshacer) existe pero está **pospuesta** hasta aislar el sistema: no la actives todavía. |
 | `ai.history_size` | `20` | Mensajes recientes que recuerda por chat. |
 | `ai.providers.ollama.model` | `gemma3:12b` | Modelo de Ollama. Debe ser **multimodal** para ver fotos. |
 | `ai.providers.ollama.keep_alive` | `0` | `0` descarga el modelo tras responder (ahorra RAM); `"5m"` lo mantiene cargado (más rápido). |
@@ -485,7 +488,7 @@ python -m scripts.semantic_check "¿qué te conté de mi mascota?"   # Similitud
 - [ ] Base del Funko del Meka (ESP32-S3, luces, sensor táctil) y caja de holograma ([planos](https://claude.ai/artifact/TVgmmCCLpmyd2KxQCpEEki))
 - [ ] Google Drive como memoria documental compartida con otros agentes
 - [ ] Gestionar carpetas autorizadas desde el móvil, con confirmación y git
-- [ ] Tamagotchi completo: logros, disfraces y rutinas
+- [ ] Compañera de productividad: tarjetas tipo Brief, modo concentración y resumen del día (sin mecánicas de cuidado: MEKA ayuda, no distrae)
 - [ ] App móvil: Android con burbuja flotante, iOS con widget
 - [ ] Transcripción más rápida con [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
 

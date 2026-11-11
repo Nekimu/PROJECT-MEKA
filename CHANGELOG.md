@@ -4,6 +4,22 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ## [Sin publicar]
 
+### Filosofía: compañera de productividad
+- El Tamagotchi pasa a ser solo **inspiración para interactuar y conversar** con el asistente. Sin mecánicas de cuidado (alimentar, energía, saciedad, ánimo, afecto, desbloqueos): MEKA ayuda, no distrae. `docs/VISION.md` actualizado.
+
+### Dynamic Island: datos del sistema (backend)
+- **Música en reproducción** de cualquier reproductor de Windows (SMTC) y **batería**: eventos `system.media` y `system.battery`, solo cuando cambian; controles con `user.media` (pausa, siguiente, anterior).
+- **Notificaciones de Windows**: `system.notification` / `system.notification_removed`, con apps permitidas o bloqueadas, **códigos de verificación ocultos** y textos sensibles ocultos. Privadas: nunca van a la nube, a la memoria ni al MCP. Se pueden descartar o abrir la app.
+- `GET /v1/system` y `GET /v1/system/notifications` para los clientes que se conectan tarde.
+
+### Manos (fase 3)
+- **Lectura** de carpetas autorizadas (`hands.folders`): listar, leer (también PDF, DOCX y XLSX) y buscar, por API y MCP. Sin escapes (`..`, enlaces simbólicos), archivos sensibles siempre protegidos y carpetas `private` ocultas al MCP.
+- **Escritura** (escribir, mover, borrar, crear carpetas) con permiso por cambio, punto de restauración en un git "sombra" y deshacer. **Inactiva** hasta resolver el aislamiento del sistema (T-042).
+
+### Contrato y pruebas
+- Contrato **1.4 → 1.8** (siempre aditivo, con su historial en `core/contract.py`).
+- Colección de Postman: 35 peticiones y 44 comprobaciones.
+
 ### Modularidad (backend)
 - **`server/` dividido por responsabilidades**: `app.py` solo compone la aplicación; las rutas viven en `server/routes/` (estado, conversación, voz, memoria y eventos), la seguridad en `security.py`, los modelos en `schemas.py` y las dependencias en `deps.py`. Mismas rutas y contrato.
 - **Voz como paquete `ai/tts/`** con la interfaz `TTSEngine`: un módulo por motor (`edge.py`, `piper.py`, `qwen.py`), conversión a OGG en `audio.py` y respaldo entre motores en `service.py`. `TTSService.unload_qwen()` pasa a `unload()`.

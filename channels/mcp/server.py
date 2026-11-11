@@ -22,8 +22,11 @@ INSTRUCTIONS = (
     "MEKA es la compañera virtual del usuario: una mascota animada con personalidad. "
     "Usa pet_status al empezar ('working'), terminar ('done') o fallar ('error') una tarea "
     "larga para que la mascota reaccione. Antes de algo irreversible (borrar, enviar, publicar) "
-    "usa ask_permission: el usuario decide desde la mascota. Usa chat solo si el usuario quiere "
-    "hablar con MEKA."
+    "usa ask_permission: el usuario decide desde la mascota. Para leer archivos del usuario usa "
+    "list_folders, list_files, read_file y search_files (solo las carpetas que él autorizó). En "
+    "las carpetas writable puedes write_file, move_file, delete_file y make_folder: cada cambio "
+    "pide permiso al usuario en la mascota y se puede deshacer con undo_last_change. "
+    "Usa chat solo si el usuario quiere hablar con MEKA."
 )
 
 STATES = {"working": "agent.working", "done": "agent.done", "error": "agent.error"}
@@ -78,6 +81,53 @@ class MekaTools:
         approved = await self.core.ask_permission(action, timeout=timeout)
         return "APROBADO: puedes continuar." if approved else "DENEGADO: no hagas la acción."
 
+    # ------------------------------------------------------------------ manos (solo lectura)
+    # Nunca carpetas privadas: el agente envía lo que lee a su proveedor en la nube.
+
+    async def list_folders(self) -> list[dict]:
+        """Carpetas que el usuario autorizó a MEKA (solo lectura). Úsalas por su nombre."""
+        return (await self.core.hands("folders", include_private=False))["folders"]
+
+    async def list_files(self, folder: str, path: str = ".", pattern: str = "") -> dict:
+        """Contenido de una carpeta autorizada. `path` es relativo a ella; `pattern` filtra
+        (p. ej. "*.pdf")."""
+        return await self.core.hands(
+            "list", folder, path=path, pattern=pattern or None, include_private=False
+        )
+
+    async def read_file(self, folder: str, path: str) -> dict:
+        """Texto de un archivo de una carpeta autorizada (también PDF, DOCX y XLSX)."""
+        return await self.core.hands("read", folder, path=path, include_private=False)
+
+    async def search_files(self, folder: str, query: str, content: bool = True) -> dict:
+        """Busca archivos por nombre y, con `content`, también dentro de los de texto."""
+        return await self.core.hands(
+            "search", folder, q=query, content=content, include_private=False
+        )
+
+    async def write_file(self, folder: str, path: str, content: str, overwrite: bool = False):
+        """Crea (o con `overwrite`, reemplaza) un archivo de texto en una carpeta writable.
+        Pide permiso al usuario y espera su respuesta; si lo niega, no se hace nada."""
+        body = {"path": path, "content": content, "overwrite": overwrite}
+        return await self.core.hands_change("write", folder, body, include_private=False)
+
+    async def move_file(self, folder: str, src: str, dest: str) -> dict:
+        """Mueve o renombra un archivo dentro de una carpeta writable (nunca sobrescribe)."""
+        body = {"src": src, "dest": dest}
+        return await self.core.hands_change("move", folder, body, include_private=False)
+
+    async def delete_file(self, folder: str, path: str) -> dict:
+        """Borra UN archivo de una carpeta writable (nunca carpetas). Se puede deshacer."""
+        return await self.core.hands_change("delete", folder, {"path": path}, include_private=False)
+
+    async def make_folder(self, folder: str, path: str) -> dict:
+        """Crea una subcarpeta dentro de una carpeta writable."""
+        return await self.core.hands_change("mkdir", folder, {"path": path}, include_private=False)
+
+    async def undo_last_change(self, folder: str) -> dict:
+        """Deshace el último cambio de MEKA en esa carpeta (también pide permiso)."""
+        return await self.core.hands_change("undo", folder, include_private=False)
+
     def all(self):
         return [
             self.chat,
@@ -86,6 +136,15 @@ class MekaTools:
             self.remember,
             self.memories,
             self.ask_permission,
+            self.list_folders,
+            self.list_files,
+            self.read_file,
+            self.search_files,
+            self.write_file,
+            self.move_file,
+            self.delete_file,
+            self.make_folder,
+            self.undo_last_change,
         ]
 
 

@@ -10,7 +10,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-ESTADOS = ("pendiente", "en_progreso", "bloqueada", "en_revision", "hecha")
+ESTADOS = ("pendiente", "en_progreso", "bloqueada", "en_revision", "hecha", "descartada")
+CERRADOS = ("hecha", "descartada")  # No cuentan como abiertas
 PRIORIDADES = ("alta", "media", "baja")
 ICONOS = {
     "pendiente": "⬜",
@@ -18,6 +19,7 @@ ICONOS = {
     "bloqueada": "⛔",
     "en_revision": "👀",
     "hecha": "✅",
+    "descartada": "🚫",
 }
 
 

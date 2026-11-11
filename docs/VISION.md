@@ -21,7 +21,7 @@ Lo que diferencia a MEKA no es gestionar archivos, sino **la relación**: te rec
 ## Principios
 
 1. **Local primero.** Tus archivos, tu memoria y tu mascota viven en tu equipo. Solo sale el texto que envías al cerebro que elijas, y con Ollama ni eso.
-2. **Viva, pero no punitiva.** Como un Tamagotchi moderno: tiene necesidades y estados de ánimo, pero nunca muere ni te regaña por no abrirla.
+2. **Ayuda, no distrae.** El Tamagotchi solo inspira la *interacción* (un avatar con expresiones con el que conversas). No hay que alimentarla ni cuidarla, no tiene necesidades ni te pide atención: su trabajo es ayudarte a ser productivo y reducir interrupciones.
 3. **Personalidad antes que funciones.** Cada respuesta, animación y frase tiene que sonar al personaje.
 4. **Cerebro intercambiable.** La lógica no depende de un proveedor de IA, y el personaje tampoco: es un paquete en [`personas/`](../personas/README.md) que se elige por configuración.
 5. **Segura por diseño.** Solo toca lo que autorizas, pide permiso antes de cambiar nada y todo se puede deshacer.
@@ -50,7 +50,7 @@ flowchart TB
 |---|---|---|
 | **Alma** | Personalidad, memoria por usuario, estado de la mascota | ✅ Personalidad y memoria en SQLite |
 | **Cerebro** | Generar respuestas e interpretar imágenes y documentos | ✅ Ollama, Claude y Gemini (`ai/providers/`) |
-| **Manos** | Leer y organizar archivos en carpetas autorizadas | ⏳ Fase 3 |
+| **Manos** | Leer y organizar archivos en carpetas autorizadas | ✅ Lectura (`core/hands/`, `/v1/hands`) · 💤 Escritura implementada pero inactiva hasta aislar el sistema (T-042) |
 | **Cuerpo** | Mostrar a la mascota y recoger la interacción | ✅ Telegram · ✅ MCP · ✅ prototipo de escritorio |
 
 ## Contrato de eventos
@@ -64,7 +64,7 @@ Un agente externo puede publicar estos eventos con `POST /v1/events` o con las h
 | `type` | `data` | La mascota... |
 |---|---|---|
 | `agent.working` | `{"task": "Ordenar Descargas"}` | Se pone a trabajar (animación continua) |
-| `agent.done` | `{"summary": "Ordené 42 archivos"}` | Celebra; sube el ánimo y el afecto |
+| `agent.done` | `{"summary": "Ordené 42 archivos"}` | Celebra que la tarea terminó |
 | `agent.error` | `{"message": "No pude abrir..."}` | Se agobia; baja un poco el ánimo |
 | `agent.confirm` | `{"id": "a1b2", "action": "borrar 3 duplicados", "timeout": 120, "expires_at": ...}` | Pide permiso (se confirma desde el móvil o la mascota); sin respuesta a tiempo = no |
 | `agent.confirmed` | `{"id": "a1b2", "approved": true, "by": "pet"}` | Cierra el diálogo: el permiso ya se resolvió |
@@ -88,8 +88,8 @@ Emociones válidas: `idle`, `happy`, `working`, `thinking`, `sleeping`, `eating`
 |---|---|---|---|
 | **MEKA** (nombre provisional) | Original: chica de visor y horquilla de estrella | 3 (guiño, abrazo, combate contra un *bug*) | Mascota principal |
 | **Nekimu** | Tu avatar | 10 (comer, dormir, `SQL ERROR`, *payday*...) | Personaje "modo desarrollador" |
-| **Espadachina** | Original | 1 | Desbloqueable (afecto 50) |
-| **Kitsune** | Original | 1 | Desbloqueable (afecto 70) |
+| **Espadachina** | Original | 1 | Personaje alternativo |
+| **Kitsune** | Original | 1 | Personaje alternativo |
 
 ### Guía de arte para los personajes
 
@@ -102,7 +102,7 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 | `working` | El agente trabaja | Concentrada, tecleando o luchando contra un *bug* |
 | `thinking` | Pensando o analizando | Mano en la barbilla, holograma, lupa |
 | `sleeping` | Duerme | Ojos cerrados, almohada o taza, "Zzz" |
-| `eating` | La alimentas | Comiendo su comida favorita |
+| `eating` | *(Heredada del prototipo; ya no hay que alimentarla)* | Pausa o descanso, si se usa |
 | `error` | Algo falló | Pánico, sudor, pantalla roja |
 | `celebrate` | Tarea completada | Saltando, confeti, signo de victoria |
 | `sad` | Sola o sin recursos | Cabizbaja, lágrima, cartera vacía |
@@ -122,26 +122,24 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 | **Rive** | Idea | Animación vectorial con máquina de estados incorporada (parpadeo, respiración) |
 | **Live2D** | Idea | Lo más "anime", pero caro de producir y pesado |
 
-## Mecánicas de Tamagotchi
+## Compañera, no mascota que cuidar
 
-| Estadística | Baja por hora | Se recupera con | Si está baja |
-|---|---|---|---|
-| ⚡ Energía | −4 despierta (+15 dormida) | Dormir | Se queja y duerme sola por debajo de 12 |
-| 🍙 Saciedad | −6 | Alimentar (+30) | Pide comida; el ánimo baja el doble |
-| 😊 Ánimo | −3 | Caricias, juegos, tareas completadas | Se pone triste |
-| 💙 Afecto | −0,5 | Caricias, juegos, tareas completadas | Desbloquea personajes al subir |
+> **Decisión (noviembre de 2026):** la idea del Tamagotchi es solo **inspiración para interactuar y
+> conversar** con el asistente. MEKA **no** tiene necesidades: no se alimenta, no tiene energía,
+> hambre ni afecto que suba o baje, y nada se desbloquea por dedicarle tiempo. La filosofía es la
+> **productividad y la ayuda, no distraer**.
 
-**Reglas:**
-- Ninguna estadística baja de 5: no hay muerte ni castigo.
-- El tiempo avanza con la app cerrada, con un máximo de 48 h.
-- Duerme sola de madrugada si no le haces caso durante 10 minutos.
-- Un desbloqueo es para siempre.
+| Sí | No |
+|---|---|
+| Un avatar con expresiones que **comunican lo que hace** (pensando, trabajando, error, tarea terminada) | Estadísticas de cuidado (energía, saciedad, ánimo, afecto) |
+| **Modo compañero**: al desplegar la isla, conversar con MEKA y pedirle cosas | Alimentar, acariciar o jugar para que "esté bien" |
+| La isla resume lo importante (música, notificaciones filtradas, tareas de agentes, permisos) | Avisos que piden atención sin aportar nada |
+| Reducir interrupciones: notificaciones privadas y filtradas | Rachas, recompensas o castigos por abrir la app |
 
-**Ideas para más adelante:**
-- Disfraces y cosplays como logros ligados a tu trabajo real, por ejemplo "10 tareas completadas".
-- Rachas diarias.
-- Rutinas según la hora: café por la mañana, sueño por la noche.
-- Frases que cambian según el ánimo.
+**Ideas en esta línea:**
+- **Modo concentración:** silenciar notificaciones y animaciones durante un bloque de trabajo.
+- **Resumen del día** con lo que hicieron los agentes y lo que quedó pendiente.
+- Frases que cambian según el contexto de trabajo (no según "su ánimo").
 
 ## Plataformas
 
@@ -166,9 +164,9 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 |---|---|---|
 | 0 | Bot de Telegram estable, seguro y con tests | ✅ v1.1 |
 | 1 | **MEKA Core como servicio**: servidor local con este contrato, Telegram y MCP como clientes · adaptador de cerebro (Claude, Gemini, Ollama) | ✅ |
-| 2 | **Mascota de escritorio** | ✅ Prototipo (`pet/`) |
-| 3 | Manos: carpetas autorizadas, lectura y luego escritura con git y confirmación | Pendiente |
-| 4 | Tamagotchi completo: logros, disfraces, rutinas | Pendiente |
+| 2 | **Compañera de escritorio** (Dynamic Island en Go) | ✅ Prototipo (`pet/`) |
+| 3 | Manos: carpetas autorizadas, lectura y luego escritura con git y confirmación | ✅ Lectura · 💤 Escritura inactiva (aislamiento pendiente) |
+| 4 | Compañera de productividad: tarjetas tipo Brief, notificaciones filtradas, modo concentración | En curso (música, batería y notificaciones ✅) |
 | 5 | Móvil: Android con burbuja e iOS con widget, vía Tailscale | Pendiente |
 
 ## Decisiones abiertas

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from . import datos
-from .datos import ESTADOS, ICONOS, PRIORIDADES
+from .datos import CERRADOS, ESTADOS, ICONOS, PRIORIDADES
 
 
 def _resumen(db: dict) -> list[str]:
@@ -35,7 +35,7 @@ def _por_agente(db: dict) -> list[str]:
         ]
         # Abiertas primero (por prioridad), las hechas al final
         for t in sorted(
-            mine, key=lambda t: (t["estado"] == "hecha", prio[t["prioridad"]], t["id"])
+            mine, key=lambda t: (t["estado"] in CERRADOS, prio[t["prioridad"]], t["id"])
         ):
             deps = ", ".join(t.get("depende_de", [])) or "—"
             fecha = t.get("actualizada", "")[:16].replace("T", " ")
@@ -90,7 +90,9 @@ def render(db: dict):
 def summary(db: dict) -> str:
     out = []
     for key, agente in db["agentes"].items():
-        activas = [t for t in db["tareas"] if t["responsable"] == key and t["estado"] != "hecha"]
+        activas = [
+            t for t in db["tareas"] if t["responsable"] == key and t["estado"] not in CERRADOS
+        ]
         out.append(f"{agente['nombre']} ({len(activas)} abiertas):")
         for t in activas:
             out.append(f"  {ICONOS[t['estado']]} {t['id']} [{t['prioridad']}] {t['titulo']}")

@@ -20,6 +20,14 @@ sqlite-vec>=0.1.6          # Similitud de vectores en C para la memoria semánti
 openai-whisper>=20250625   # STT (instala PyTorch como dependencia)
 edge-tts>=7.0              # TTS ligero en la nube (motor de respaldo)
 
+# --- Datos del sistema para la Dynamic Island (core/system/) ---
+psutil>=5.9                # Batería
+winrt-Windows.Media.Control>=3.0 ; sys_platform == "win32"   # Música en reproducción (SMTC)
+winrt-Windows.Foundation>=3.0 ; sys_platform == "win32"
+winrt-Windows.UI.Notifications>=3.0 ; sys_platform == "win32"              # Notificaciones
+winrt-Windows.UI.Notifications.Management>=3.0 ; sys_platform == "win32"
+winrt-Windows.ApplicationModel>=3.0 ; sys_platform == "win32"               # Nombre de la app
+
 # --- Lectura de documentos ---
 pymupdf>=1.24.3            # PDF
 python-docx>=1.1           # DOCX

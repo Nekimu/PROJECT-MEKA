@@ -5,9 +5,11 @@ from server.routes import (
     contract,
     conversation,
     events,
+    hands,
     memory,
     runs,
     status,
+    system,
     voice,
 )
 
@@ -20,4 +22,6 @@ ROUTERS = [
     memory.router,
     events.router,
     confirmations.router,
+    hands.router,
+    system.router,
 ]

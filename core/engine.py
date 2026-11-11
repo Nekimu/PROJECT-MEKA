@@ -18,6 +18,8 @@ from core.audio_store import AudioStore
 from core.config import resolve_path
 from core.confirmations import ConfirmationRegistry
 from core.events import EventBus
+from core.hands import Hands
+from core.hands.restore import RestorePoints
 from core.logger import setup_logger
 from core.media import MediaMixin
 from core.memory import MemoryStore
@@ -25,6 +27,7 @@ from core.persona import Persona, load_active_persona
 from core.replies import Reply, UnsupportedFileError
 from core.runs import RunLog
 from core.semantic import SemanticMemory
+from core.system import SystemMonitor
 
 __all__ = ["MekaEngine", "Reply", "UnsupportedFileError"]
 
@@ -72,6 +75,20 @@ class MekaEngine(MediaMixin):
         self.confirmations = ConfirmationRegistry(
             self.bus, config.get("server", {}).get("confirm_timeout_seconds", 120)
         )
+        # Música y batería para la Dynamic Island (core/system/); arranca con el servidor
+        self.system = SystemMonitor(config, self.bus)
+        # Manos (fase 3): carpetas autorizadas; los cambios piden permiso y dejan un punto de
+        # restauración en data/hands/ (core/hands/)
+        self.hands = Hands(
+            config,
+            self.bus,
+            self.runs,
+            confirmations=self.confirmations,
+            restore_points=RestorePoints(
+                resolve_path(config.get("paths", {}).get("hands_dir", "data/hands")),
+                self.memory.db_path,
+            ),
+        )
 
         server = config.get("server", {})
         self.broadcast = server.get("broadcast_messages", True)
@@ -111,6 +128,8 @@ class MekaEngine(MediaMixin):
         self.stt.unload_model()
         with contextlib.suppress(Exception):
             self.runs.close()
+        with contextlib.suppress(Exception):
+            self.hands.restore_points.close()
         with contextlib.suppress(Exception):
             self.memory.close()
         self.tts.unload()

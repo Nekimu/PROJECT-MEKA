@@ -52,7 +52,9 @@
       "descripcion": "Python 3.12 (el proyecto soporta 3.11-3.13), PyTorch CPU (sin GPU NVIDIA), requirements-dev.txt, `ruff check .` y `pytest` en verde. Pendiente fuera de pip: Ollama (+ gemma3:12b y embeddinggemma) y FFmpeg.",
       "archivos": [],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T19:30:00-06:00",
@@ -71,15 +73,21 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "FFmpeg 9.0.2 y Ollama 0.40.15 instalados; modelos gemma3:270m (pruebas) y embeddinggemma. config_local.yml (ignorado por git) soportado en core/config.py. 144 tests OK."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T20:57:05-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-002",
       "titulo": "Tablero compartido de tareas y protección de áreas (este sistema)",
       "responsable": "claude",
-      "estado": "en_revision",
+      "estado": "hecha",
       "prioridad": "alta",
       "descripcion": "`coordinacion/` + `scripts/tareas.py`, hooks de git (commit-msg y post-commit) y hooks de Claude Code (SessionStart, PreToolUse, Stop).",
       "archivos": [
@@ -89,7 +97,9 @@
         ".claude/settings.json"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T19:30:00-06:00",
@@ -102,9 +112,15 @@
           "estado": "en_revision",
           "por": "claude",
           "nota": "Listo; hooks de Claude Code activos desde la próxima sesión. Sin commit todavía."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T19:26:40-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-003",
@@ -120,7 +136,9 @@
         "tests/test_server.py"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T19:30:00-06:00",
@@ -138,15 +156,21 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "core/confirmations.py (registro con caducidad: sin respuesta = no), evento agent.confirmed, user.confirm por WebSocket, GET/POST /v1/confirmations, herramienta MCP ask_permission. Probado en real: agente MCP pide permiso y la mascota (WebSocket) aprueba/rechaza. Contrato en coordinacion/README.md."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-11T09:23:55-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-004",
       "titulo": "Fase 3 · Manos (solo lectura): carpetas autorizadas, listar, leer y buscar",
       "responsable": "claude",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "alta",
       "descripcion": "`hands.folders` en config.yml; nada fuera de ellas (resolución de rutas, sin symlinks que escapen). API `/v1/workspace/...` y herramientas MCP. Emite `agent.working`/`agent.done`/`agent.error` para que la mascota reaccione. Registro de cada acción.",
       "archivos": [
@@ -164,15 +188,26 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T10:19:40-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T10:29:19-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "core/hands/ (policy, reader): carpetas autorizadas con nombre, rutas resueltas (sin .. ni enlaces que escapen, probado con junction en Windows), protegidos siempre (.env, llaves, .git, gestores...), carpetas private ocultas al MCP. /v1/hands + 4 herramientas MCP, registro sin rutas ni contenido, eventos en búsquedas. Contrato 1.5. 16 tests + Postman (27/35)."
         }
       ],
-      "actualizada": "2026-11-09T19:30:00-06:00"
+      "actualizada": "2026-11-11T10:29:19-06:00"
     },
     {
       "id": "T-005",
       "titulo": "Fase 3 · Manos (escritura): punto de restauración git + confirmación + deshacer",
       "responsable": "claude",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "media",
       "descripcion": "Antes de mover/renombrar/borrar: commit de restauración en la carpeta autorizada, `agent.confirm` (T-003) y operación `undo`.",
       "archivos": [
@@ -191,15 +226,32 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T10:41:44-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T10:48:11-06:00",
+          "estado": "en_revision",
+          "por": "claude",
+          "nota": "Código y 17 tests listos (permiso por cambio, git sombra en data/hands, deshacer en pila, límites antes de preguntar). INACTIVO: ninguna carpeta tiene writable:true. Pendiente decidir si se activa ahora o tras evaluar aislamiento (Docker / usuario restringido de Windows)."
+        },
+        {
+          "fecha": "2026-11-11T10:52:28-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "Código terminado y probado (17 tests) pero INACTIVO por decisión del usuario: ninguna carpeta con writable:true hasta resolver el aislamiento (T-042)."
         }
       ],
-      "actualizada": "2026-11-09T19:30:00-06:00"
+      "actualizada": "2026-11-11T10:52:28-06:00"
     },
     {
       "id": "T-006",
       "titulo": "Estado de la mascota en el núcleo: GET/PUT /v1/pet/state persistido en SQLite",
       "responsable": "claude",
-      "estado": "pendiente",
+      "estado": "descartada",
       "prioridad": "media",
       "descripcion": "Guardar energía, saciedad, ánimo, afecto y desbloqueos en el Core para que escritorio, móvil y Telegram compartan la misma mascota. Las reglas del Tamagotchi siguen en el frontend; el Core solo almacena y difunde un evento `pet.state` (nuevo, aditivo).",
       "archivos": [
@@ -216,9 +268,21 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T11:47:14-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "Prioridad renovada: la isla (Tamagotchi integrado) necesita que el estado de la mascota viva en el Core."
+        },
+        {
+          "fecha": "2026-11-11T11:59:08-06:00",
+          "estado": "descartada",
+          "por": "claude",
+          "nota": "Descartada por decisión del usuario (2026-11-11): MEKA no tiene mecánicas de cuidado (energía, saciedad, ánimo, afecto, desbloqueos). El Tamagotchi solo inspira la interacción; la filosofía es productividad, no distraer."
         }
       ],
-      "actualizada": "2026-11-09T19:30:00-06:00"
+      "actualizada": "2026-11-11T11:59:08-06:00"
     },
     {
       "id": "T-007",
@@ -233,7 +297,9 @@
         "tests/test_server.py"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T19:30:00-06:00",
@@ -251,9 +317,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "core/contract.py fuente única (versión 1.4, campos y tipos de cada evento, historial); GET /v1/contract público con rutas REST generadas desde los routers; /v1/health incluye contract; POST /v1/events valida campos; test con huella que obliga a subir la versión (probado con mutación) y test de que todo evento emitido cumple el contrato."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-11T09:34:16-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-008",
@@ -333,7 +405,7 @@
       "id": "T-011",
       "titulo": "(Propuesta) UI de confirmación en la mascota para agent.confirm / user.confirm",
       "responsable": "antigravity",
-      "estado": "en_revision",
+      "estado": "hecha",
       "prioridad": "media",
       "descripcion": "Propuesta de Claude Code como contraparte de T-003: diálogo Aprobar/Rechazar en la mascota que envía `user.confirm {id, approved}`. Antigravity puede aceptarla, cambiarla o descartarla.",
       "archivos": [
@@ -361,9 +433,15 @@
           "estado": "en_revision",
           "por": "antigravity",
           "nota": "UI de confirmación Aprobar/Rechazar lista en el bocadillo (envía user.confirm {id, approved}); lista para integrarse cuando T-003 esté en Core"
+        },
+        {
+          "fecha": "2026-11-11T10:58:01-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Aceptada e integrada: interfaz de confirmacion con botones Permitir/Cancelar, cierre reactivo, timeout sincronizado y soporte nativo en el notch."
         }
       ],
-      "actualizada": "2026-11-09T19:30:35-06:00"
+      "actualizada": "2026-11-11T10:58:01-06:00"
     },
     {
       "id": "T-012",
@@ -479,7 +557,9 @@
         "tests/test_server.py"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T21:01:08-06:00",
@@ -492,9 +572,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "server/ dividido en app, security, schemas, deps y routes/ (status, conversation, voice, memory, events). Mismas rutas (comparado el OpenAPI)."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T21:03:00-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-016",
@@ -509,7 +595,9 @@
         "tests/test_tts.py"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T21:01:08-06:00",
@@ -522,9 +610,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "ai/tts/ con interfaz TTSEngine (base.py), un módulo por motor (edge, piper, qwen), audio.py (OGG) y service.py (respaldo)."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T21:04:51-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-017",
@@ -540,7 +634,9 @@
         "core/history.py"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T21:01:08-06:00",
@@ -553,9 +649,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "core/audio_store.py (AudioStore) y core/history.py (ConversationStore). Además core/memory.py dividido: core/textsearch.py y core/legacy_import.py."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T21:09:49-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-018",
@@ -572,7 +674,9 @@
         "T-016",
         "T-017"
       ],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T21:01:09-06:00",
@@ -585,9 +689,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "tests/test_modularidad.py: máx. 300 líneas en core, ai, server, channels, scripts y run.py. scripts/tareas.py dividido en scripts/tablero/."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T21:09:49-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-019",
@@ -603,7 +713,9 @@
         "tests/**"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T21:01:09-06:00",
@@ -621,9 +733,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "ai/routing.py (cerebro por tarea; lo privado solo local, nunca de respaldo en la nube), ai/privacy.py (credenciales, llaves, JWT, tarjetas con Luhn, CURP), privacidad persistente por sesión en SQLite hasta el reset, documentos privados por defecto, 'private' en API y WebSocket. 22 tests + prueba real."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T22:13:48-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-020",
@@ -639,7 +757,9 @@
         "tests/**"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T21:01:09-06:00",
@@ -657,9 +777,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "ProviderReply (texto + tokens) en Ollama, Claude y Gemini; Answer con ok/proveedor/modelo/latencia; core/runs.py (tabla runs sin contenido, máx. 5000) y GET /v1/runs. Probado con Ollama real."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T22:03:16-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-021",
@@ -674,7 +800,9 @@
         "tests/**"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T21:01:09-06:00",
@@ -692,9 +820,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "message con emotion=error si el cerebro falla; emotion=error si el núcleo revienta; sad si no entiende el audio. Avisado en coordinacion/README.md (contrato)."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T22:03:16-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-022",
@@ -832,7 +966,9 @@
         "README.md"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T21:44:09-06:00",
@@ -845,9 +981,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "5 herramientas OK por stdio contra MEKA Core real; la mascota (WebSocket) recibe los eventos. Claude Code 2.x y Gemini CLI 0.62: Connected. Corregido: un log al importar core.config se colaba en stdout y rompía el JSON-RPC (test de regresión)."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T21:44:10-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-027",
@@ -894,7 +1036,9 @@
         "tests/test_text_utils.py"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T22:03:16-06:00",
@@ -907,9 +1051,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "UnicodeEncodeError (cp1252) en log_conversation. Consola tolerante (backslashreplace) y log_conversation nunca rompe una respuesta. Test de regresión."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T22:03:17-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-029",
@@ -923,7 +1073,9 @@
         "tests/**"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T22:03:17-06:00",
@@ -936,9 +1088,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "core/engine.py 290 -> 179 líneas: core/media.py (voz, archivos, audios) y core/replies.py (Reply, UnsupportedFileError)."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T22:11:51-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-030",
@@ -991,7 +1149,9 @@
         "tests/**"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-09T22:13:48-06:00",
@@ -1009,9 +1169,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "facts.private (migración automática, probada con la base real; respaldo en %TEMP%). Recuerdos privados solo en prompts cuando todos los proveedores (respaldo incluido) son locales; MCP y Telegram nunca los reciben (include_private=false). ai/recall.py separado (service.py 244 líneas) y core/memory_sessions.py (memory.py 264). 7 tests nuevos."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-09T22:21:58-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-032",
@@ -1070,7 +1236,7 @@
       "id": "T-034",
       "titulo": "Diálogo de permisos: usar timeout del evento, cerrar con agent.confirmed y pedir pendientes al conectar",
       "responsable": "antigravity",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "alta",
       "descripcion": "Aviso de Claude Code: T-003 ya está en el Core. agent.confirm trae {id, action, timeout, expires_at, details?}; hoy pet.js cierra el diálogo a los 25 s fijos aunque el Core espera 'timeout'. Nuevo evento agent.confirmed {id, approved, by} para cerrar el diálogo si se resolvió en otro cliente o caducó (by: timeout). Al conectar: GET /v1/confirmations. user.confirm no cambia. Además: .gitignore actualizado por Claude: *.exe (meka-desktop.exe) y .gemini/ quedan fuera del repo; se quitaron las líneas de pet/src-tauri.",
       "archivos": [
@@ -1085,9 +1251,21 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T10:55:12-06:00",
+          "estado": "en_progreso",
+          "por": "antigravity",
+          "nota": "Iniciando implementacion de cierre por agent.confirmed, timeout real de expires_at y peticion de pendientes en /v1/confirmations al conectar"
+        },
+        {
+          "fecha": "2026-11-11T10:57:27-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Completado: 1) pet.js ahora escucha agent.confirmed para cerrar de inmediato el dialogo si la accion fue resuelta externamente o por timeout. 2) Tiempo limite calculado con precision desde expires_at o timeout del evento. 3) Peticion automatica de pendientes a GET /v1/confirmations al conectar el WebSocket."
         }
       ],
-      "actualizada": "2026-11-11T09:23:56-06:00"
+      "actualizada": "2026-11-11T10:57:27-06:00"
     },
     {
       "id": "T-035",
@@ -1127,7 +1305,7 @@
       "id": "T-036",
       "titulo": "App Go/web: leer eventos y emociones de GET /v1/contract y avisar si la versión mayor no coincide",
       "responsable": "antigravity",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "media",
       "descripcion": "Aviso de Claude Code (T-007): GET /v1/contract es público y devuelve version (1.4), events.outbound/inbound con campos y tipos, emotions y rest. /v1/health trae contract. Sugerencia: al conectar, si la versión mayor difiere, mostrar aviso en vez de fallar en silencio.",
       "archivos": [
@@ -1142,9 +1320,21 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T10:55:18-06:00",
+          "estado": "en_progreso",
+          "por": "antigravity",
+          "nota": "Iniciando verificacion de compatibilidad mayor de version con GET /v1/contract y /v1/health al conectar"
+        },
+        {
+          "fecha": "2026-11-11T10:57:48-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Completado: 1) pet.js consulta GET /v1/contract y /v1/health al conectar. 2) Verifica compatibilidad de version mayor (1.x) y muestra advertencia clara si no coincide. 3) Sincroniza la personalidad activa del Core con los avatares disponibles."
         }
       ],
-      "actualizada": "2026-11-11T09:34:17-06:00"
+      "actualizada": "2026-11-11T10:57:48-06:00"
     },
     {
       "id": "T-037",
@@ -1158,7 +1348,9 @@
         "README.md"
       ],
       "depende_de": [],
-      "commits": [],
+      "commits": [
+        "92ca09c6893a79b430753254a28298ee3b62e898"
+      ],
       "historial": [
         {
           "fecha": "2026-11-11T09:42:36-06:00",
@@ -1171,9 +1363,15 @@
           "estado": "hecha",
           "por": "claude",
           "nota": "postman-cli 1.87 instalado (npm -g). tests/postman: 24 peticiones / 32 comprobaciones en 6 carpetas, generadas desde generar_coleccion.py. Pasan todas contra el Core real con Ollama."
+        },
+        {
+          "fecha": "2026-11-11T10:07:00-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 92ca09c: feat(backend): núcleo modular, privacidad, permisos y contrato publicado"
         }
       ],
-      "actualizada": "2026-11-11T09:42:38-06:00"
+      "actualizada": "2026-11-11T10:07:00-06:00"
     },
     {
       "id": "T-038",
@@ -1211,6 +1409,344 @@
         }
       ],
       "actualizada": "2026-11-11T10:03:24-06:00"
+    },
+    {
+      "id": "T-039",
+      "titulo": "Dynamic Island: arranque centrado con hook CBT, pildora flotante y diseno Apple autentico",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Eliminacion del salto inicial con hook CBT nativo de Win32; pildora flotante con border-radius continuo de 360 grados, eliminacion del recuadro anidado interno, especularidad vitrea y diseno fluido de Apple.",
+      "archivos": [
+        "pet/desktop/window_windows.go",
+        "pet/desktop/main.go",
+        "pet/desktop/main_test.go",
+        "pet/web/pet.css",
+        "pet/web/index.html"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T10:17:46-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T10:17:53-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Hook CBT nativo de Win32 implementado (cero salto visual al arrancar); pildora flotante con border-radius 9999px y squircle 34px; diseno unificado sin caja anidada, especularidad vitrea Apple e iluminacion morada difusa."
+        }
+      ],
+      "actualizada": "2026-11-11T10:17:53-06:00"
+    },
+    {
+      "id": "T-040",
+      "titulo": "Dynamic Island: inicio estrictamente colapsado en pildora y eliminacion de auto-despliegue",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Correccion del auto-despliegue que forzaba el estado expandido en el saludo inicial de say(); ahora inicia 100% como pildora flotante compacta, ocultando el escenario interno hasta que el usuario hace clic.",
+      "archivos": [
+        "pet/web/pet.js",
+        "pet/web/pet.css",
+        "pet/desktop/window_windows.go"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T10:28:49-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T10:28:57-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Resuelto: 1) say() ya no auto-despliega el notch para saludos o mensajes normales, solo para agent.confirm urgente. 2) start() inicia estrictamente en modo pildora. 3) En modo colapsado los elementos internos se ocultan con display: none y la pildora flota con border-radius 9999px continuo."
+        }
+      ],
+      "actualizada": "2026-11-11T10:28:57-06:00"
+    },
+    {
+      "id": "T-041",
+      "titulo": "Dynamic Island: eliminacion de halo cuadrado, auto-colapso por mouseleave y diseno Samsung Brief",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Eliminar halo/recuadro rectangular de fondo asegurando transparencia 100% pura exterior, colapso interactivo por clic en el notch sin re-apertura por bubbling, auto-colapso suave al salir el cursor (mouseleave) y estetica refinada inspirada en Samsung Brief.",
+      "archivos": [
+        "pet/web/pet.css",
+        "pet/web/pet.js",
+        "pet/desktop/window_windows.go"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T10:41:39-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T10:41:53-06:00",
+          "estado": "en_progreso",
+          "por": "antigravity",
+          "nota": "Iniciando erradicacion de halo cuadrado exterior, correccion de toggle por clic, auto-colapso por mouseleave y estetica Samsung Brief"
+        },
+        {
+          "fecha": "2026-11-11T10:46:32-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Completado: 1) Eliminado el halo/recuadro rectangular de fondo al contener la iluminacion morada como gradiente radial y resplandor interno (inset) sin sangrado exterior. 2) Corregido el clic en el notch al estar expandido para replegar a pildora sin re-apertura por bubbling. 3) Implementado auto-colapso suave (350ms) al salir el cursor (mouseleave) o al perder foco la ventana, respetando escritura en chat y autorizaciones. 4) Estetica inspirada en Samsung Brief / Dynamic Island con bordes squircle organicos, acrilico oscuro y tarjeta de briefing refinada."
+        }
+      ],
+      "actualizada": "2026-11-11T10:46:32-06:00"
+    },
+    {
+      "id": "T-042",
+      "titulo": "Aislamiento de las manos antes de activar la escritura: usuario restringido de Windows (NTFS) vs Docker/WSL2",
+      "responsable": "claude",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "descripcion": "Decisión del usuario (2026-11-11): la escritura (T-005) queda INACTIVA hasta tener una segunda capa de aislamiento del sistema operativo. Evaluar: (a) ejecutar MEKA Core con un usuario de Windows sin privilegios y permisos NTFS solo sobre las carpetas autorizadas (sin VM ni RAM extra); (b) Docker Desktop + WSL2 con montajes solo de esas carpetas (2-4 GB de RAM, comprobar virtualización en firmware, montajes lentos). Criterio: aislamiento real con el menor consumo en este equipo (i5-8265U, 16 GB).",
+      "archivos": [
+        "core/hands/**",
+        "docs/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T10:52:26-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-11T10:52:26-06:00"
+    },
+    {
+      "id": "T-043",
+      "titulo": "Dynamic Island fluida en Go: ventana fija + resorte en JS, click-through, DPI y foco (ver propuesta)",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Propuesta de Claude Code en coordinacion/propuestas/dynamic-island-go.md. Diagnóstico: mekaSetNotchExpanded redimensiona la ventana nativa con SetWindowPos y eso nunca será fluido. DynamicWin (inspiración; licencia CC BY-SA 4.0: no copiar código) usa una ventana FIJA y anima la isla dentro con un resorte de segundo orden. Pasos: 1) ventana fija + resorte JS; 2) clics que atraviesan lo transparente alternando WS_EX_TRANSPARENT según el cursor (lo que DynamicWin no resuelve); 3) DPI PerMonitorV2; 4) WS_EX_NOACTIVATE y foco para el chat. Opcional: eventos system.media/system.battery desde el Core.",
+      "archivos": [
+        "pet/desktop/**",
+        "pet/web/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T11:19:06-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T11:22:00-06:00",
+          "estado": "en_progreso",
+          "por": "antigravity",
+          "nota": "Iniciando implementación de ventana fija, click-through WS_EX_TRANSPARENT, resorte de física y diseño DynamicWin"
+        },
+        {
+          "fecha": "2026-11-11T11:32:00-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Implementada ventana fija 380x480 con click-through WS_EX_TRANSPARENT a 60Hz, resorte de segundo orden en JS, DPI PerMonitorV2, WS_EX_NOACTIVATE, desactivación de sombra DWM y HUD estilo DynamicWin/Samsung Brief"
+        }
+      ],
+      "actualizada": "2026-11-11T11:32:00-06:00"
+    },
+    {
+      "id": "T-044",
+      "titulo": "Datos del sistema para la Dynamic Island: system.media, system.battery y user.media (contrato 1.7)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "",
+      "archivos": [
+        "core/system/**",
+        "core/contract.py",
+        "server/routes/system.py",
+        "tests/test_system.py",
+        "requirements.txt",
+        "config.yml"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T11:30:41-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T11:30:41-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "core/system/: música por SMTC de Windows (cualquier reproductor, winrt-Windows.Media.Control) y batería por psutil; publica solo cuando cambia (la posición no cuenta); user.media y POST /v1/system/media (play_pause/next/previous); GET /v1/system para clientes que llegan tarde. Contrato 1.7. 11 tests. Probado en vivo: batería 37 % cargando."
+        }
+      ],
+      "actualizada": "2026-11-11T11:30:41-06:00"
+    },
+    {
+      "id": "T-045",
+      "titulo": "Isla: mostrar la música en reproducción y la batería (eventos system.* del Core)",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "Ya disponible en el Core (contrato 1.7): system.media {playing, title?, artist?, app?, position?, duration?} y system.battery {percent, charging}, solo cuando cambian; al conectar, GET /v1/system. Controles: enviar user.media {action: play_pause|next|previous} por WebSocket. La posición no genera eventos: avanzarla en local con un temporizador mientras playing=true. Ver coordinacion/propuestas/dynamic-island-go.md.",
+      "archivos": [
+        "pet/web/**",
+        "pet/desktop/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T11:30:42-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T11:33:30-06:00",
+          "estado": "en_progreso",
+          "por": "antigravity",
+          "nota": "Integrando widgets de medios y batería con contrato 1.7 del Core"
+        },
+        {
+          "fecha": "2026-11-11T11:45:00-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Integrados eventos system.media y system.battery: ecualizador reactivo en notch colapsado (#miniMusicBar), tarjeta reproductor (#mediaWidget) con progreso local, controles user.media por WebSocket/REST, y chip de batería con estado de carga en el glance HUD"
+        }
+      ],
+      "actualizada": "2026-11-11T11:45:00-06:00"
+    },
+    {
+      "id": "T-046",
+      "titulo": "Notificaciones de Windows para la isla: system.notification privado, apps permitidas, códigos ocultos, descartar y abrir",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "",
+      "archivos": [
+        "core/system/**",
+        "core/contract.py",
+        "server/routes/**",
+        "tests/**",
+        "requirements.txt",
+        "config.yml"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T11:47:13-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T11:47:15-06:00",
+          "estado": "en_progreso",
+          "por": "claude"
+        },
+        {
+          "fecha": "2026-11-11T11:54:24-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "core/system/notifications.py + inbox.py: UserNotificationListener (funciona sin empaquetar, probado con 25 reales); apps permitidas/bloqueadas, códigos ocultos, sensibles ocultos (ai/privacy), sin aumid hacia fuera; descartar y abrir (solo sobre notificaciones visibles). Contrato 1.8. 18 tests + Postman 35/44."
+        }
+      ],
+      "actualizada": "2026-11-11T11:54:24-06:00"
+    },
+    {
+      "id": "T-047",
+      "titulo": "Pila de tarjetas tipo Brief en la isla con animaciones (música, batería, notificaciones, agentes, permisos, mensajes de MEKA)",
+      "responsable": "antigravity",
+      "estado": "pendiente",
+      "prioridad": "alta",
+      "descripcion": "Idea del usuario (inspiración Samsung Brief). La isla compone las tarjetas con eventos que ya existen: system.media, system.battery, system.notification (en camino, T-046), agent.working/done/error, agent.confirm (prioridad máxima) y message. Ordenar por prioridad y pasar entre tarjetas con animaciones. Controles: user.media y user.notification {id, action: dismiss|open}.",
+      "archivos": [
+        "pet/web/**",
+        "pet/desktop/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T11:47:14-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-11T11:47:14-06:00"
+    },
+    {
+      "id": "T-048",
+      "titulo": "Modo compañero al desplegar la isla: avatar flotante y chat con MEKA",
+      "responsable": "antigravity",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "descripcion": "Idea del usuario: al expandir la isla aparece el avatar y pasa a modo compañero. El backend ya lo cubre: chat por WebSocket (user.message, con private opcional), respuestas con emoción, memoria y permisos. El estado de la mascota en el Core llegará con T-006.",
+      "archivos": [
+        "pet/web/**",
+        "pet/desktop/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T11:47:14-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-11T11:59:09-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "Recordatorio de Claude: el modo compañero es para conversar y pedir ayuda; sin mecánicas de cuidado (ver la tarea de quitarlas y docs/VISION.md)."
+        }
+      ],
+      "actualizada": "2026-11-11T11:59:09-06:00"
+    },
+    {
+      "id": "T-049",
+      "titulo": "Quitar las mecánicas de cuidado del prototipo: alimentar, energía, saciedad, ánimo, afecto y desbloqueos",
+      "responsable": "antigravity",
+      "estado": "pendiente",
+      "prioridad": "alta",
+      "descripcion": "Decisión del usuario (2026-11-11): el Tamagotchi es solo inspiración para INTERACTUAR y CONVERSAR con el asistente; no se le alimenta ni se le cuida. Filosofía: productividad y ayuda, no distraer. Quitar del prototipo las estadísticas (HUD de energía/saciedad/ánimo/afecto), alimentar/acariciar/jugar, el progreso offline, dormirse sola y los personajes desbloqueables por afecto (todos disponibles). Las emociones se quedan para comunicar lo que hace el asistente (pensando, trabajando, error, celebra una tarea). La emoción 'eating' queda heredada en el contrato; si ya no se usa, avísame y la retiro en un cambio de versión mayor. Ver la sección «Compañera, no mascota que cuidar» de docs/VISION.md.",
+      "archivos": [
+        "pet/web/**",
+        "pet/desktop/**",
+        "pet/README.md"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-11T11:59:09-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-11T11:59:09-06:00"
     }
   ]
 }

@@ -227,6 +227,87 @@ PERMISOS = [
     ),
 ]
 
+MANOS = [
+    request(
+        "Carpetas autorizadas",
+        "GET",
+        "/v1/hands",
+        'pm.test("Lista (vacía si no autorizaste ninguna en config.yml)", () => pm.expect(pm.response.json().folders).to.be.an("array"));',
+    ),
+    request(
+        "Carpeta no autorizada → 404",
+        "GET",
+        "/v1/hands/no-autorizada/list",
+        'pm.test("404", () => pm.response.to.have.status(404));',
+    ),
+    request(
+        "Escapar de una carpeta → nunca 200",
+        "GET",
+        "/v1/hands/no-autorizada/read",
+        'pm.test("Rechazado", () => pm.expect(pm.response.code).to.be.oneOf([400, 403, 404]));',
+        query=[("path", "../../.env")],
+    ),
+    request(
+        "Escribir en carpeta no autorizada → nunca 200",
+        "POST",
+        "/v1/hands/no-autorizada/write",
+        'pm.test("Rechazado sin pedir permiso", () => pm.expect(pm.response.code).to.be.oneOf([403, 404]));',
+        body={"path": "prueba.txt", "content": "no debería escribirse"},
+    ),
+    request(
+        "Historial de una carpeta no autorizada → 404",
+        "GET",
+        "/v1/hands/no-autorizada/history",
+        'pm.test("404", () => pm.response.to.have.status(404));',
+    ),
+    request(
+        "Ninguna carpeta admite cambios (escritura pospuesta)",
+        "GET",
+        "/v1/hands",
+        'pm.test("writable es false en todas", () => pm.response.json().folders.forEach(f => pm.expect(f.writable).to.be.false));',
+    ),
+]
+
+SISTEMA = [
+    request(
+        "Música y batería",
+        "GET",
+        "/v1/system",
+        'pm.test("Tiene media y battery (pueden ser null)", () => { const s = pm.response.json(); pm.expect(s).to.have.property("media"); pm.expect(s).to.have.property("battery"); });',
+    ),
+    request(
+        "Acción de música no válida → 422",
+        "POST",
+        "/v1/system/media",
+        'pm.test("422", () => pm.response.to.have.status(422));',
+        body={"action": "borrar_todo"},
+    ),
+    request(
+        "system.battery a mano → 422",
+        "POST",
+        "/v1/events",
+        'pm.test("Solo lo emite el núcleo", () => pm.response.to.have.status(422));',
+        body={"type": "system.battery", "data": {"percent": 1, "charging": False}},
+    ),
+    request(
+        "Notificaciones (privadas)",
+        "GET",
+        "/v1/system/notifications",
+        """
+const n = pm.response.json().notifications;
+pm.test("Lista", () => pm.expect(n).to.be.an("array"));
+pm.test("Nunca sale el identificador interno de la app", () => n.forEach(x => pm.expect(x).to.not.have.property("aumid")));
+""",
+    ),
+    request(
+        "Acción de notificación no válida → 422",
+        "POST",
+        "/v1/system/notifications/1",
+        'pm.test("422", () => pm.response.to.have.status(422));',
+        body={"action": "responder"},
+    ),
+]
+
 REGISTRO_Y_SEGURIDAD = [
     request(
         "Registro de ejecución (sin contenido)",
@@ -279,7 +360,9 @@ COLLECTION = {
         folder("3 · Conversación y privacidad", "Llama al cerebro configurado.", CONVERSACION),
         folder("4 · Eventos", "Publicación validada contra el contrato.", EVENTOS),
         folder("5 · Permisos", "agent.confirm / user.confirm. Sin respuesta = no.", PERMISOS),
-        folder("6 · Registro y seguridad", "", REGISTRO_Y_SEGURIDAD),
+        folder("6 · Manos (solo lectura)", "Carpetas autorizadas en hands.folders.", MANOS),
+        folder("7 · Sistema (Dynamic Island)", "Música y batería.", SISTEMA),
+        folder("8 · Registro y seguridad", "", REGISTRO_Y_SEGURIDAD),
     ],
 }
 

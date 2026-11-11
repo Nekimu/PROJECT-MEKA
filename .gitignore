@@ -57,6 +57,11 @@ pet/desktop/frontend/dist/
 .gemini/
 .claude/settings.local.json
 
+# App de Postman: vincula tu workspace (con su ID) a la colección local. La colección
+# compartida vive en tests/postman/ y sí se sube.
+.postman/
+/postman/
+
 # Tablero de coordinación: bloqueo y escritura temporal de scripts/tareas.py
 coordinacion/.tareas.lock
 coordinacion/*.tmp

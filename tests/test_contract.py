@@ -16,6 +16,10 @@ from tests.test_server import make_client, make_engine
 # frontend en coordinacion/README.md.
 FINGERPRINTS = {
     "1.4": "dc763f817ee8390f",
+    "1.5": "2b570112825a18d4",
+    "1.6": "0e5f228573640fe0",
+    "1.7": "d59efebe67ae41cc",
+    "1.8": "b150bda941daf0ec",
 }
 
 
@@ -39,7 +43,13 @@ def test_contract_is_public_and_complete(tmp_path):
     with make_client(make_engine(tmp_path), token="secreto") as client:
         document = client.get("/v1/contract").json()  # Sin token, como /v1/health
     assert set(document["emotions"]) == set(contract.EMOTIONS)
-    assert set(document["events"]["inbound"]) == {"client.hello", "user.message", "user.confirm"}
+    assert set(document["events"]["inbound"]) == {
+        "client.hello",
+        "user.message",
+        "user.confirm",
+        "user.media",
+        "user.notification",
+    }
     rest = {(r["method"], r["path"]): r["auth"] for r in document["rest"]}
     assert rest[("GET", "/v1/health")] is False and rest[("GET", "/v1/contract")] is False
     assert rest[("POST", "/v1/chat")] is True and rest[("WEBSOCKET", "/v1/events")] is True

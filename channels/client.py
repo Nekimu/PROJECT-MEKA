@@ -16,6 +16,10 @@ class CoreUnavailableError(RuntimeError):
     """MEKA Core no responde."""
 
 
+class CoreRequestError(ValueError):
+    """MEKA Core rechazó la petición (4xx). El mensaje es el `detail` del servidor."""
+
+
 class CoreClient:
     def __init__(
         self,
@@ -44,6 +48,12 @@ class CoreClient:
             response = await self.http.request(method, path, **kwargs)
         except httpx.TransportError as e:
             raise CoreUnavailableError(f"MEKA Core no responde en {self.http.base_url}: {e}") from e
+        if 400 <= response.status_code < 500:
+            try:
+                detail = response.json().get("detail")
+            except ValueError:
+                detail = None
+            raise CoreRequestError(str(detail or f"HTTP {response.status_code}"))
         response.raise_for_status()
         return response
 
@@ -137,6 +147,26 @@ class CoreClient:
         body = {"action": action, "timeout": timeout, "details": details or {}}
         response = await self._json("POST", "/v1/confirmations", json=body, timeout=timeout + 15)
         return response["approved"]
+
+    # ------------------------------------------------------------------ manos (solo lectura)
+
+    async def hands(self, action: str, folder: str | None = None, **params) -> dict:
+        """`action`: "folders", "list", "read" o "search" (ver server/routes/hands.py)."""
+        params = {k: ("true" if v is True else "false" if v is False else v)
+                  for k, v in params.items() if v is not None}  # fmt: skip
+        path = (
+            "/v1/hands" if action == "folders" else f"/v1/hands/{quote(folder, safe='')}/{action}"
+        )
+        return await self._json("GET", path, params=params)
+
+    async def hands_change(
+        self, action: str, folder: str, body: dict | None = None, *, include_private: bool = True
+    ) -> dict:
+        """`action`: "write", "move", "delete", "mkdir" o "undo". Espera al permiso del
+        usuario (la mascota muestra el diálogo); si lo niega, lanza CoreRequestError."""
+        params = None if include_private else {"include_private": "false"}
+        path = f"/v1/hands/{quote(folder, safe='')}/{action}"
+        return await self._json("POST", path, json=body or {}, params=params)
 
     async def forget(self, user: str) -> int:
         return (await self._json("DELETE", f"/v1/users/{quote(user, safe='')}/memories"))["removed"]
