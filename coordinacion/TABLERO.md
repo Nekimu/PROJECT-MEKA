@@ -2,14 +2,14 @@
 
 > ⚠️ **Archivo generado automáticamente.** No lo edites a mano: usa `python scripts/tareas.py` (ver [README](README.md)). Fuente: `tareas.json`.
 
-_Última actualización: 2026-11-14T20:35:23-06:00_
+_Última actualización: 2026-11-14T22:05:02-06:00_
 
 ## Resumen
 
 | Agente | Rol | ⬜ pendiente | 🔄 en_progreso | ⛔ bloqueada | 👀 en_revision | ✅ hecha | 🚫 descartada |
 |---|---|---|---|---|---|---|---|
-| **Claude Code** | Backend, IA, agente y canales | 4 | 0 | 0 | 0 | 27 | 1 |
-| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 1 | 0 | 0 | 0 | 24 | 0 |
+| **Claude Code** | Backend, IA, agente y canales | 4 | 0 | 0 | 0 | 29 | 1 |
+| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 0 | 0 | 0 | 0 | 26 | 0 |
 
 ## Claude Code
 
@@ -35,6 +35,7 @@ _Última actualización: 2026-11-14T20:35:23-06:00_
 | T-053 | ✅ hecha | alta | Enrutamiento por capacidades: cada cerebro declara qué entiende (texto, imagen, audio, PDF) y MEKA usa la ruta óptima | — | 2026-11-11 15:30 |
 | T-055 | ✅ hecha | alta | Isla sin Spotify ni notificaciones al arrancar: CORS para la mascota, primera lectura y estado inicial por WebSocket | — | 2026-11-14 20:35 |
 | T-056 | ✅ hecha | alta | Agenda y Hanna proactiva: tareas y recordatorios hablando, avisos a su hora y resumen no invasivo | — | 2026-11-14 20:35 |
+| T-058 | ✅ hecha | alta | Avisos de Hanna en Telegram cuando no estás al equipo (botones Hecho/Posponer, /tareas) | — | 2026-11-14 21:42 |
 | T-005 | ✅ hecha | media | Fase 3 · Manos (escritura): punto de restauración git + confirmación + deshacer | T-003, T-004 | 2026-11-11 12:00 |
 | T-006 | 🚫 descartada | media | Estado de la mascota en el núcleo: GET/PUT /v1/pet/state persistido en SQLite | — | 2026-11-11 11:59 |
 | T-007 | ✅ hecha | media | Contrato publicado y versionado: GET /v1/contract (eventos, emociones, versión) | — | 2026-11-11 10:07 |
@@ -47,12 +48,12 @@ _Última actualización: 2026-11-14T20:35:23-06:00_
 | T-044 | ✅ hecha | media | Datos del sistema para la Dynamic Island: system.media, system.battery y user.media (contrato 1.7) | — | 2026-11-11 12:00 |
 | T-052 | ✅ hecha | media | Instalación más ligera: PyTorch opcional (openai-whisper a requirements aparte) | — | 2026-11-11 15:30 |
 | T-054 | ✅ hecha | media | Adaptador OpenAI-compatible (llama.cpp, LM Studio, vLLM): Gemma 4 local con audio nativo | — | 2026-11-11 15:30 |
+| T-060 | ✅ hecha | media | Carátulas de lo que suena y «Mientras no estabas» al volver al equipo | — | 2026-11-14 21:43 |
 
 ## Antigravity (Gemini)
 
 | ID | Estado | Prioridad | Tarea | Depende de | Actualizada |
 |---|---|---|---|---|---|
-| T-057 | ⬜ pendiente | alta | Isla: agenda de Hanna (tarjeta de aviso con Hecho/Posponer, resumen proactivo, lista de tareas y botón ¿Qué tengo pendiente?) | T-056 | 2026-11-14 20:05 |
 | T-013 | ✅ hecha | alta | Rediseño visual del escenario de la mascota y HUD Tamagotchi (glassmorphism, animaciones y menú contextual) | — | 2026-11-09 19:30 |
 | T-014 | ✅ hecha | alta | Dashboard de control y simulador en navegador (tema oscuro/claro, log de eventos, selector visual de skins y estado Core) | — | 2026-11-09 19:30 |
 | T-022 | ✅ hecha | alta | Integración de assets Pixel Art animados (Hana y Clawd), herramienta pixelize.py y GUI minimalista estilo Apple con ventana emergente | — | 2026-11-09 21:14 |
@@ -67,6 +68,7 @@ _Última actualización: 2026-11-14T20:35:23-06:00_
 | T-043 | ✅ hecha | alta | Dynamic Island fluida en Go: ventana fija + resorte en JS, click-through, DPI y foco (ver propuesta) | — | 2026-11-11 11:32 |
 | T-047 | ✅ hecha | alta | Pila de tarjetas tipo Brief en la isla con animaciones (música, batería, notificaciones, agentes, permisos, mensajes de MEKA) | — | 2026-11-11 13:11 |
 | T-049 | ✅ hecha | alta | Quitar las mecánicas de cuidado del prototipo: alimentar, energía, saciedad, ánimo, afecto y desbloqueos | — | 2026-11-11 12:31 |
+| T-057 | ✅ hecha | alta | Isla: agenda de Hanna (tarjeta de aviso con Hecho/Posponer, resumen proactivo, lista de tareas y botón ¿Qué tengo pendiente?) | T-056 | 2026-11-14 20:53 |
 | T-011 | ✅ hecha | media | (Propuesta) UI de confirmación en la mascota para agent.confirm / user.confirm | T-003 | 2026-11-11 10:58 |
 | T-023 | ✅ hecha | media | Lint: RUF002 (signo × ambiguo) en pet/tools/pixelize.py rompe ruff check . del CI | — | 2026-11-09 21:39 |
 | T-024 | ✅ hecha | media | App de escritorio nativa en Python (ventana transparente sin bordes + Pixel Art + Drawer) | — | 2026-11-09 21:24 |
@@ -76,6 +78,7 @@ _Última actualización: 2026-11-14T20:35:23-06:00_
 | T-045 | ✅ hecha | media | Isla: mostrar la música en reproducción y la batería (eventos system.* del Core) | — | 2026-11-11 11:45 |
 | T-048 | ✅ hecha | media | Modo compañero al desplegar la isla: avatar flotante y chat con MEKA | — | 2026-11-11 12:31 |
 | T-051 | ✅ hecha | media | Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen | — | 2026-11-14 20:02 |
+| T-059 | ✅ hecha | media | Settings en menú 3 puntos, reply dock inferior, Liquid Glass blur, carátulas media e integraciones Core | — | 2026-11-14 21:27 |
 | T-012 | ✅ hecha | baja | (Propuesta) Sincronizar el Tamagotchi con /v1/pet/state | T-006 | 2026-11-09 21:14 |
 
 ## Detalle
@@ -656,7 +659,7 @@ La app de Go sirve la mascota en 127.0.0.1:<puerto> y el Core no enviaba CORS: W
 
 **Archivos:** `server/security.py`, `server/app.py`, `server/routes/events.py`, `core/system/**`, `tests/**`
 
-**Commits:** `579dac9`
+**Commits:** `579dac9`, `21980b9`
 
 **Última nota (git (Nekimu)):** commit 579dac9: fix(backend): la isla ya ve Spotify y las notificaciones al arrancar (cierra T-0
 
@@ -668,13 +671,13 @@ Tareas y recordatorios en lenguaje natural (fechas en español sin modelo), cont
 
 **Archivos:** `core/tasks/**`, `server/routes/tasks.py`, `server/schemas.py`, `core/contract.py`, `core/focus.py`, `channels/**`, `personas/dva/persona.yml`, `config.yml`, `tests/**`
 
-**Commits:** `d1fd6f1`
+**Commits:** `d1fd6f1`, `21980b9`
 
 **Última nota (git (Nekimu)):** commit d1fd6f1: feat(backend): agenda y Hanna proactiva (cierra T-056)
 
 ### T-057 · Isla: agenda de Hanna (tarjeta de aviso con Hecho/Posponer, resumen proactivo, lista de tareas y botón ¿Qué tengo pendiente?)
 
-**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** alta
+**Responsable:** Antigravity (Gemini) · **Estado:** ✅ hecha · **Prioridad:** alta
 
 Contrato 1.10 (T-056): reminder.due, nudge y task.changed; acciones con user.task {id, action: done|snooze|reopen|delete, minutes?}; lista en GET /v1/users/{user}/tasks; botón → POST /v1/proactive/check. Los textos ya vienen redactados por el personaje. Ver coordinacion/README.md.
 
@@ -682,4 +685,34 @@ Contrato 1.10 (T-056): reminder.due, nudge y task.changed; acciones con user.tas
 
 **Depende de:** T-056
 
-**Última nota (claude):** creada
+**Commits:** `21980b9`
+
+### T-058 · Avisos de Hanna en Telegram cuando no estás al equipo (botones Hecho/Posponer, /tareas)
+
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** alta
+
+El canal de Telegram escucha el WebSocket del núcleo y reenvía reminder.due y nudge marcados remote (política away: isla cerrada o inactividad de Windows). Nunca tareas privadas ni notificaciones. Contrato 1.11.
+
+**Archivos:** `channels/**`, `core/tasks/**`, `core/system/presence.py`, `core/contract.py`, `server/routes/events.py`, `config.yml`, `tests/**`
+
+**Última nota (claude):** Probado con el bot real: el aviso llegó a Telegram con botones, '⏰ 10 min' lo pospuso, /tareas no muestra las privadas y la privada no salió del equipo. En modo away (isla cerrada, 12 min inactivo) un aviso real llegó al móvil. Alias me/local = dueño para la isla. Silenciado WinError 10054.
+
+### T-059 · Settings en menú 3 puntos, reply dock inferior, Liquid Glass blur, carátulas media e integraciones Core
+
+**Responsable:** Antigravity (Gemini) · **Estado:** ✅ hecha · **Prioridad:** media
+
+Rediseñar #stageSettingsCard en #menuBtn con toggles (Concentración, Liquid Glass, Privado, Reposo, Tema), acciones rápidas y diagnóstico Core (/v1/runs, /v1/proactive, reset sesión); ocultar switches en hero/laterales y quitar lista redundante de skins; anclar respuestas en #agentReplyDock con transición desde #bubble; blur real en #stageGlassFx; integración de carátulas multimedia; creación rápida de tareas (/v1/users/me/tasks) y subida de voz (/v1/voice, /v1/audio).
+
+**Archivos:** `pet/web/index.html`, `pet/web/pet.css`, `pet/web/pet.js`
+
+**Última nota (antigravity):** Implementado #stageSettingsCard, #agentReplyDock con animacion desde #bubble, #stageGlassFx blur, caratulas en #mediaWidget/#briefMediaCover e integraciones /v1/voice, /v1/audio, /v1/runs, /v1/proactive, /v1/users/me/tasks y reset de sesion.
+
+### T-060 · Carátulas de lo que suena y «Mientras no estabas» al volver al equipo
+
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** media
+
+artwork y album en system.media (SMTC, solo al cambiar de canción) y GET /v1/system/media/artwork; nudge kind welcome al volver tras welcome_minutes; el resumen no repite lo recién avisado. Contrato 1.12.
+
+**Archivos:** `core/system/**`, `core/tasks/**`, `server/routes/system.py`, `core/contract.py`, `personas/dva/persona.yml`, `config.yml`, `tests/**`
+
+**Última nota (claude):** Carátula en vivo: Spotify 'Aguanta Corazón' → 200 image/png 207 KB por /v1/system/media/artwork, con CORS para la mascota; pet.js ya lee 'artwork' (resolveMediaCoverCandidate), pero el index.html servido no tiene los <img> de portada. «Mientras no estabas» y el resumen sin repetir lo recién avisado con tests. 473 tests.

@@ -2045,7 +2045,8 @@
       ],
       "depende_de": [],
       "commits": [
-        "579dac9cce8c433ab0bf9b528c2076eaf75012a8"
+        "579dac9cce8c433ab0bf9b528c2076eaf75012a8",
+        "21980b9e05e5b3c180e371d313b78449b78ad976"
       ],
       "historial": [
         {
@@ -2067,7 +2068,7 @@
           "nota": "commit 579dac9: fix(backend): la isla ya ve Spotify y las notificaciones al arrancar (cierra T-0"
         }
       ],
-      "actualizada": "2026-11-14T20:35:13-06:00"
+      "actualizada": "2026-11-14T20:35:40-06:00"
     },
     {
       "id": "T-056",
@@ -2089,7 +2090,8 @@
       ],
       "depende_de": [],
       "commits": [
-        "d1fd6f121973d3e10223307c76f9941ae8f4a655"
+        "d1fd6f121973d3e10223307c76f9941ae8f4a655",
+        "21980b9e05e5b3c180e371d313b78449b78ad976"
       ],
       "historial": [
         {
@@ -2111,13 +2113,13 @@
           "nota": "commit d1fd6f1: feat(backend): agenda y Hanna proactiva (cierra T-056)"
         }
       ],
-      "actualizada": "2026-11-14T20:35:23-06:00"
+      "actualizada": "2026-11-14T20:35:40-06:00"
     },
     {
       "id": "T-057",
       "titulo": "Isla: agenda de Hanna (tarjeta de aviso con Hecho/Posponer, resumen proactivo, lista de tareas y botón ¿Qué tengo pendiente?)",
       "responsable": "antigravity",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "alta",
       "descripcion": "Contrato 1.10 (T-056): reminder.due, nudge y task.changed; acciones con user.task {id, action: done|snooze|reopen|delete, minutes?}; lista en GET /v1/users/{user}/tasks; botón → POST /v1/proactive/check. Los textos ya vienen redactados por el personaje. Ver coordinacion/README.md.",
       "archivos": [
@@ -2126,16 +2128,139 @@
       "depende_de": [
         "T-056"
       ],
-      "commits": [],
+      "commits": [
+        "21980b9e05e5b3c180e371d313b78449b78ad976"
+      ],
       "historial": [
         {
           "fecha": "2026-11-14T20:05:53-06:00",
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-14T20:35:40-06:00",
+          "estado": "en_progreso",
+          "por": "git (Nekimu)",
+          "nota": "commit 21980b9: docs: agenda, Hanna proactiva y detectores de Windows; tablero al día"
+        },
+        {
+          "fecha": "2026-11-14T20:35:47-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "Vuelve a pendiente: el hook la marcó en progreso solo por mencionarla en un commit de documentación de Claude. Es de Antigravity."
+        },
+        {
+          "fecha": "2026-11-14T20:53:14-06:00",
+          "estado": "hecha",
+          "por": "antigravity"
         }
       ],
-      "actualizada": "2026-11-14T20:05:53-06:00"
+      "actualizada": "2026-11-14T20:53:14-06:00"
+    },
+    {
+      "id": "T-058",
+      "titulo": "Avisos de Hanna en Telegram cuando no estás al equipo (botones Hecho/Posponer, /tareas)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "El canal de Telegram escucha el WebSocket del núcleo y reenvía reminder.due y nudge marcados remote (política away: isla cerrada o inactividad de Windows). Nunca tareas privadas ni notificaciones. Contrato 1.11.",
+      "archivos": [
+        "channels/**",
+        "core/tasks/**",
+        "core/system/presence.py",
+        "core/contract.py",
+        "server/routes/events.py",
+        "config.yml",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-14T20:51:37-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-14T20:51:38-06:00",
+          "estado": "en_progreso",
+          "por": "claude",
+          "nota": "Código, 462 tests y prueba en vivo con bot simulado (Core → WebSocket → reenvío): la pública llegó con botones; la privada no. Falta: prueba con el bot real (token y ALLOWED_USER_IDS del usuario)."
+        },
+        {
+          "fecha": "2026-11-14T21:42:12-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "Probado con el bot real: el aviso llegó a Telegram con botones, '⏰ 10 min' lo pospuso, /tareas no muestra las privadas y la privada no salió del equipo. En modo away (isla cerrada, 12 min inactivo) un aviso real llegó al móvil. Alias me/local = dueño para la isla. Silenciado WinError 10054."
+        }
+      ],
+      "actualizada": "2026-11-14T21:42:12-06:00"
+    },
+    {
+      "id": "T-059",
+      "titulo": "Settings en menú 3 puntos, reply dock inferior, Liquid Glass blur, carátulas media e integraciones Core",
+      "responsable": "antigravity",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "Rediseñar #stageSettingsCard en #menuBtn con toggles (Concentración, Liquid Glass, Privado, Reposo, Tema), acciones rápidas y diagnóstico Core (/v1/runs, /v1/proactive, reset sesión); ocultar switches en hero/laterales y quitar lista redundante de skins; anclar respuestas en #agentReplyDock con transición desde #bubble; blur real en #stageGlassFx; integración de carátulas multimedia; creación rápida de tareas (/v1/users/me/tasks) y subida de voz (/v1/voice, /v1/audio).",
+      "archivos": [
+        "pet/web/index.html",
+        "pet/web/pet.css",
+        "pet/web/pet.js"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-14T21:27:31-06:00",
+          "estado": "pendiente",
+          "por": "antigravity",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-14T21:27:38-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Implementado #stageSettingsCard, #agentReplyDock con animacion desde #bubble, #stageGlassFx blur, caratulas en #mediaWidget/#briefMediaCover e integraciones /v1/voice, /v1/audio, /v1/runs, /v1/proactive, /v1/users/me/tasks y reset de sesion."
+        }
+      ],
+      "actualizada": "2026-11-14T21:27:38-06:00"
+    },
+    {
+      "id": "T-060",
+      "titulo": "Carátulas de lo que suena y «Mientras no estabas» al volver al equipo",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "media",
+      "descripcion": "artwork y album en system.media (SMTC, solo al cambiar de canción) y GET /v1/system/media/artwork; nudge kind welcome al volver tras welcome_minutes; el resumen no repite lo recién avisado. Contrato 1.12.",
+      "archivos": [
+        "core/system/**",
+        "core/tasks/**",
+        "server/routes/system.py",
+        "core/contract.py",
+        "personas/dva/persona.yml",
+        "config.yml",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-14T21:42:12-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-14T21:43:27-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "Carátula en vivo: Spotify 'Aguanta Corazón' → 200 image/png 207 KB por /v1/system/media/artwork, con CORS para la mascota; pet.js ya lee 'artwork' (resolveMediaCoverCandidate), pero el index.html servido no tiene los <img> de portada. «Mientras no estabas» y el resumen sin repetir lo recién avisado con tests. 473 tests."
+        }
+      ],
+      "actualizada": "2026-11-14T21:43:27-06:00"
     }
   ]
 }
