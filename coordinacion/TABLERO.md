@@ -2,14 +2,14 @@
 
 > ⚠️ **Archivo generado automáticamente.** No lo edites a mano: usa `python scripts/tareas.py` (ver [README](README.md)). Fuente: `tareas.json`.
 
-_Última actualización: 2026-11-14T22:05:02-06:00_
+_Última actualización: 2026-11-15T17:12:04-06:00_
 
 ## Resumen
 
 | Agente | Rol | ⬜ pendiente | 🔄 en_progreso | ⛔ bloqueada | 👀 en_revision | ✅ hecha | 🚫 descartada |
 |---|---|---|---|---|---|---|---|
 | **Claude Code** | Backend, IA, agente y canales | 4 | 0 | 0 | 0 | 29 | 1 |
-| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 0 | 0 | 0 | 0 | 26 | 0 |
+| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 2 | 0 | 0 | 0 | 26 | 0 |
 
 ## Claude Code
 
@@ -54,6 +54,8 @@ _Última actualización: 2026-11-14T22:05:02-06:00_
 
 | ID | Estado | Prioridad | Tarea | Depende de | Actualizada |
 |---|---|---|---|---|---|
+| T-061 | ⬜ pendiente | alta | Isla recogida: foco momentáneo en el hero al llegar una notificación o cambiar de canción | — | 2026-11-15 17:00 |
+| T-062 | ⬜ pendiente | media | Isla: arreglos menores que vio Claude (doble POST /v1/focus, errores de fetch silenciados, aviso de formato) | — | 2026-11-15 17:12 |
 | T-013 | ✅ hecha | alta | Rediseño visual del escenario de la mascota y HUD Tamagotchi (glassmorphism, animaciones y menú contextual) | — | 2026-11-09 19:30 |
 | T-014 | ✅ hecha | alta | Dashboard de control y simulador en navegador (tema oscuro/claro, log de eventos, selector visual de skins y estado Core) | — | 2026-11-09 19:30 |
 | T-022 | ✅ hecha | alta | Integración de assets Pixel Art animados (Hana y Clawd), herramienta pixelize.py y GUI minimalista estilo Apple con ventana emergente | — | 2026-11-09 21:14 |
@@ -716,3 +718,23 @@ artwork y album en system.media (SMTC, solo al cambiar de canción) y GET /v1/sy
 **Archivos:** `core/system/**`, `core/tasks/**`, `server/routes/system.py`, `core/contract.py`, `personas/dva/persona.yml`, `config.yml`, `tests/**`
 
 **Última nota (claude):** Carátula en vivo: Spotify 'Aguanta Corazón' → 200 image/png 207 KB por /v1/system/media/artwork, con CORS para la mascota; pet.js ya lee 'artwork' (resolveMediaCoverCandidate), pero el index.html servido no tiene los <img> de portada. «Mientras no estabas» y el resumen sin repetir lo recién avisado con tests. 473 tests.
+
+### T-061 · Isla recogida: foco momentáneo en el hero al llegar una notificación o cambiar de canción
+
+**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** alta
+
+Pedido por el usuario. Solo en modo isla (notch recogido): al llegar system.notification o al cambiar de canción (system.media con otro title/artist; isNewTrack en updateMedia) expandir unos segundos y mostrarlo en el panel hero, y volver a recoger. Si la isla ya está expandida o el usuario interactúa, no cambiar de vista. Hoy: onNotification expande a 'notifs' 5 s (pet.js ~1826) y el cambio de canción solo hace previewBrief('media') (~2260), sin expandir. No en pausa/reanudar ni en avance de posición; respetar focusActive. El backend no cambia: los eventos ya llevan todo.
+
+**Archivos:** `pet/**`
+
+**Última nota (claude):** creada
+
+### T-062 · Isla: arreglos menores que vio Claude (doble POST /v1/focus, errores de fetch silenciados, aviso de formato)
+
+**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** media
+
+1) Al activar concentración la isla envía POST /v1/focus dos veces seguidas y luego un DELETE /v1/focus que da 404 (log del Core, 14/11 21:03): ¿doble clic o doble envío? 2) Los fetch a /v1/system, /v1/system/notifications, etc. tienen catch vacío: registrar el error en consola para que un fallo (Core apagado, CORS) no pase desapercibido; hoy la isla queda vacía sin explicación. Ideal: indicar 'Core desconectado' en la isla. 3) Aviso: Claude ejecutó por error 'ruff format' sobre pet/tools/pixelize.py (solo estilo: comillas y saltos de línea, sin cambiar lógica); revísalo. Detalle en coordinacion/README.md (T-055, T-060).
+
+**Archivos:** `pet/**`
+
+**Última nota (claude):** creada

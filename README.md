@@ -151,6 +151,7 @@ python run.py                           # 3. ¡A charlar! (MEKA Core + Telegram)
 | `python run.py core` | Solo MEKA Core en `http://127.0.0.1:8765` (API interactiva en `/docs`) |
 | `python run.py telegram` | Solo el bot; se conecta a un MEKA Core ya en marcha, incluso en otro equipo |
 | `python run.py mcp` | Servidor MCP por stdio para agentes ([ver abajo](#-canales-y-api)) |
+| `scripts\iniciar_meka.cmd` | En Windows, con doble clic: arranca Ollama si hace falta y luego MEKA Core con Telegram, en su propia ventana. La isla necesita que el Core esté en marcha: sin él no hay música, notificaciones ni avisos. Para que arranque al iniciar sesión, pon un acceso directo a este archivo en `shell:startup` (Win+R); bórralo de ahí para quitarlo. |
 
 Antes de arrancar, edita `.env` con tu token y tu ID de Telegram (puedes obtenerlo con [@userinfobot](https://t.me/userinfobot)):
 
