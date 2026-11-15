@@ -50,3 +50,6 @@ lines:
     - "Oye, revisé tu radar: {summary} 🎯"
     - "Un aviso rápido, sin interrumpirte mucho: {summary}"
   nudge_notifications: ["Tienes {count} notificación(es) nueva(s) de {apps} 🔔"]
+  nudge_welcome:
+    - "¡Respawn! 👋 Mientras no estabas: {summary}"
+    - "De vuelta en la partida 🎮 Mientras no estabas: {summary}"

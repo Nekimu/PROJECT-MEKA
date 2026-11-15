@@ -241,3 +241,66 @@ def test_a_new_websocket_client_gets_the_current_state(tmp_path):
     assert {m["type"] for m in first} == {"system.media", "system.battery"}
     media = next(m for m in first if m["type"] == "system.media")["data"]
     assert media["title"] == "Idol" and media["playing"] is False
+
+
+# ---------------------------------------------------------------------- carátulas
+
+
+def test_artwork_is_read_only_when_the_song_changes():
+    from core.system.artwork import MAX_BYTES, ArtworkCache
+
+    cache, reads = ArtworkCache(), []
+
+    def reader(data, mime="image/png"):
+        async def read():
+            reads.append(data)
+            return data, mime
+
+        return read
+
+    song = ("Spotify", "Esfinge", "Alemán", "Esfinge")
+    url = asyncio.run(cache.update(song, reader(b"\x89PNG-uno")))
+    assert url.startswith("/v1/system/media/artwork?v=") and cache.get() == (
+        b"\x89PNG-uno",
+        "image/png",
+    )
+    assert asyncio.run(cache.update(song, reader(b"otra"))) == url  # Misma canción: ni la lee
+    assert reads == [b"\x89PNG-uno"]
+    other = asyncio.run(
+        cache.update(("Spotify", "Otra", "x", None), reader(b"\xff\xd8jpg", "image/jpeg"))
+    )
+    assert other != url and cache.get()[1] == "image/jpeg"
+    assert asyncio.run(cache.update(("a",), reader(b"x" * (MAX_BYTES + 1)))) is None  # Enorme
+    assert cache.get() is None
+
+    async def broken():
+        raise OSError("sin carátula")
+
+    assert asyncio.run(cache.update(("b",), broken)) is None  # El reproductor no la da
+
+
+def test_artwork_reaches_the_island(tmp_path):
+    from core.system.artwork import ArtworkCache
+
+    media = FakeMedia({**SONG, "artwork": "/v1/system/media/artwork?v=abc"})
+    media.artwork = ArtworkCache()
+    media.artwork.data, media.artwork.mime = b"\x89PNG", "image/png"
+    engine = make_engine(tmp_path)
+    engine.system, _ = make_monitor(media=media)
+    engine.system.bus = engine.bus
+    with make_client(engine) as client:
+        state = client.get("/v1/system").json()
+        assert state["media"]["artwork"] == "/v1/system/media/artwork?v=abc"
+        image = client.get("/v1/system/media/artwork?v=abc")
+        assert image.status_code == 200 and image.content == b"\x89PNG"
+        assert image.headers["content-type"] == "image/png"
+        media.artwork.data = None
+        assert client.get("/v1/system/media/artwork").status_code == 404
+
+
+def test_artwork_arriving_late_is_a_change():
+    monitor, events = make_monitor(media=FakeMedia(SONG, {**SONG, "artwork": "/a?v=1"}))
+    asyncio.run(monitor.refresh("media"))
+    asyncio.run(monitor.refresh("media"))
+    sent = [m for m in drain(events) if m["type"] == "system.media"]
+    assert len(sent) == 2 and sent[1]["data"]["artwork"] == "/a?v=1"

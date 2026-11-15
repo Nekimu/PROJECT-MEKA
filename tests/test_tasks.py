@@ -222,3 +222,18 @@ def test_agenda_events_follow_the_contract(tmp_path):
     for _ in range(events.qsize()):
         message = events.get_nowait()
         assert contract.validate(message["type"], message["data"]) == []
+
+
+def test_me_is_the_owner(tmp_path):
+    engine = make_engine(tmp_path)
+    with make_client(engine) as client:
+        client.app.state.local_user = "12345"  # Con ALLOWED_USER_IDS, el dueño es tu ID
+        client.post("/v1/users/12345/tasks", json={"title": "desde Telegram"})
+        for alias in ("me", "local"):  # La mascota no conoce el ID
+            titles = [t["title"] for t in client.get(f"/v1/users/{alias}/tasks").json()["tasks"]]
+            assert titles == ["desde Telegram"]
+        task_id = client.post("/v1/users/me/tasks", json={"title": "desde la isla"}).json()["id"]
+        assert (
+            client.post(f"/v1/users/me/tasks/{task_id}", json={"action": "done"}).status_code == 200
+        )
+        assert engine.tasks.store.get(task_id).user_id == "12345"

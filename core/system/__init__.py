@@ -23,7 +23,7 @@ __all__ = ["MEDIA_ACTIONS", "NOTIFICATION_ACTIONS", "SystemMonitor"]
 logger = setup_logger("System")
 
 # Lo que cuenta como "cambio" de la música (la posición avanza sola)
-MEDIA_KEYS = ("playing", "title", "artist", "app", "duration")
+MEDIA_KEYS = ("playing", "title", "artist", "album", "app", "duration", "artwork")
 
 
 class SystemMonitor(InboxMixin):
@@ -144,6 +144,11 @@ class SystemMonitor(InboxMixin):
         if kind == "media":
             return any(previous.get(k) != value.get(k) for k in MEDIA_KEYS)
         return previous != value
+
+    def artwork(self) -> tuple[bytes, str] | None:
+        """La carátula de lo que suena (bytes, tipo), o None."""
+        cache = getattr(self.media, "artwork", None)
+        return cache.get() if cache is not None else None
 
     async def media_control(self, action: str) -> bool:
         """Reproducir/pausar o cambiar de canción en el reproductor activo."""

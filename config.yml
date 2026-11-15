@@ -129,6 +129,10 @@ proactive:                   # Hanna proactiva: revisa pendientes y notificacion
   max_per_day: 6
   repeat_hours: 4            # No repite el mismo resumen antes de este tiempo
   notifications: true        # Incluir cuántas notificaciones nuevas hay (nunca su texto)
+  remote: away               # También por Telegram: away (si no estás al equipo) | always | never
+  away_minutes: 10           # "No estás" = la isla cerrada o este tiempo sin tocar teclado/ratón
+  desk_clients: ["pet"]      # Clientes que cuentan como "la isla está abierta"
+  welcome_minutes: 20        # Al volver tras este tiempo fuera: «Mientras no estabas…» (0 = nunca)
 
 hands:                       # Las "manos" de MEKA (fase 3): leer carpetas que tú autorizas
   enabled: true
@@ -191,6 +195,7 @@ telegram:
   request_timeout: 30
   drop_pending_updates: false  # true = ignora los mensajes recibidos mientras el bot estaba apagado
   typing_delay: 1.0          # Pausas de "escribiendo..." para parecer humana (0 = sin pausas)
+  alerts: true               # Avisos de Hanna al primer ID de ALLOWED_USER_IDS (ver proactive.remote)
   # file_id de stickers que el personaje puede enviar con [STICKER]. Envíale un sticker al bot
   # y su file_id aparecerá en la consola.
   stickers: []

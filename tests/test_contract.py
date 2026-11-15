@@ -22,6 +22,8 @@ FINGERPRINTS = {
     "1.8": "b150bda941daf0ec",
     "1.9": "43fc58691fefe816",
     "1.10": "d8526fbc821e63ed",
+    "1.11": "6d6c19ad1eeaac2d",
+    "1.12": "7a4bdddfc0a96909",
 }
 
 

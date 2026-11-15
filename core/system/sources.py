@@ -9,6 +9,7 @@
 import contextlib
 
 from core.logger import setup_logger
+from core.system.artwork import ArtworkCache, read_thumbnail
 
 logger = setup_logger("System")
 
@@ -31,6 +32,7 @@ class NullMediaSource:
     """Sin acceso a la música del sistema (no es Windows o falta la dependencia)."""
 
     available = False
+    artwork = ArtworkCache()
 
     async def snapshot(self) -> dict | None:
         return None
@@ -49,6 +51,7 @@ class WindowsMediaSource:
 
         self._manager_class = Manager
         self._manager = None
+        self.artwork = ArtworkCache()  # Solo se lee cuando cambia la canción
 
     async def _session(self):
         if self._manager is None:
@@ -65,8 +68,11 @@ class WindowsMediaSource:
             "playing": int(info.playback_status) == _PLAYING,
             "title": props.title or None,
             "artist": props.artist or None,
+            "album": props.album_title or None,
             "app": _app_name(session.source_app_user_model_id),
         }
+        song = (data["app"], data["title"], data["artist"], data["album"])
+        data["artwork"] = await self.artwork.update(song, lambda: read_thumbnail(props.thumbnail))
         with contextlib.suppress(Exception):  # No todos los reproductores informan del tiempo
             timeline = session.get_timeline_properties()
             duration = timeline.end_time.total_seconds()

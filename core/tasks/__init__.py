@@ -32,6 +32,7 @@ DEFAULT_LINES = {
     "reminder_due": "⏰ Te recuerdo: {title}{when}",
     "nudge_tasks": "Oye, {summary}",
     "nudge_notifications": "Tienes {count} notificación(es) nueva(s) de {apps}.",
+    "nudge_welcome": "De vuelta 👋 Mientras no estabas: {summary}",
 }
 WEEKDAYS = ("lun", "mar", "mié", "jue", "vie", "sáb", "dom")
 MONTHS = ("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
@@ -187,10 +188,13 @@ class TaskService:
         self._changed(task, {"reopen": "reopened", "snooze": "snoozed"}.get(action, "deleted"))
         return task
 
-    def remind(self, task: Task) -> str:
-        """Avisa de una tarea (evento `reminder.due`) y la marca como avisada."""
+    def remind(self, task: Task, *, remote: bool = False, now: float | None = None) -> str:
+        """Avisa de una tarea (evento `reminder.due`) y la marca como avisada. `remote`: que
+        llegue también al móvil (nunca si la tarea es privada)."""
         text = self.line("reminder_due", title=task.title, when=self._when(task))
-        data = {"id": task.id, "title": task.title, "text": text, "due": task.due_at}
+        data = {"id": task.id, "title": task.title, "text": text, "due": task.due_at,
+                "private": task.private, "remote": remote and not task.private}  # fmt: skip
         self.bus.publish("reminder.due", **{k: v for k, v in data.items() if v is not None})
-        self.store.mark_reminded(task.id)
+        self.store.mark_reminded(task.id, now)
+        logger.info(f"Aviso de la tarea {task.id}{' (también al móvil)' if data['remote'] else ''}")
         return text

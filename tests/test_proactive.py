@@ -79,10 +79,10 @@ def test_reminders_arrive_on_time_once(tmp_path):
 
 def test_digest_with_overdue_and_today(tmp_path):
     proactive, tasks, events = setup(tmp_path)
-    tasks.add("u", "entregar el informe", due_at=MORNING - 3600)  # Vencida
-    tasks.add("u", "llamar al banco", due_at=MORNING + 3600)  # Hoy
-    tasks.add("u", "algún día", due_at=None)
-    tasks.add("u", "la semana que viene", due_at=MORNING + 6 * 86400)
+    tasks.store.add("u", "entregar el informe", due_at=MORNING - 3600)  # Vencida
+    tasks.store.add("u", "llamar al banco", due_at=MORNING + 3600)  # Hoy
+    tasks.store.add("u", "algún día", due_at=None)
+    tasks.store.add("u", "la semana que viene", due_at=MORNING + 6 * 86400)
     drain(events)
     nudge = proactive.tick(MORNING)["nudge"]
     assert nudge["tasks"] == 2 and nudge["overdue"] == 1 and nudge["kind"] == "tasks"
@@ -119,13 +119,13 @@ def test_never_interrupts(tmp_path, kwargs, now, reason):
 
 def test_frequency_repetition_and_daily_limit(tmp_path):
     proactive, tasks, _ = setup(tmp_path, digest_minutes=60, repeat_hours=4, max_per_day=2)
-    tasks.add("u", "vencida", due_at=MORNING - 3600)
+    tasks.store.add("u", "vencida", due_at=MORNING - 3600)
     assert proactive.tick(MORNING)["nudge"] is not None
     assert proactive.tick(MORNING + 1800)["skipped"] == "resumen reciente"
     assert proactive.tick(MORNING + 3700)["nudge"] is None  # Lo mismo de antes: no lo repite
-    tasks.add("u", "otra vencida", due_at=MORNING - 60)
+    tasks.store.add("u", "otra vencida", due_at=MORNING - 60)
     assert proactive.tick(MORNING + 3800)["nudge"] is not None  # Algo nuevo: sí
-    tasks.add("u", "tercera", due_at=MORNING - 30)
+    tasks.store.add("u", "tercera", due_at=MORNING - 30)
     assert proactive.tick(MORNING + 7600)["skipped"] == "límite diario"
 
 
@@ -186,3 +186,63 @@ def test_focus_holds_the_digest_but_not_your_reminders(tmp_path):
     sent = types(events)
     assert "reminder.due" in sent and "task.changed" in sent
     assert sent.index("focus.ended") > sent.index("reminder.due") and "nudge" not in sent
+
+
+# ---------------------------------------------------------------------- mientras no estabas
+
+
+def away_watcher(tmp_path, **kwargs):
+    idle = {"seconds": 0.0}
+    inbox = Inbox({"id": 5, "app": "WhatsApp", "title": "Ana", "body": "x", "time": MORNING + 600})
+    watcher, tasks, events = setup(tmp_path, inbox=inbox, **kwargs)
+    watcher.idle = lambda: idle["seconds"]
+    return watcher, tasks, events, idle
+
+
+def test_welcome_back_summary(tmp_path):
+    watcher, tasks, events, idle = away_watcher(tmp_path)
+    tasks.add("u", "pagar la luz", due_at=MORNING + 900, remind_at=MORNING + 900)
+    idle["seconds"] = 25 * 60  # Te fuiste hace 25 min
+    watcher.tick(MORNING + 1200)  # Fuera: el aviso suena (y va al móvil)
+    reminder = next(m["data"] for m in drain(events) if m["type"] == "reminder.due")
+    assert reminder["remote"] is True
+    assert watcher.away_since == MORNING + 1200 - 25 * 60
+    idle["seconds"] = 3  # Vuelves
+    nudge = watcher.tick(MORNING + 1300)["nudge"]
+    assert nudge["kind"] == "welcome" and nudge["remote"] is False
+    assert "pagar la luz" in nudge["text"] and "WhatsApp" in nudge["text"]
+    assert "Ana" not in nudge["text"]  # Nunca el contenido de la notificación
+    assert contract.validate("nudge", nudge) == []
+    assert watcher.away_since is None and watcher.missed == []
+    assert watcher.tick(MORNING + 1400)["nudge"] is None  # Una sola vez por regreso
+
+
+def test_short_breaks_and_quiet_returns(tmp_path):
+    watcher, _, _, idle = away_watcher(tmp_path)
+    idle["seconds"] = 5 * 60  # Una pausa corta no cuenta como irse
+    watcher.tick(MORNING)
+    assert watcher.away_since is None
+    watcher, _, events, idle = away_watcher(tmp_path / "b", focus=True)
+    idle["seconds"] = 30 * 60
+    watcher.tick(MORNING)
+    idle["seconds"] = 1
+    assert watcher.tick(MORNING + 60)["nudge"] is None  # Concentrado: no te recibe
+    assert nudges(events) == []
+
+
+def test_nothing_happened_means_no_welcome(tmp_path):
+    watcher, _, _, idle = away_watcher(tmp_path)
+    watcher.system = Inbox()
+    idle["seconds"] = 30 * 60
+    watcher.tick(MORNING)
+    idle["seconds"] = 1
+    assert watcher.tick(MORNING + 60)["nudge"] is None
+
+
+def test_digest_does_not_repeat_what_was_just_reminded(tmp_path):
+    proactive, tasks, _ = setup(tmp_path)
+    tasks.add("u", "pagar la luz", due_at=MORNING + 600, remind_at=MORNING - 60)
+    result = proactive.tick(MORNING)
+    assert result["reminded"] == 1 and result["nudge"] is None  # Un solo mensaje, no dos
+    tasks.store.mark_reminded(1, MORNING - 7200)  # Avisada hace horas: el resumen la recuerda
+    assert proactive.tick(MORNING + 60)["nudge"] is not None

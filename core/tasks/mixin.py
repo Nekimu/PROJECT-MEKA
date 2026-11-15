@@ -4,10 +4,12 @@
 config, memory, bus, persona, focus, system, lock y ai.
 """
 
+import collections
 import time
 
 from ai.text_utils import ParsedMessage, parse_message
 from core.config import default_user
+from core.system.presence import idle_seconds
 from core.tasks import TaskService, TaskStore
 from core.tasks.proactive import Proactive
 
@@ -16,6 +18,8 @@ class AgendaMixin:
     def _setup_agenda(self, config: dict):
         self.tasks = TaskService(config, TaskStore(self.memory.db_path), self.bus, self.persona)
         self.last_activity = 0.0  # Última vez que el usuario habló (la proactiva no interrumpe)
+        self.clients: collections.Counter = collections.Counter()  # Conectados por WebSocket
+        desk = set((config.get("proactive") or {}).get("desk_clients") or ["pet"])
         self.proactive = Proactive(
             config,
             self.tasks,
@@ -25,6 +29,8 @@ class AgendaMixin:
             system=self.system,
             busy=lambda: self.lock.locked(),
             last_activity=lambda: self.last_activity,
+            at_desk=lambda: any(self.clients[name] > 0 for name in desk),
+            idle=idle_seconds,
         )
 
     async def _answer_with_agenda(

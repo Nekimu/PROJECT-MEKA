@@ -2,9 +2,10 @@
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
-from server.deps import AUTH, get_engine
+from server.deps import AUTH, get_engine, resolve_user
 from server.schemas import TaskAction, TaskRequest
 
+# `user` = un ID, o `me` para el dueño (lo que usa la mascota)
 router = APIRouter(prefix="/v1/users/{user}/tasks", tags=["tareas"], dependencies=AUTH)
 proactive_router = APIRouter(prefix="/v1/proactive", tags=["tareas"], dependencies=AUTH)
 
@@ -19,6 +20,7 @@ def list_tasks(
     ),
 ):
     """Las de fecha más cercana primero; las que no tienen fecha, al final."""
+    user = resolve_user(user, request)
     if status not in ("pending", "done", "all"):
         raise HTTPException(422, "status debe ser pending, done o all")
     tasks = get_engine(request).tasks.store.list(
@@ -30,6 +32,7 @@ def list_tasks(
 @router.post("")
 def add_task(user: str, body: TaskRequest, request: Request):
     """Con `when` en lenguaje natural («mañana a las 5») o con `due_at`/`remind_at` en epoch."""
+    user = resolve_user(user, request)
     try:
         task = get_engine(request).tasks.add(
             user,
@@ -48,6 +51,7 @@ def add_task(user: str, body: TaskRequest, request: Request):
 @router.post("/{task_id}")
 def task_action(user: str, task_id: int, body: TaskAction, request: Request):
     """done | reopen | snooze (con `minutes`) | delete. Publica task.changed."""
+    user = resolve_user(user, request)
     engine = get_engine(request)
     current = engine.tasks.store.get(task_id)
     if current is None or current.user_id != user:

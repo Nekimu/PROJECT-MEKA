@@ -28,9 +28,12 @@ Historial:
 - 1.9  Modo concentración: `focus.started`, `focus.ended`, `user.focus` y `/v1/focus` (T-050).
 - 1.10 Agenda y Hanna proactiva: `task.changed`, `reminder.due`, `nudge`, `user.task`,
        `/v1/users/{user}/tasks` y `/v1/proactive` (T-056).
+- 1.11 Avisos también al móvil: `private` y `remote` en `reminder.due`; `remote` y
+       `shareable` en `nudge` (T-058).
+- 1.12 Carátulas: `album` y `artwork` en `system.media`; `GET /v1/system/media/artwork` (T-060).
 """
 
-CONTRACT_VERSION = "1.10"
+CONTRACT_VERSION = "1.12"
 
 EMOTIONS = frozenset({
     "idle", "happy", "working", "thinking", "sleeping", "eating", "error", "celebrate", "sad",
@@ -57,7 +60,9 @@ OUTBOUND: dict[str, dict[str, str]] = {
         "playing": "bool",
         "title": "str?",
         "artist": "str?",
+        "album": "str?",
         "app": "str?",
+        "artwork": "str?",  # URL relativa de la carátula (cambia con cada una)
         "position": "float?",  # Segundos
         "duration": "float?",
     },
@@ -81,13 +86,22 @@ OUTBOUND: dict[str, dict[str, str]] = {
     # Agenda (core/tasks/): tareas, avisos que pediste y el resumen proactivo
     "task.changed": {"id": "int", "status": "str", "action": "str"},
     # status: pending | done · action: added | done | reopened | snoozed | deleted
-    "reminder.due": {"id": "int", "title": "str", "text": "str", "due": "float?"},
+    "reminder.due": {
+        "id": "int",
+        "title": "str",
+        "text": "str",
+        "due": "float?",
+        "private": "bool?",
+        "remote": "bool?",  # También al móvil (no estás frente al equipo)
+    },
     "nudge": {
         "text": "str",  # Lo que dice el personaje
-        "kind": "str",  # tasks | notifications
+        "kind": "str",  # tasks | notifications | welcome (al volver al equipo)
         "tasks": "int",  # Vencidas + las que vencen pronto
         "overdue": "int",
         "notifications": "int",  # Nuevas desde el último resumen (solo cuántas)
+        "remote": "bool?",  # También al móvil, con `shareable`
+        "shareable": "str?",  # Sin tareas privadas ni notificaciones: apto para salir del equipo
     },
 }
 

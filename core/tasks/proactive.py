@@ -11,6 +11,10 @@ Diseñada para **no estorbar ni gastar**:
   núcleo no está ocupado; pasó `digest_minutes` desde el anterior; no lo ha repetido en
   `repeat_hours`, y no superó `max_per_day`.
 - Las notificaciones solo cuentan (cuántas y de qué apps), nunca su texto.
+
+Al móvil (Telegram), con `remote: away` (por defecto), solo si no estás frente al equipo: la
+isla no está conectada o llevas `away_minutes` sin tocar teclado ni ratón. Al móvil nunca van
+las tareas privadas ni las notificaciones: el evento lleva `remote` y un `shareable` sin ellas.
 """
 
 import asyncio
@@ -21,6 +25,7 @@ from datetime import datetime
 
 from core.events import EventBus
 from core.logger import setup_logger
+from core.tasks.welcome import WelcomeMixin
 
 logger = setup_logger("Proactive")
 
@@ -30,7 +35,7 @@ def _minutes(value: str) -> int:
     return int(hours) * 60 + int(minutes)
 
 
-class Proactive:
+class Proactive(WelcomeMixin):
     def __init__(
         self,
         config: dict,
@@ -42,6 +47,8 @@ class Proactive:
         system=None,
         busy: Callable[[], bool] = lambda: False,
         last_activity: Callable[[], float] = lambda: 0.0,
+        at_desk: Callable[[], bool] = lambda: True,
+        idle: Callable[[], float | None] = lambda: None,
     ):
         cfg = config.get("proactive") or {}
         # Desactivado si config.yml no lo pide (los tests no vigilan con el reloj real)
@@ -53,11 +60,17 @@ class Proactive:
         self.repeat_seconds = float(cfg.get("repeat_hours", 4)) * 3600
         self.max_per_day = int(cfg.get("max_per_day", 6))
         self.include_notifications = bool(cfg.get("notifications", True))
+        self.remote_mode = str(cfg.get("remote", "away"))  # away | always | never
+        if self.remote_mode not in ("away", "always", "never"):
+            raise ValueError("proactive.remote debe ser away, always o never")
+        self.away_seconds = float(cfg.get("away_minutes", 10)) * 60
+        self._setup_welcome(cfg)
         quiet = cfg.get("quiet_hours") or ["22:00", "08:00"]
         self.quiet = (_minutes(quiet[0]), _minutes(quiet[1])) if quiet else None
         self.tasks, self.bus, self.user = tasks, bus, user
         self.focus, self.system = focus, system
         self.busy, self.last_activity = busy, last_activity
+        self.at_desk, self.idle = at_desk, idle
         self.started_at = time.time()
         self.last_nudge_at: float | None = None
         self.last_signature: tuple | None = None
@@ -97,10 +110,27 @@ class Proactive:
     def tick(self, now: float | None = None) -> dict:
         """Una revisión: avisos que tocan y, si procede, el resumen. Devuelve lo que hizo."""
         now = now or time.time()
-        reminded = [self.tasks.remind(task) for task in self.tasks.store.due_reminders(now)]
+        remote = self.remote()
+        self.mark_leaving(now)
+        reminded = []
+        for task in self.tasks.store.due_reminders(now):
+            reminded.append(self.tasks.remind(task, remote=remote and not task.private, now=now))
+            self.note_missed(task.title)
+        welcome = self.track_presence(now)  # ¿Acabas de volver? (core/tasks/welcome.py)
+        if welcome is not None:
+            return {"reminded": len(reminded), "nudge": welcome, "skipped": None}
         reason = self.why_not(now)
         nudge = self.nudge(now) if reason is None else None
         return {"reminded": len(reminded), "nudge": nudge, "skipped": reason}
+
+    def remote(self) -> bool:
+        """¿Avisar también al móvil? Con `away`, solo si no estás frente al equipo."""
+        if self.remote_mode != "away":
+            return self.remote_mode == "always"
+        if not self.at_desk():
+            return True  # La isla no está conectada
+        idle = self.idle()
+        return idle is not None and idle >= self.away_seconds
 
     # ------------------------------------------------------------------ el resumen
 
@@ -137,6 +167,9 @@ class Proactive:
         )
         if repeated and not force:
             return None
+        if not (self.remote() and content["shareable"]):
+            content.pop("shareable")
+        content["remote"] = "shareable" in content
         self.bus.publish("nudge", **content)
         self.last_nudge_at, self.last_signature = now, signature
         day = self._day(now)
@@ -150,20 +183,25 @@ class Proactive:
         horizon = today.replace(hour=23, minute=59, second=59).timestamp()
         if today.hour >= 18:  # Por la tarde también cuenta lo de mañana
             horizon += 86400
-        pending = self.tasks.store.list(self.user)
+        # Lo que se acaba de avisar (última hora) no se repite en el resumen
+        pending = [
+            t for t in self.tasks.store.list(self.user)
+            if not (t.reminded_at and now - t.reminded_at < 3600)
+        ]  # fmt: skip
         overdue = [t for t in pending if t.due_at is not None and t.due_at < now]
         soon = [t for t in pending if t.due_at is not None and now <= t.due_at <= horizon]
-        parts = []
-        if overdue:
-            parts.append(f"tienes {len(overdue)} vencida(s): " + _titles(overdue))
-        if soon:
-            parts.append(("y " if overdue else "") + "pronto vence: " + _titles(soon))
+        parts = _parts(overdue, soon)
         notes = self._new_notifications() if self.include_notifications else []
         if not parts and not notes:
             return None
         text = []
         if parts:
             text.append(self.tasks.line("nudge_tasks", summary=" ".join(parts) + "."))
+        # Lo que puede salir del equipo: sin tareas privadas ni notificaciones
+        public = _parts([t for t in overdue if not t.private], [t for t in soon if not t.private])
+        shareable = (
+            self.tasks.line("nudge_tasks", summary=" ".join(public) + ".") if public else None
+        )
         if notes:
             apps = sorted({n["app"] for n in notes})
             text.append(self.tasks.line(
@@ -175,6 +213,7 @@ class Proactive:
             "tasks": len(overdue) + len(soon),
             "overdue": len(overdue),
             "notifications": len(notes),
+            "shareable": shareable,
             "signature": (tuple(t.id for t in overdue + soon), tuple(n["id"] for n in notes)),
         }
 
@@ -210,7 +249,20 @@ class Proactive:
             "last_nudge": self.last_nudge_at,
             "nudges_today": self.sent_today.get(self._day(now), 0),
             "waiting": self.why_not(now),
+            "remote": self.remote(),  # ¿Ahora mismo avisaría también al móvil?
+            "remote_mode": self.remote_mode,
+            "at_desk": self.at_desk(),
+            "idle_seconds": self.idle(),
         }
+
+
+def _parts(overdue, soon) -> list[str]:
+    parts = []
+    if overdue:
+        parts.append(f"tienes {len(overdue)} vencida(s): " + _titles(overdue))
+    if soon:
+        parts.append(("y " if overdue else "") + "pronto vence: " + _titles(soon))
+    return parts
 
 
 def _titles(tasks) -> str:

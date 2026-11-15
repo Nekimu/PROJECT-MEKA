@@ -15,6 +15,15 @@ def get_engine(request: Request) -> MekaEngine:
     return request.app.state.engine
 
 
+OWNER_ALIASES = {"me", "local"}
+
+
+def resolve_user(user: str, request: Request) -> str:
+    """`me` (o `local`) = el dueño: el primer ID de ALLOWED_USER_IDS, o "local" si no hay.
+    La mascota no conoce tu ID de Telegram; así ve las mismas tareas que el bot."""
+    return request.app.state.local_user if user in OWNER_ALIASES else user
+
+
 async def save_upload(upload: UploadFile, request: Request) -> Path:
     """Guarda la subida en temp/uploads cortando si supera `server.max_upload_mb`."""
     engine = get_engine(request)

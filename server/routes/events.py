@@ -56,10 +56,15 @@ class ClientSession:
         self.engine: MekaEngine = websocket.app.state.engine
         self.local_user: str = websocket.app.state.local_user
         self.name = "cliente"
+        self.counted = False
 
     async def handle(self, type_: str, data: dict):
         if type_ == "client.hello":
+            if self.counted:
+                self.engine.clients[self.name] -= 1
             self.name = str(data.get("client") or self.name)[:50]
+            self.engine.clients[self.name] += 1  # La proactiva sabe si la isla está abierta
+            self.counted = True
             logger.info(f"Cliente conectado: {self.name}")
         elif type_ == "user.message" and str(data.get("text") or "").strip():
             replies = await self.engine.chat(
@@ -137,6 +142,8 @@ class ClientSession:
             pass
         finally:
             self.engine.bus.unsubscribe(queue)
+            if self.counted:
+                self.engine.clients[self.name] -= 1
             sender.cancel()
             with contextlib.suppress(asyncio.CancelledError, Exception):
                 await sender

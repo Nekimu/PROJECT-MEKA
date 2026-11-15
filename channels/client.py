@@ -29,6 +29,7 @@ class CoreClient:
         timeout: float = 300.0,
         transport: httpx.AsyncBaseTransport | None = None,
     ):
+        self.token = token
         headers = {"Authorization": f"Bearer {token}"} if token else {}
         # Los modelos locales pueden tardar minutos en responder (sobre todo con keep_alive=0)
         self.http = httpx.AsyncClient(
@@ -42,6 +43,12 @@ class CoreClient:
 
     async def close(self):
         await self.http.aclose()
+
+    def events_url(self) -> str:
+        """WebSocket de eventos (el token va en `?token=`: así lo acepta el núcleo)."""
+        base = str(self.http.base_url).rstrip("/")
+        url = base.replace("https://", "wss://", 1).replace("http://", "ws://", 1) + "/v1/events"
+        return f"{url}?token={quote(self.token, safe='')}" if self.token else url
 
     async def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
         try:

@@ -1,6 +1,6 @@
 """Datos del sistema para la Dynamic Island: música en reproducción y batería."""
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Response
 
 from server.deps import AUTH, get_engine
 from server.schemas import MediaAction, NotificationAction
@@ -29,6 +29,17 @@ async def notification_action(notification_id: int, body: NotificationAction, re
     except ValueError as e:
         raise HTTPException(422, str(e)) from e
     return {"done": done}
+
+
+@router.get("/media/artwork")
+def artwork(request: Request):
+    """La carátula de lo que suena (la URL con `?v=` viaja en `system.media.artwork`)."""
+    found = get_engine(request).system.artwork()
+    if found is None:
+        raise HTTPException(404, "No hay carátula")
+    data, mime = found
+    # La versión va en la URL: el cliente puede guardarla en caché sin miedo
+    return Response(data, media_type=mime, headers={"Cache-Control": "private, max-age=86400"})
 
 
 @router.post("/media")
