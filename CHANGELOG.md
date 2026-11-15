@@ -8,10 +8,19 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 - El Tamagotchi pasa a ser solo **inspiración para interactuar y conversar** con el asistente. Sin mecánicas de cuidado (alimentar, energía, saciedad, ánimo, afecto, desbloqueos): MEKA ayuda, no distrae. `docs/VISION.md` actualizado.
 - **Modo concentración** (`core/focus.py`, `/v1/focus`): durante un bloque de trabajo el núcleo retiene notificaciones, música y avisos de agentes, deja pasar permisos, errores, apps importantes y la batería crítica, y al terminar envía un resumen de lo que esperó (`focus.started` / `focus.ended`, contrato 1.9).
 
+### Agenda y Hanna proactiva
+- **Tareas y recordatorios hablando**: *«recuérdame pagar la luz antes del 15»*, *«apunta comprar pan»*, *«¿qué tareas me quedan?»*, *«ya pagué la luz»*. Las fechas en español (*«mañana a las 5 de la tarde»*, *«en media hora»*, *«el viernes»*, números escritos) se entienden **sin el modelo**: funciona con cualquier cerebro, con la transcripción de una nota de voz y aunque el cerebro no responda.
+- La confirmación y la lista son exactas (no las redacta el modelo) y el cerebro recibe la agenda real como contexto para no inventar tareas. Lo dicho en privado se guarda como privado y no llega a la nube ni al MCP.
+- **Hanna proactiva** (`core/tasks/proactive.py`): avisa a su hora (`reminder.due`) y, de vez en cuando, resume lo vencido, lo de hoy y las notificaciones nuevas (`nudge`). Una consulta a SQLite por minuto, sin IA; respeta horas de silencio, modo concentración, la conversación en curso y un límite diario.
+- API `/v1/users/{user}/tasks` (listar, crear con fecha en lenguaje natural, hecha, reabrir, posponer, borrar), `/v1/proactive` y `POST /v1/proactive/check`; WebSocket `user.task`; herramientas MCP `tasks`, `add_task` y `complete_task`. Contrato 1.10.
+
 ### Dynamic Island: datos del sistema (backend)
 - **Música en reproducción** de cualquier reproductor de Windows (SMTC) y **batería**: eventos `system.media` y `system.battery`, solo cuando cambian; controles con `user.media` (pausa, siguiente, anterior).
 - **Notificaciones de Windows**: `system.notification` / `system.notification_removed`, con apps permitidas o bloqueadas, **códigos de verificación ocultos** y textos sensibles ocultos. Privadas: nunca van a la nube, a la memoria ni al MCP. Se pueden descartar o abrir la app.
 - `GET /v1/system` y `GET /v1/system/notifications` para los clientes que se conectan tarde.
+- **Corregido: la isla no veía Spotify ni las notificaciones al arrancar.** La app de Go sirve la mascota en `127.0.0.1:<puerto>`, otro origen para el navegador, y el Core no enviaba cabeceras CORS: WebView2 bloqueaba las lecturas REST y las acciones con POST, y solo llegaba el WebSocket. Ahora los orígenes permitidos pueden usar la API (las webs ajenas siguen rechazadas).
+- El Core lee música, batería y notificaciones **antes** de aceptar clientes, y cada cliente nuevo recibe por WebSocket el estado actual de `system.media` y `system.battery` (salvo en modo concentración).
+- La isla muestra el reproductor **que está sonando**, aunque Windows marque como actual otro en pausa (p. ej. un vídeo del navegador).
 
 ### Enrutamiento por capacidades
 - Cada cerebro declara lo que entiende de forma nativa (`text`, `vision`, `audio`, `pdf`) y `config.yml` lo corrige por modelo. El objetivo del asistente es fijo; la ruta interna se elige según el cerebro:

@@ -2,14 +2,14 @@
 
 > ⚠️ **Archivo generado automáticamente.** No lo edites a mano: usa `python scripts/tareas.py` (ver [README](README.md)). Fuente: `tareas.json`.
 
-_Última actualización: 2026-11-11T15:30:09-06:00_
+_Última actualización: 2026-11-14T20:35:23-06:00_
 
 ## Resumen
 
 | Agente | Rol | ⬜ pendiente | 🔄 en_progreso | ⛔ bloqueada | 👀 en_revision | ✅ hecha | 🚫 descartada |
 |---|---|---|---|---|---|---|---|
-| **Claude Code** | Backend, IA, agente y canales | 4 | 0 | 0 | 0 | 25 | 1 |
-| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 1 | 0 | 0 | 0 | 23 | 0 |
+| **Claude Code** | Backend, IA, agente y canales | 4 | 0 | 0 | 0 | 27 | 1 |
+| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 1 | 0 | 0 | 0 | 24 | 0 |
 
 ## Claude Code
 
@@ -32,25 +32,27 @@ _Última actualización: 2026-11-11T15:30:09-06:00_
 | T-031 | ✅ hecha | alta | Privacidad de la memoria larga: recuerdos guardados en una conversación privada no deben ir a prompts en la nube | — | 2026-11-11 10:07 |
 | T-046 | ✅ hecha | alta | Notificaciones de Windows para la isla: system.notification privado, apps permitidas, códigos ocultos, descartar y abrir | — | 2026-11-11 12:00 |
 | T-050 | ✅ hecha | alta | Modo concentración: retener lo que distrae, dejar pasar permisos y lo importante, resumen al terminar | — | 2026-11-11 12:15 |
-| T-053 | ✅ hecha | alta | Enrutamiento por capacidades: cada cerebro declara qué entiende (texto, imagen, audio, PDF) y MEKA usa la ruta óptima | — | 2026-11-11 15:29 |
+| T-053 | ✅ hecha | alta | Enrutamiento por capacidades: cada cerebro declara qué entiende (texto, imagen, audio, PDF) y MEKA usa la ruta óptima | — | 2026-11-11 15:30 |
+| T-055 | ✅ hecha | alta | Isla sin Spotify ni notificaciones al arrancar: CORS para la mascota, primera lectura y estado inicial por WebSocket | — | 2026-11-14 20:35 |
+| T-056 | ✅ hecha | alta | Agenda y Hanna proactiva: tareas y recordatorios hablando, avisos a su hora y resumen no invasivo | — | 2026-11-14 20:35 |
 | T-005 | ✅ hecha | media | Fase 3 · Manos (escritura): punto de restauración git + confirmación + deshacer | T-003, T-004 | 2026-11-11 12:00 |
 | T-006 | 🚫 descartada | media | Estado de la mascota en el núcleo: GET/PUT /v1/pet/state persistido en SQLite | — | 2026-11-11 11:59 |
 | T-007 | ✅ hecha | media | Contrato publicado y versionado: GET /v1/contract (eventos, emociones, versión) | — | 2026-11-11 10:07 |
-| T-008 | ✅ hecha | media | STT más rápido con faster-whisper (motor opcional, respaldo openai-whisper) | T-001 | 2026-11-11 15:29 |
+| T-008 | ✅ hecha | media | STT más rápido con faster-whisper (motor opcional, respaldo openai-whisper) | T-001 | 2026-11-11 15:30 |
 | T-017 | ✅ hecha | media | Modularidad: extraer almacén de audios del motor e historial de conversación del servicio de IA | — | 2026-11-11 10:07 |
 | T-018 | ✅ hecha | media | Guardia de tamaño: test que falla si un módulo del backend supera 300 líneas | T-015, T-016, T-017 | 2026-11-11 10:07 |
 | T-021 | ✅ hecha | media | Filosofía 5.2: eventos normalizados para el avatar (error y fin de respuesta) | — | 2026-11-11 10:07 |
 | T-029 | ✅ hecha | media | Modularidad: core/engine.py está en 290 líneas (límite 300); separar análisis de archivos y voz | — | 2026-11-11 10:07 |
 | T-037 | ✅ hecha | media | Pruebas de la API con Postman CLI (colección generada + entorno local) | — | 2026-11-11 10:07 |
 | T-044 | ✅ hecha | media | Datos del sistema para la Dynamic Island: system.media, system.battery y user.media (contrato 1.7) | — | 2026-11-11 12:00 |
-| T-052 | ✅ hecha | media | Instalación más ligera: PyTorch opcional (openai-whisper a requirements aparte) | — | 2026-11-11 15:29 |
+| T-052 | ✅ hecha | media | Instalación más ligera: PyTorch opcional (openai-whisper a requirements aparte) | — | 2026-11-11 15:30 |
 | T-054 | ✅ hecha | media | Adaptador OpenAI-compatible (llama.cpp, LM Studio, vLLM): Gemma 4 local con audio nativo | — | 2026-11-11 15:30 |
 
 ## Antigravity (Gemini)
 
 | ID | Estado | Prioridad | Tarea | Depende de | Actualizada |
 |---|---|---|---|---|---|
-| T-051 | ⬜ pendiente | media | Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen | — | 2026-11-11 12:09 |
+| T-057 | ⬜ pendiente | alta | Isla: agenda de Hanna (tarjeta de aviso con Hecho/Posponer, resumen proactivo, lista de tareas y botón ¿Qué tengo pendiente?) | T-056 | 2026-11-14 20:05 |
 | T-013 | ✅ hecha | alta | Rediseño visual del escenario de la mascota y HUD Tamagotchi (glassmorphism, animaciones y menú contextual) | — | 2026-11-09 19:30 |
 | T-014 | ✅ hecha | alta | Dashboard de control y simulador en navegador (tema oscuro/claro, log de eventos, selector visual de skins y estado Core) | — | 2026-11-09 19:30 |
 | T-022 | ✅ hecha | alta | Integración de assets Pixel Art animados (Hana y Clawd), herramienta pixelize.py y GUI minimalista estilo Apple con ventana emergente | — | 2026-11-09 21:14 |
@@ -73,6 +75,7 @@ _Última actualización: 2026-11-11T15:30:09-06:00_
 | T-036 | ✅ hecha | media | App Go/web: leer eventos y emociones de GET /v1/contract y avisar si la versión mayor no coincide | — | 2026-11-11 10:57 |
 | T-045 | ✅ hecha | media | Isla: mostrar la música en reproducción y la batería (eventos system.* del Core) | — | 2026-11-11 11:45 |
 | T-048 | ✅ hecha | media | Modo compañero al desplegar la isla: avatar flotante y chat con MEKA | — | 2026-11-11 12:31 |
+| T-051 | ✅ hecha | media | Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen | — | 2026-11-14 20:02 |
 | T-012 | ✅ hecha | baja | (Propuesta) Sincronizar el Tamagotchi con /v1/pet/state | T-006 | 2026-11-09 21:14 |
 
 ## Detalle
@@ -169,7 +172,7 @@ Notas de voz 2-4x más rápidas en CPU (punto 3 de la auditoría). `stt.engine` 
 
 **Depende de:** T-001
 
-**Commits:** `59b9a9a`
+**Commits:** `59b9a9a`, `d49c080`
 
 **Última nota (git (Nekimu)):** commit 59b9a9a: feat(backend): voz a texto con faster-whisper y PyTorch opcional (cierra T-008, 
 
@@ -601,13 +604,13 @@ Decisión del usuario (2026-11-11): el Tamagotchi es solo inspiración para INTE
 
 ### T-051 · Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen
 
-**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** media
+**Responsable:** Antigravity (Gemini) · **Estado:** ✅ hecha · **Prioridad:** media
 
 Backend listo (T-050, contrato 1.9). Enviar user.focus {action: start, minutes?} / {action: stop}, o POST/DELETE /v1/focus. Recibir focus.started {until, minutes} → mostrar cuenta atrás discreta y dejar la isla quieta; focus.ended {reason, held, notifications} → una tarjeta: 'Mientras te concentrabas: N notificaciones' (detalle con GET /v1/system/notifications). Durante la sesión el Core ya no envía lo que distrae; los permisos (agent.confirm) y errores siguen llegando. Alineado con la filosofía: ayuda, no distrae.
 
 **Archivos:** `pet/web/**`, `pet/desktop/**`
 
-**Última nota (claude):** creada
+**Última nota (antigravity):** UI Modo Concentración integrada en Dynamic Island: eventos focus.started y focus.ended, temporizador en vivo (#focusBadge/#focusTimerText), supresión de expansiones distractoras, resumen al finalizar y controles WS/REST (#focusToggleBtn y menú contextual).
 
 ### T-052 · Instalación más ligera: PyTorch opcional (openai-whisper a requirements aparte)
 
@@ -617,7 +620,7 @@ Con faster-whisper como motor por defecto, PyTorch (varios GB) solo hace falta p
 
 **Archivos:** `requirements.txt`, `requirements-*.txt`, `README.md`, `.github/**`
 
-**Commits:** `59b9a9a`
+**Commits:** `59b9a9a`, `d49c080`
 
 **Última nota (claude):** requirements-whisper.txt (opcional) con openai-whisper; requirements.txt sin PyTorch (comprobado en venv limpio: 71 paquetes sin torch vs 86 con él); CI sin el paso de PyTorch; README y config actualizados.
 
@@ -629,7 +632,7 @@ Idea del usuario (2026-11-11): el objetivo del asistente es fijo, pero el cómo 
 
 **Archivos:** `ai/**`, `core/**`, `config.yml`, `tests/**`
 
-**Commits:** `b43e6dd`
+**Commits:** `b43e6dd`, `d49c080`
 
 **Última nota (git (Nekimu)):** commit b43e6dd: feat(backend): enrutamiento por capacidades, voz y PDF nativos (cierra T-053)
 
@@ -641,6 +644,42 @@ Ollama aún no acepta audio de forma fiable con Gemma 4; llama-server (llama.cpp
 
 **Archivos:** `ai/providers/**`, `config.yml`, `requirements*.txt`, `tests/**`
 
-**Commits:** `7ab7c95`
+**Commits:** `7ab7c95`, `d49c080`
 
 **Última nota (git (Nekimu)):** commit 7ab7c95: feat(backend): cerebro openai_compat, Gemma 4 con audio nativo en llama.cpp (cie
+
+### T-055 · Isla sin Spotify ni notificaciones al arrancar: CORS para la mascota, primera lectura y estado inicial por WebSocket
+
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** alta
+
+La app de Go sirve la mascota en 127.0.0.1:<puerto> y el Core no enviaba CORS: WebView2 bloqueaba GET /v1/system, /v1/system/notifications y los POST de acciones. Solo llegaba el WebSocket, que no repite una canción en pausa ni las notificaciones que ya había.
+
+**Archivos:** `server/security.py`, `server/app.py`, `server/routes/events.py`, `core/system/**`, `tests/**`
+
+**Commits:** `579dac9`
+
+**Última nota (git (Nekimu)):** commit 579dac9: fix(backend): la isla ya ve Spotify y las notificaciones al arrancar (cierra T-0
+
+### T-056 · Agenda y Hanna proactiva: tareas y recordatorios hablando, avisos a su hora y resumen no invasivo
+
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** alta
+
+Tareas y recordatorios en lenguaje natural (fechas en español sin modelo), contexto real para el cerebro, avisos reminder.due, resumen proactivo nudge con límites (silencio, concentración, conversación, frecuencia), API, WebSocket user.task, MCP. Contrato 1.10.
+
+**Archivos:** `core/tasks/**`, `server/routes/tasks.py`, `server/schemas.py`, `core/contract.py`, `core/focus.py`, `channels/**`, `personas/dva/persona.yml`, `config.yml`, `tests/**`
+
+**Commits:** `d1fd6f1`
+
+**Última nota (git (Nekimu)):** commit d1fd6f1: feat(backend): agenda y Hanna proactiva (cierra T-056)
+
+### T-057 · Isla: agenda de Hanna (tarjeta de aviso con Hecho/Posponer, resumen proactivo, lista de tareas y botón ¿Qué tengo pendiente?)
+
+**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** alta
+
+Contrato 1.10 (T-056): reminder.due, nudge y task.changed; acciones con user.task {id, action: done|snooze|reopen|delete, minutes?}; lista en GET /v1/users/{user}/tasks; botón → POST /v1/proactive/check. Los textos ya vienen redactados por el personaje. Ver coordinacion/README.md.
+
+**Archivos:** `pet/**`
+
+**Depende de:** T-056
+
+**Última nota (claude):** creada

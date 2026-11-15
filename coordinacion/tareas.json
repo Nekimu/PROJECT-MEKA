@@ -359,7 +359,8 @@
         "T-001"
       ],
       "commits": [
-        "59b9a9a80e3aea763f6e663a0220214c2b566c6d"
+        "59b9a9a80e3aea763f6e663a0220214c2b566c6d",
+        "d49c08097545a9901558efca3ed28916e10d26b6"
       ],
       "historial": [
         {
@@ -386,7 +387,7 @@
           "nota": "commit 59b9a9a: feat(backend): voz a texto con faster-whisper y PyTorch opcional (cierra T-008, "
         }
       ],
-      "actualizada": "2026-11-11T15:29:41-06:00"
+      "actualizada": "2026-11-11T15:30:45-06:00"
     },
     {
       "id": "T-009",
@@ -1868,7 +1869,7 @@
       "id": "T-051",
       "titulo": "Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen",
       "responsable": "antigravity",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "media",
       "descripcion": "Backend listo (T-050, contrato 1.9). Enviar user.focus {action: start, minutes?} / {action: stop}, o POST/DELETE /v1/focus. Recibir focus.started {until, minutes} → mostrar cuenta atrás discreta y dejar la isla quieta; focus.ended {reason, held, notifications} → una tarjeta: 'Mientras te concentrabas: N notificaciones' (detalle con GET /v1/system/notifications). Durante la sesión el Core ya no envía lo que distrae; los permisos (agent.confirm) y errores siguen llegando. Alineado con la filosofía: ayuda, no distrae.",
       "archivos": [
@@ -1883,9 +1884,15 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-14T20:02:28-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "UI Modo Concentración integrada en Dynamic Island: eventos focus.started y focus.ended, temporizador en vivo (#focusBadge/#focusTimerText), supresión de expansiones distractoras, resumen al finalizar y controles WS/REST (#focusToggleBtn y menú contextual)."
         }
       ],
-      "actualizada": "2026-11-11T12:09:57-06:00"
+      "actualizada": "2026-11-14T20:02:28-06:00"
     },
     {
       "id": "T-052",
@@ -1902,7 +1909,8 @@
       ],
       "depende_de": [],
       "commits": [
-        "59b9a9a80e3aea763f6e663a0220214c2b566c6d"
+        "59b9a9a80e3aea763f6e663a0220214c2b566c6d",
+        "d49c08097545a9901558efca3ed28916e10d26b6"
       ],
       "historial": [
         {
@@ -1923,7 +1931,7 @@
           "nota": "requirements-whisper.txt (opcional) con openai-whisper; requirements.txt sin PyTorch (comprobado en venv limpio: 71 paquetes sin torch vs 86 con él); CI sin el paso de PyTorch; README y config actualizados."
         }
       ],
-      "actualizada": "2026-11-11T15:29:41-06:00"
+      "actualizada": "2026-11-11T15:30:45-06:00"
     },
     {
       "id": "T-053",
@@ -1940,7 +1948,8 @@
       ],
       "depende_de": [],
       "commits": [
-        "b43e6dd9407215b14ce3b8e5e355958a90f382ab"
+        "b43e6dd9407215b14ce3b8e5e355958a90f382ab",
+        "d49c08097545a9901558efca3ed28916e10d26b6"
       ],
       "historial": [
         {
@@ -1967,7 +1976,7 @@
           "nota": "commit b43e6dd: feat(backend): enrutamiento por capacidades, voz y PDF nativos (cierra T-053)"
         }
       ],
-      "actualizada": "2026-11-11T15:29:56-06:00"
+      "actualizada": "2026-11-11T15:30:45-06:00"
     },
     {
       "id": "T-054",
@@ -1984,7 +1993,8 @@
       ],
       "depende_de": [],
       "commits": [
-        "7ab7c95dc3a732238e6e710d12df00c659741999"
+        "7ab7c95dc3a732238e6e710d12df00c659741999",
+        "d49c08097545a9901558efca3ed28916e10d26b6"
       ],
       "historial": [
         {
@@ -2017,7 +2027,115 @@
           "nota": "commit 7ab7c95: feat(backend): cerebro openai_compat, Gemma 4 con audio nativo en llama.cpp (cie"
         }
       ],
-      "actualizada": "2026-11-11T15:30:09-06:00"
+      "actualizada": "2026-11-11T15:30:45-06:00"
+    },
+    {
+      "id": "T-055",
+      "titulo": "Isla sin Spotify ni notificaciones al arrancar: CORS para la mascota, primera lectura y estado inicial por WebSocket",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "La app de Go sirve la mascota en 127.0.0.1:<puerto> y el Core no enviaba CORS: WebView2 bloqueaba GET /v1/system, /v1/system/notifications y los POST de acciones. Solo llegaba el WebSocket, que no repite una canción en pausa ni las notificaciones que ya había.",
+      "archivos": [
+        "server/security.py",
+        "server/app.py",
+        "server/routes/events.py",
+        "core/system/**",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [
+        "579dac9cce8c433ab0bf9b528c2076eaf75012a8"
+      ],
+      "historial": [
+        {
+          "fecha": "2026-11-14T19:32:33-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-14T19:32:39-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "Causa: sin cabeceras CORS, WebView2 bloqueaba REST desde 127.0.0.1:<puerto> (verificado en navegador: Failed to fetch). Arreglo: CORSMiddleware solo para orígenes de OriginGuard; primera lectura del sistema antes de abrir (log 'Sistema: música=… · batería=… · notificaciones=…'); estado de media/batería al conectar el WebSocket; se elige la sesión que suena. Tests aislados de la música real del equipo. 398 tests; verificado en vivo: la mascota pinta Spotify y 3 notificaciones al arrancar."
+        },
+        {
+          "fecha": "2026-11-14T20:35:13-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit 579dac9: fix(backend): la isla ya ve Spotify y las notificaciones al arrancar (cierra T-0"
+        }
+      ],
+      "actualizada": "2026-11-14T20:35:13-06:00"
+    },
+    {
+      "id": "T-056",
+      "titulo": "Agenda y Hanna proactiva: tareas y recordatorios hablando, avisos a su hora y resumen no invasivo",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Tareas y recordatorios en lenguaje natural (fechas en español sin modelo), contexto real para el cerebro, avisos reminder.due, resumen proactivo nudge con límites (silencio, concentración, conversación, frecuencia), API, WebSocket user.task, MCP. Contrato 1.10.",
+      "archivos": [
+        "core/tasks/**",
+        "server/routes/tasks.py",
+        "server/schemas.py",
+        "core/contract.py",
+        "core/focus.py",
+        "channels/**",
+        "personas/dva/persona.yml",
+        "config.yml",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [
+        "d1fd6f121973d3e10223307c76f9941ae8f4a655"
+      ],
+      "historial": [
+        {
+          "fecha": "2026-11-14T20:05:44-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-14T20:05:53-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "core/tasks/ (when, intents, store, servicio, proactive, mixin). Verificado en vivo: chat con la nota real apunta 'pagar la factura de la luz (antes de mañana)' y lista exacta incluso con el cerebro caído; con gemma3:270m, añadir/completar/listar sin tareas inventadas; reminder.due llegó al minuto; resumen a petición con recuento de notificaciones (sin texto). 443 tests. Limitación: con audio nativo (sin transcripción) no se detectan órdenes de agenda."
+        },
+        {
+          "fecha": "2026-11-14T20:35:23-06:00",
+          "estado": "hecha",
+          "por": "git (Nekimu)",
+          "nota": "commit d1fd6f1: feat(backend): agenda y Hanna proactiva (cierra T-056)"
+        }
+      ],
+      "actualizada": "2026-11-14T20:35:23-06:00"
+    },
+    {
+      "id": "T-057",
+      "titulo": "Isla: agenda de Hanna (tarjeta de aviso con Hecho/Posponer, resumen proactivo, lista de tareas y botón ¿Qué tengo pendiente?)",
+      "responsable": "antigravity",
+      "estado": "pendiente",
+      "prioridad": "alta",
+      "descripcion": "Contrato 1.10 (T-056): reminder.due, nudge y task.changed; acciones con user.task {id, action: done|snooze|reopen|delete, minutes?}; lista en GET /v1/users/{user}/tasks; botón → POST /v1/proactive/check. Los textos ya vienen redactados por el personaje. Ver coordinacion/README.md.",
+      "archivos": [
+        "pet/**"
+      ],
+      "depende_de": [
+        "T-056"
+      ],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-14T20:05:53-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        }
+      ],
+      "actualizada": "2026-11-14T20:05:53-06:00"
     }
   ]
 }

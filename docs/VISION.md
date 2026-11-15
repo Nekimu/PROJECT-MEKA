@@ -166,7 +166,7 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 | 1 | **MEKA Core como servicio**: servidor local con este contrato, Telegram y MCP como clientes · adaptador de cerebro (Claude, Gemini, Ollama) | ✅ |
 | 2 | **Compañera de escritorio** (Dynamic Island en Go) | ✅ Prototipo (`pet/`) |
 | 3 | Manos: carpetas autorizadas, lectura y luego escritura con git y confirmación | ✅ Lectura · 💤 Escritura inactiva (aislamiento pendiente) |
-| 4 | Compañera de productividad: tarjetas tipo Brief, notificaciones filtradas, modo concentración | En curso (música, batería y notificaciones ✅) |
+| 4 | Compañera de productividad: tarjetas tipo Brief, notificaciones filtradas, modo concentración, agenda proactiva | En curso (música, batería, notificaciones, concentración y agenda ✅ en el núcleo) |
 | 5 | Móvil: Android con burbuja e iOS con widget, vía Tailscale | Pendiente |
 
 ## Decisiones abiertas

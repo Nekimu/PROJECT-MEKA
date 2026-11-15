@@ -89,6 +89,7 @@ El documento completo, con las iteraciones previstas (Google Home, Home Assistan
 | 🔊 | **Habla** | Cada personaje tiene su voz (Edge-TTS por defecto; Qwen3-TTS y Piper opcionales). Llega como nota de voz nativa (OGG/Opus). |
 | 🖼️ | **Ve tus fotos** | Comenta las imágenes con un modelo multimodal. |
 | 📄 | **Lee documentos** | PDF, DOCX (con tablas), XLSX, TXT, MD y CSV. |
+| ⏰ | **Agenda y avisos** | *«Recuérdame pagar la luz antes del 15»*, *«¿qué tareas me quedan?»*, *«ya pagué la luz»*. Entiende fechas en español sin depender del modelo y te avisa a su hora. De vez en cuando revisa tus pendientes y notificaciones y te lo recuerda, **sin interrumpir**: nunca en horas de silencio, en modo concentración ni mientras hablas con ella. |
 | 💭 | **Recuerda** | Recuerdos por usuario (*«recuerda esto: …»*) e historial de cada chat en SQLite. Busca **por significado** con embeddings locales: *«¿qué te conté de mi mascota?»* encuentra *«mi perro se llama Toby»*. |
 | 🔒 | **Privada** | Lista blanca de usuarios, historial aislado y archivos temporales que se borran al procesarse. |
 | 🪶 | **Ligera** | Descarga los modelos tras cada respuesta para funcionar con 16 GB de RAM (configurable). |
@@ -285,6 +286,10 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 | `ai.privacy.provider` | `ollama` | Cerebro local para lo privado. Lo privado **nunca** va a la nube, ni como respaldo; si no hay proveedor local, no se envía. |
 | `ai.privacy.documents` / `detect_sensitive` | `true` / `true` | Documentos siempre privados; contraseñas, llaves de API, tokens, tarjetas o CURP vuelven privada la conversación hasta reiniciarla. Lo que pidas recordar en privado solo vuelve a prompts de proveedores locales y nunca sale por MCP ni Telegram. |
 | `system.notifications.apps` / `blocked` / `hide_codes` | `["*"]` / `[]` / `true` | Notificaciones de Windows que ve la isla. Son privadas: nunca van a la nube ni al MCP, y los códigos de verificación se ocultan. |
+| `tasks.morning_hour` | `9` | Las tareas de un día sin hora (*«el viernes»*) se avisan a esta hora; *«antes del 15»*, la mañana anterior. |
+| `proactive.enabled` | `true` | **Hanna proactiva**: cada `check_seconds` (60) mira si toca un aviso (una consulta a SQLite, sin IA ni red). Los avisos que pediste llegan a su hora, también en modo concentración. |
+| `proactive.digest_minutes` / `max_per_day` / `repeat_hours` | `120` / `6` / `4` | El resumen por su cuenta (vencidas, lo de hoy, cuántas notificaciones nuevas) sale como mucho cada 2 h, 6 al día, sin repetir lo mismo, y solo si hay algo que contar. |
+| `proactive.quiet_hours` / `idle_minutes` | `22:00–08:00` / `5` | Sin resúmenes de noche, en modo concentración, con el núcleo ocupado o si le hablaste hace menos de 5 min. De las notificaciones solo dice cuántas y de qué apps, nunca su texto. |
 | `focus.default_minutes` / `allow_apps` / `battery_alert` | `25` / `[]` / `15` | **Modo concentración**: retiene notificaciones, música y avisos de agentes; los permisos, los errores, las apps de `allow_apps` y la batería crítica pasan igual. Al terminar, resumen de lo que esperó. |
 | `hands.folders` | `{}` | Carpetas que MEKA puede **leer** (nombre: ruta, o `{path, private}`). Fuera de ellas nada; `.env`, llaves, `.git` y similares nunca, aunque estén dentro. La escritura (`writable: true`, con permiso y deshacer) existe pero está **pospuesta** hasta aislar el sistema: no la actives todavía. |
 | `ai.history_size` | `20` | Mensajes recientes que recuerda por chat. |
