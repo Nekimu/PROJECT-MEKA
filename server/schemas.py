@@ -65,3 +65,19 @@ class FocusRequest(BaseModel):
 
 class MediaAction(BaseModel):
     action: str = Field(description="play_pause | next | previous")
+
+
+class TaskRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+    when: str | None = Field(
+        None, max_length=200, description="En lenguaje natural: «mañana a las 5», «el viernes»"
+    )
+    due_at: float | None = Field(None, description="Cuándo vence (epoch); ignorado si hay `when`")
+    remind_at: float | None = Field(None, description="Cuándo avisar (epoch)")
+    private: bool = False
+    source: str = Field("api", pattern="^(api|mcp|pet)$")
+
+
+class TaskAction(BaseModel):
+    action: str = Field(description="done | reopen | snooze | delete")
+    minutes: int | None = Field(None, ge=1, le=10080, description="Para snooze (10 por defecto)")

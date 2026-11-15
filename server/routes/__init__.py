@@ -11,6 +11,7 @@ from server.routes import (
     runs,
     status,
     system,
+    tasks,
     voice,
 )
 
@@ -26,4 +27,6 @@ ROUTERS = [
     hands.router,
     system.router,
     focus.router,
+    tasks.router,
+    tasks.proactive_router,
 ]

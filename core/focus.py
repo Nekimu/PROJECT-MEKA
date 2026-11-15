@@ -25,11 +25,12 @@ logger = setup_logger("Focus")
 ALWAYS = frozenset({
     "agent.confirm", "agent.confirmed",  # Un agente no puede quedarse esperando tu permiso
     "agent.error", "emotion", "budget.low", "focus.started", "focus.ended",
+    "reminder.due", "task.changed",  # Los avisos los pediste tú; la lista debe seguir al día
 })  # fmt: skip
 # Se retienen (y se cuentan para el resumen)
 HELD = frozenset({
     "system.notification", "system.notification_removed", "system.media", "system.battery",
-    "message", "agent.working", "agent.done",
+    "message", "agent.working", "agent.done", "nudge",
 })  # fmt: skip
 
 

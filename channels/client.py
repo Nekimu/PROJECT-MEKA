@@ -140,6 +140,21 @@ class CoreClient:
             )
         )["added"]
 
+    # ------------------------------------------------------------------ agenda
+
+    async def tasks(self, user: str, *, include_private: bool = True) -> list[dict]:
+        params = {} if include_private else {"include_private": "false"}
+        path = f"/v1/users/{quote(user, safe='')}/tasks"
+        return (await self._json("GET", path, params=params))["tasks"]
+
+    async def add_task(self, user: str, title: str, when: str | None = None, **extra) -> dict:
+        body = {"title": title, "when": when or None, **extra}
+        return await self._json("POST", f"/v1/users/{quote(user, safe='')}/tasks", json=body)
+
+    async def task_action(self, user: str, task_id: int, action: str, **extra) -> dict:
+        path = f"/v1/users/{quote(user, safe='')}/tasks/{int(task_id)}"
+        return await self._json("POST", path, json={"action": action, **extra})
+
     async def ask_permission(
         self, action: str, *, timeout: float = 120, details: dict | None = None
     ) -> bool:

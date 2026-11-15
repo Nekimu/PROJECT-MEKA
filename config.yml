@@ -115,6 +115,21 @@ focus:                       # Modo concentración: retiene lo que distrae duran
   allow_apps: []             # Notificaciones que pasan igual (p. ej. ["Teams"] para llamadas)
   battery_alert: 15          # La batería por debajo de este % (sin cargar) avisa igual
 
+tasks:                       # Agenda: «recuérdame…», «¿qué tareas me quedan?», «ya pagué la luz»
+  enabled: true
+  morning_hour: 9            # Las tareas de un día sin hora se avisan a esta hora
+
+proactive:                   # Hanna proactiva: revisa pendientes y notificaciones y te los recuerda
+  enabled: true
+  check_seconds: 60          # Cada cuánto mira si toca algún aviso (una consulta a SQLite, sin IA)
+  digest_minutes: 120        # Como mucho, un resumen cada este tiempo...
+  startup_minutes: 2         # ...y el primero poco después de arrancar
+  idle_minutes: 5            # No interrumpe si le hablaste hace menos de esto
+  quiet_hours: ["22:00", "08:00"]  # Sin resúmenes (los avisos que pediste sí llegan)
+  max_per_day: 6
+  repeat_hours: 4            # No repite el mismo resumen antes de este tiempo
+  notifications: true        # Incluir cuántas notificaciones nuevas hay (nunca su texto)
+
 hands:                       # Las "manos" de MEKA (fase 3): leer carpetas que tú autorizas
   enabled: true
   folders: {}                # Fuera de estas carpetas, nada. Ejemplos:

@@ -9,6 +9,7 @@ import asyncio
 import contextlib
 import gc
 import shutil
+import time
 import uuid
 from pathlib import Path
 
@@ -45,12 +46,13 @@ class MediaMixin:
                 if not transcription:
                     self._emotion("sad")  # No entendió el audio
                     return None, []
-                answer = await self.ai.answer(session, user, transcription, private=private)
-            replies = await self._build_replies(
-                [parse_message(m) for m in answer.messages],
-                with_audio=audio,
-                private=answer.private,
-            )
+                parsed, answer = await self._answer_with_agenda(
+                    session, user, transcription, private=private
+                )
+            else:
+                self.last_activity = time.time()
+                parsed = [parse_message(m) for m in answer.messages]
+            replies = await self._build_replies(parsed, with_audio=audio, private=answer.private)
         self._say(replies, "happy" if answer.ok else "error")
         return transcription, replies
 

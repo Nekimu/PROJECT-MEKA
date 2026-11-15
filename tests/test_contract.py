@@ -21,6 +21,7 @@ FINGERPRINTS = {
     "1.7": "d59efebe67ae41cc",
     "1.8": "b150bda941daf0ec",
     "1.9": "43fc58691fefe816",
+    "1.10": "d8526fbc821e63ed",
 }
 
 
@@ -51,11 +52,13 @@ def test_contract_is_public_and_complete(tmp_path):
         "user.media",
         "user.notification",
         "user.focus",
+        "user.task",
     }
     rest = {(r["method"], r["path"]): r["auth"] for r in document["rest"]}
     assert rest[("GET", "/v1/health")] is False and rest[("GET", "/v1/contract")] is False
     assert rest[("POST", "/v1/chat")] is True and rest[("WEBSOCKET", "/v1/events")] is True
     assert ("POST", "/v1/confirmations/{confirmation_id}") in rest
+    assert rest[("POST", "/v1/users/{user}/tasks/{task_id}")] is True
 
 
 def test_every_event_the_core_emits_follows_the_contract(tmp_path):

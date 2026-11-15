@@ -12,7 +12,6 @@ import sys
 
 from ai.service import AIService
 from ai.stt import STTService
-from ai.text_utils import parse_message
 from ai.tts import TTSService
 from core.audio_store import AudioStore
 from core.config import resolve_path
@@ -29,13 +28,14 @@ from core.replies import Reply, UnsupportedFileError
 from core.runs import RunLog
 from core.semantic import SemanticMemory
 from core.system import SystemMonitor
+from core.tasks.mixin import AgendaMixin
 
 __all__ = ["MekaEngine", "Reply", "UnsupportedFileError"]
 
 logger = setup_logger("Engine")
 
 
-class MekaEngine(MediaMixin):
+class MekaEngine(MediaMixin, AgendaMixin):
     def __init__(
         self,
         config: dict,
@@ -104,6 +104,8 @@ class MekaEngine(MediaMixin):
         # Un solo proceso pesado a la vez (Ollama, Whisper, Qwen-TTS) para no agotar la RAM
         self.lock = asyncio.Lock()
         self.audio = AudioStore(server.get("audio_ttl_seconds", 300))
+        # Tareas, recordatorios y la vigilancia proactiva (core/tasks/); arranca con el servidor
+        self._setup_agenda(config)
 
     # ------------------------------------------------------------------ ciclo de vida
 
@@ -135,6 +137,8 @@ class MekaEngine(MediaMixin):
             self.runs.close()
         with contextlib.suppress(Exception):
             self.hands.restore_points.close()
+        with contextlib.suppress(Exception):
+            self._close_agenda()
         with contextlib.suppress(Exception):
             self.memory.close()
         self.tts.unload()
@@ -180,14 +184,10 @@ class MekaEngine(MediaMixin):
         """Responde a un mensaje de texto. Con `audio`, sintetiza las frases marcadas con [AUDIO].
         Con `private`, solo responden proveedores locales (ai/routing.py)."""
         async with self._busy(), self.lock:
-            answer = await self.ai.answer(
-                session, user, text, use_memory=use_memory, private=private
+            parsed, answer = await self._answer_with_agenda(
+                session, user, text, private=private, use_memory=use_memory
             )
-            replies = await self._build_replies(
-                [parse_message(m) for m in answer.messages],
-                with_audio=audio,
-                private=answer.private,
-            )
+            replies = await self._build_replies(parsed, with_audio=audio, private=answer.private)
         self._say(replies, "happy" if answer.ok else "error")
         return replies
 

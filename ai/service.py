@@ -142,6 +142,13 @@ class AIService(MultimodalMixin):
             return reply, latency_ms, name
         raise ProviderError("Ningún proveedor respondió")  # pragma: no cover
 
+    def decide_privacy(self, chat_id, text: str, requested: bool = False) -> bool:
+        """¿Será privada esta petición? (la decisión que tomará `answer`; queda anotada)."""
+        return self._privacy(chat_id, text, requested)
+
+    def stays_local(self, task: str, private: bool) -> bool:
+        return self._stays_local(task, private)
+
     def _stays_local(self, task: str, private: bool) -> bool:
         """¿Todos los proveedores que podrían atender esta petición (respaldo incluido) son
         locales? Solo entonces pueden ir al prompt los recuerdos privados."""
@@ -168,8 +175,10 @@ class AIService(MultimodalMixin):
         use_memory: bool = True,
         task: str = "chat",
         private: bool = False,
+        extra_context: str = "",
     ) -> Answer:
-        """Genera una respuesta dividida en varios mensajes, con su resultado."""
+        """Genera una respuesta dividida en varios mensajes, con su resultado.
+        `extra_context`: datos reales que el cerebro debe conocer (la agenda, core/tasks/)."""
         self._log("User", user_text)
         requested = private or (task == "document" and self.private_documents)
         private = self._privacy(chat_id, user_text, requested)
@@ -184,7 +193,7 @@ class AIService(MultimodalMixin):
 
         try:
             reply, latency_ms, used = await self._chat(
-                self.system_prompt + context, messages, task=task, private=private
+                self.system_prompt + context + extra_context, messages, task=task, private=private
             )
         except Exception as e:
             logger.error(f"Error generando respuesta: {e}")

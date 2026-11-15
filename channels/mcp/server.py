@@ -73,6 +73,21 @@ class MekaTools:
         Nunca devuelve recuerdos privados: el agente los enviaría a su proveedor en la nube."""
         return await self.core.memories(self.user, query or None, include_private=False)
 
+    async def tasks(self) -> list[dict]:
+        """Tareas pendientes del usuario (las de fecha más cercana primero; fechas en epoch).
+        Nunca devuelve las privadas: el agente las enviaría a su proveedor en la nube."""
+        return await self.core.tasks(self.user, include_private=False)
+
+    async def add_task(self, title: str, when: str = "") -> dict:
+        """Apunta una tarea en la agenda de MEKA, que se la recordará al usuario. `when` en
+        español natural y opcional: «mañana a las 5», «el viernes», «antes del 15 de noviembre»."""
+        return await self.core.add_task(self.user, title, when or None, source="mcp")
+
+    async def complete_task(self, task_id: int) -> str:
+        """Marca una tarea como hecha (usa el `id` que devuelve `tasks`)."""
+        await self.core.task_action(self.user, task_id, "done")
+        return "Tarea marcada como hecha."
+
     async def ask_permission(self, action: str, timeout_seconds: int = 120) -> str:
         """Pide permiso al usuario antes de una acción delicada (borrar, enviar, publicar...).
         La mascota muestra el diálogo y esta herramienta espera la respuesta. Sin respuesta a
@@ -136,6 +151,9 @@ class MekaTools:
             self.remember,
             self.memories,
             self.ask_permission,
+            self.tasks,
+            self.add_task,
+            self.complete_task,
             self.list_folders,
             self.list_files,
             self.read_file,

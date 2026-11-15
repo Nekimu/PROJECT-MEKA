@@ -33,3 +33,20 @@ lines:
   empty_reply: ["Me quedé en blanco. ¿Me lo dices de otra forma? 🤔"]
   analyze_document: ["Analiza este documento, por favor."]
   analyze_image: ["Analiza esta imagen."]
+  # Agenda y avisos proactivos (core/tasks/). {title}, {when}, {summary}, {count}, {apps}
+  task_added:
+    - "¡Misión aceptada! Apunté: {title}{when} ⏰"
+    - "Anotado en mi radar: {title}{when} 🎯"
+  task_list_header: ["Tus misiones pendientes 🎮:"]
+  task_list_empty: ["Cero misiones pendientes. ¡Vas con racha perfecta! 🏆"]
+  task_done:
+    - "¡GG! «{title}» completada ✅"
+    - "Misión cumplida: «{title}» 🏆"
+  task_done_unknown: ["No encuentro esa misión en tu lista. ¿Cuál era? 🤔"]
+  reminder_due:
+    - "⏰ ¡Alerta de misión! {title}{when}"
+    - "⏰ Te lo recuerdo como prometí: {title}{when}"
+  nudge_tasks:
+    - "Oye, revisé tu radar: {summary} 🎯"
+    - "Un aviso rápido, sin interrumpirte mucho: {summary}"
+  nudge_notifications: ["Tienes {count} notificación(es) nueva(s) de {apps} 🔔"]

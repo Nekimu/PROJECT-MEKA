@@ -98,6 +98,13 @@ class ClientSession:
                 await self.engine.system.media_control(str(data.get("action")))
             except ValueError as e:
                 logger.info(f"user.media no válido: {e}")
+        elif type_ == "user.task" and data.get("id") is not None:
+            try:
+                self.engine.tasks.act(
+                    int(data["id"]), str(data.get("action")), minutes=data.get("minutes")
+                )
+            except (ValueError, TypeError) as e:
+                logger.info(f"user.task no válido: {e}")
         elif type_ == "user.confirm" and data.get("id"):
             if not self.engine.confirmations.resolve(
                 str(data["id"]), bool(data.get("approved")), by=self.name

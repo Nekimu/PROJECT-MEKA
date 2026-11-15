@@ -26,9 +26,11 @@ Historial:
 - 1.8  Notificaciones de Windows: `system.notification`, `system.notification_removed`,
        `user.notification` y `/v1/system/notifications` (T-046).
 - 1.9  Modo concentración: `focus.started`, `focus.ended`, `user.focus` y `/v1/focus` (T-050).
+- 1.10 Agenda y Hanna proactiva: `task.changed`, `reminder.due`, `nudge`, `user.task`,
+       `/v1/users/{user}/tasks` y `/v1/proactive` (T-056).
 """
 
-CONTRACT_VERSION = "1.9"
+CONTRACT_VERSION = "1.10"
 
 EMOTIONS = frozenset({
     "idle", "happy", "working", "thinking", "sleeping", "eating", "error", "celebrate", "sad",
@@ -76,6 +78,17 @@ OUTBOUND: dict[str, dict[str, str]] = {
         "held": "int",
         "notifications": "int",
     },  # reason: user | timeout
+    # Agenda (core/tasks/): tareas, avisos que pediste y el resumen proactivo
+    "task.changed": {"id": "int", "status": "str", "action": "str"},
+    # status: pending | done · action: added | done | reopened | snoozed | deleted
+    "reminder.due": {"id": "int", "title": "str", "text": "str", "due": "float?"},
+    "nudge": {
+        "text": "str",  # Lo que dice el personaje
+        "kind": "str",  # tasks | notifications
+        "tasks": "int",  # Vencidas + las que vencen pronto
+        "overdue": "int",
+        "notifications": "int",  # Nuevas desde el último resumen (solo cuántas)
+    },
 }
 
 # De los clientes al núcleo (WebSocket /v1/events)
@@ -86,6 +99,7 @@ INBOUND: dict[str, dict[str, str]] = {
     "user.media": {"action": "str"},  # play_pause | next | previous
     "user.notification": {"id": "int", "action": "str"},  # dismiss | open
     "user.focus": {"action": "str", "minutes": "int?"},  # start | stop
+    "user.task": {"id": "int", "action": "str", "minutes": "int?"},  # done|reopen|snooze|delete
 }
 
 # Solo los emite el núcleo: llevan un id del registro de confirmaciones (core/confirmations.py).
@@ -93,6 +107,7 @@ INBOUND: dict[str, dict[str, str]] = {
 CORE_ONLY_EVENTS = frozenset({
     "agent.confirm", "agent.confirmed", "system.media", "system.battery",
     "system.notification", "system.notification_removed", "focus.started", "focus.ended",
+    "task.changed", "reminder.due", "nudge",
 })  # fmt: skip
 
 
