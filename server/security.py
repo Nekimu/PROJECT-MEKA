@@ -11,7 +11,7 @@ from core.logger import setup_logger
 
 logger = setup_logger("Server")
 
-# La mascota (Tauri) y las páginas servidas desde este mismo equipo
+# La mascota (app de Go: http://127.0.0.1:<puerto>; antes Tauri) y las páginas de este equipo
 DEFAULT_ORIGINS = re.compile(
     r"^(tauri://localhost|https?://tauri\.localhost|https?://(localhost|127\.0\.0\.1)(:\d+)?)$"
 )
@@ -55,6 +55,28 @@ def websocket_authorized(websocket: WebSocket) -> bool:
     """El WebSocket acepta el token por `?token=` (los navegadores no envían cabeceras)."""
     supplied = websocket.query_params.get("token") or bearer(websocket.headers.get("authorization"))
     return token_matches(websocket.app.state.token, supplied)
+
+
+def add_browser_access(app, extra_origins: list[str]):
+    """Deja que las páginas permitidas lean la API REST (CORS) y rechaza las demás.
+
+    La mascota se sirve desde otro puerto (`127.0.0.1:<aleatorio>`): para el navegador es otro
+    origen, y sin estas cabeceras solo le llegaba el WebSocket (ni `GET /v1/system` al
+    arrancar ni las acciones con POST). CORS solo abre la lectura a los orígenes que ya
+    admite `OriginGuard`; el token sigue siendo obligatorio si está configurado.
+    """
+    from fastapi.middleware.cors import CORSMiddleware
+
+    extra = [origin.rstrip("/") for origin in extra_origins]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=DEFAULT_ORIGINS.pattern,
+        allow_origins=extra,
+        allow_methods=["GET", "POST", "DELETE"],
+        allow_headers=["Authorization", "Content-Type"],
+        max_age=600,
+    )
+    app.add_middleware(OriginGuard, extra_origins=extra)  # Por fuera: lo ajeno ni llega a CORS
 
 
 class OriginGuard:

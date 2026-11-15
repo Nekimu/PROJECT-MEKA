@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request, WebSocket, WebSocketDisco
 
 from core import contract
 from core.engine import MekaEngine
-from core.events import CORE_ONLY_EVENTS, OUTBOUND_EVENTS
+from core.events import CORE_ONLY_EVENTS, OUTBOUND_EVENTS, event
 from core.logger import setup_logger
 from server.deps import AUTH, get_engine
 from server.schemas import EventRequest
@@ -108,6 +108,9 @@ class ClientSession:
 
     async def run(self):
         queue = self.engine.bus.subscribe()
+        if not self.engine.focus.active:  # En concentración la isla no se llena de golpe
+            for type_, data in self.engine.system.initial_events():
+                await self.websocket.send_json(event(type_, **data))
 
         async def pump():
             while True:

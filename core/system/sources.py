@@ -53,7 +53,7 @@ class WindowsMediaSource:
     async def _session(self):
         if self._manager is None:
             self._manager = await self._manager_class.request_async()
-        return self._manager.get_current_session()
+        return pick_session(self._manager.get_current_session(), self._manager.get_sessions())
 
     async def snapshot(self) -> dict | None:
         session = await self._session()
@@ -85,6 +85,23 @@ class WindowsMediaSource:
             "previous": session.try_skip_previous_async,
         }[action]
         return bool(await method())
+
+
+def pick_session(current, sessions):
+    """La sesión que se muestra: la que suena. Windows llama "actual" a la última que tocaste,
+    que puede ser un vídeo en pausa del navegador mientras Spotify sigue sonando."""
+
+    def playing(session):
+        with contextlib.suppress(Exception):
+            return int(session.get_playback_info().playback_status) == _PLAYING
+        return False
+
+    if current is not None and playing(current):
+        return current
+    others = list(sessions or [])
+    return (
+        next((s for s in others if playing(s)), None) or current or (others[0] if others else None)
+    )
 
 
 def _app_name(app_id: str | None) -> str | None:

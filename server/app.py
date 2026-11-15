@@ -19,7 +19,7 @@ from core.config import default_user
 from core.engine import MekaEngine
 from core.logger import setup_logger
 from server.routes import ROUTERS
-from server.security import ConfigError, OriginGuard, server_token
+from server.security import ConfigError, add_browser_access, server_token
 
 __all__ = ["API_VERSION", "ConfigError", "build_server", "create_app", "server_token"]
 
@@ -65,7 +65,7 @@ def create_app(
     app.state.max_upload = int(server.get("max_upload_mb", 20)) * 1024 * 1024
     app.state.local_user = default_user(config)
 
-    app.add_middleware(OriginGuard, extra_origins=server.get("allowed_origins") or [])
+    add_browser_access(app, server.get("allowed_origins") or [])
     for router in ROUTERS:
         app.include_router(router)
     return app

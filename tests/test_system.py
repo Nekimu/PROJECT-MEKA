@@ -7,7 +7,7 @@ import pytest
 from core import contract
 from core.events import EventBus
 from core.system import SystemMonitor
-from core.system.sources import _app_name
+from core.system.sources import _PLAYING, _app_name, pick_session
 from tests.test_server import make_client, make_engine
 
 
@@ -41,6 +41,8 @@ def make_monitor(media=None, battery=None):
     config = {
         "system": {
             "enabled": True,
+            "media": False,  # Solo las fuentes falsas que pase cada test, nunca las reales
+            "battery": False,
             "media_interval": 0.01,
             "battery_interval": 0.01,
             "notifications": False,  # Nunca las notificaciones reales del equipo en los tests
@@ -186,3 +188,56 @@ def test_live_monitor_reaches_the_pet_and_the_api(tmp_path):
         )
         assert fake.status_code == 422
     assert media.actions == ["play_pause", "previous"]
+
+
+# ---------------------------------------------------------------------- al arrancar
+
+
+class FakeSession:
+    def __init__(self, name, playing):
+        self.name, self.status = name, _PLAYING if playing else 5  # 5 = en pausa
+
+    def get_playback_info(self):
+        return type("Info", (), {"playback_status": self.status})()
+
+
+def test_the_island_shows_what_is_playing():
+    paused_video, spotify = FakeSession("Edge", False), FakeSession("Spotify", True)
+    # Windows dice que la "actual" es el vídeo en pausa, pero suena Spotify
+    assert pick_session(paused_video, [paused_video, spotify]) is spotify
+    assert pick_session(spotify, [paused_video, spotify]) is spotify
+    assert pick_session(paused_video, [paused_video]) is paused_video  # Nada suena: la actual
+    assert pick_session(None, [paused_video]) is paused_video
+    assert pick_session(None, []) is None
+
+
+def test_state_is_ready_before_the_first_client():
+    paused = {**SONG, "playing": False}
+    monitor, _ = make_monitor(media=FakeMedia(paused), battery=battery_reader(
+        {"percent": 80, "charging": True}
+    ))  # fmt: skip
+
+    async def scenario():
+        await monitor.start()
+        snapshot = monitor.snapshot()  # Sin esperar a ningún ciclo de vigilancia
+        await monitor.stop()
+        return snapshot
+
+    snapshot = asyncio.run(scenario())
+    assert snapshot["media"]["title"] == "Idol" and snapshot["battery"]["percent"] == 80
+    assert dict(monitor.initial_events())["system.media"]["playing"] is False
+
+
+def test_a_new_websocket_client_gets_the_current_state(tmp_path):
+    engine = make_engine(tmp_path)
+    engine.system, _ = make_monitor(
+        media=FakeMedia({**SONG, "playing": False}),
+        battery=battery_reader({"percent": 40, "charging": False}),
+    )
+    engine.system.bus = engine.bus
+    with make_client(engine) as client, client.websocket_connect("/v1/events") as ws:
+        first = [ws.receive_json() for _ in range(2)]
+    # La canción en pausa no "cambia", pero quien llega la ve igual
+    assert {m["type"] for m in first} == {"system.media", "system.battery"}
+    media = next(m for m in first if m["type"] == "system.media")["data"]
+    assert media["title"] == "Idol" and media["playing"] is False

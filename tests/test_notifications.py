@@ -92,7 +92,10 @@ def make_inbox(*items, **cfg):
     bus = EventBus()
     events = bus.subscribe()
     source = FakeInbox(*items)
-    config = {"system": {"enabled": True, "notifications": {"enabled": True, **cfg}}}
+    config = {  # Música y batería apagadas: nunca las reales del equipo en los tests
+        "system": {"enabled": True, "media": False, "battery": False,
+                   "notifications": {"enabled": True, **cfg}}
+    }  # fmt: skip
     return (
         SystemMonitor(config, bus, media=None, battery=None, notifications=source),
         source,

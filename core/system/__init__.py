@@ -59,12 +59,49 @@ class SystemMonitor(InboxMixin):
         return {"media": self.state["media"], "battery": self.state["battery"]}
 
     async def start(self):
+        await self._first_read()
         if self.media is not None:
             self._tasks.append(asyncio.create_task(self._loop("media", self.media.snapshot)))
         if self.battery is not None:
             self._tasks.append(asyncio.create_task(self._loop("battery", self.battery)))
         if self.notifications_source is not None:
             self._tasks.append(asyncio.create_task(self._loop("notifications", None)))
+
+    async def _first_read(self, timeout: float = 3.0):
+        """Una lectura antes de abrir el servidor: quien se conecte al arrancar ya encuentra la
+        música, la batería y las notificaciones que había (y no un estado vacío)."""
+        reads = []
+        if self.media is not None:
+            reads.append(self.refresh("media", self.media.snapshot))
+        if self.battery is not None:
+            reads.append(self.refresh("battery", self.battery))
+        if self.notifications_source is not None:
+            reads.append(self.refresh_notifications())
+        if not reads:
+            return
+        try:
+            results = await asyncio.wait_for(
+                asyncio.gather(*reads, return_exceptions=True), timeout
+            )
+        except TimeoutError:
+            logger.warning("El sistema tardó en responder; los datos llegarán en unos segundos")
+            return
+        for error in (r for r in results if isinstance(r, Exception)):
+            logger.warning(f"Primera lectura del sistema fallida: {error}")
+        notifications = "—" if self._inbox is None else len(self._inbox)
+        logger.info(
+            f"Sistema: música={_seen(self.state['media'], 'title')} · "
+            f"batería={_seen(self.state['battery'], 'percent')} · notificaciones={notifications}"
+        )
+
+    def initial_events(self) -> list[tuple[str, dict]]:
+        """El estado actual como eventos, para un cliente que acaba de conectarse por WebSocket.
+        Las notificaciones no: llegarían como nuevas; la lista está en GET /v1/system/notifications."""
+        return [
+            (f"system.{kind}", {k: v for k, v in value.items() if v is not None})
+            for kind, value in self.state.items()
+            if value is not None
+        ]
 
     async def stop(self):
         for task in self._tasks:
@@ -118,3 +155,9 @@ class SystemMonitor(InboxMixin):
         with contextlib.suppress(Exception):
             await self.refresh("media")
         return True
+
+
+def _seen(value: dict | None, key: str) -> str:
+    if value is None:
+        return "—"
+    return str(value.get(key) or ("sin reproducción" if key == "title" else "?"))

@@ -87,6 +87,35 @@ def test_foreign_websites_are_rejected(tmp_path):
         )
 
 
+def test_the_pet_can_read_the_api_from_its_own_port(tmp_path):
+    """La app de Go sirve la mascota en 127.0.0.1:<puerto>: otro origen para el navegador."""
+    pet = "http://127.0.0.1:53111"
+    with make_client(make_engine(tmp_path)) as client:
+        response = client.get("/v1/system", headers={"Origin": pet})
+        assert response.status_code == 200
+        assert response.headers["access-control-allow-origin"] == pet
+        preflight = client.options(
+            "/v1/system/media",
+            headers={
+                "Origin": pet,
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "authorization, content-type",
+            },
+        )
+        assert preflight.status_code == 200
+        assert preflight.headers["access-control-allow-origin"] == pet
+        # Una web ajena no recibe permiso de lectura, ni siquiera en la consulta previa
+        foreign = client.options(
+            "/v1/system/media",
+            headers={
+                "Origin": "https://malicioso.example",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        assert foreign.status_code == 403
+        assert "access-control-allow-origin" not in foreign.headers
+
+
 # ---------------------------------------------------------------------- conversación
 
 
