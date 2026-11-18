@@ -75,3 +75,6 @@ desktop.ini
 # Voces de referencia personales para clonar (nunca al repositorio)
 voices/
 audio/
+
+# Material de origen del arte (zips y fotogramas): pesado, se queda en local
+/assets/
