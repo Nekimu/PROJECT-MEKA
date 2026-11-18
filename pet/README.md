@@ -1,74 +1,94 @@
-# MEKA · Mascota de escritorio (prototipo)
+# MEKA · Compañera de Escritorio (Go + WebView2 + Pixel Art)
 
-Una compañera animada que flota sobre tu escritorio, reacciona a lo que hace MEKA y vive como un Tamagotchi moderno. Este prototipo es la **fase 2** de la [visión del proyecto](../docs/VISION.md).
+Una compañera animada en **Pixel Art** que flota sobre tu escritorio en una ventana nativa **sin bordes, siempre visible y con fondo 100 % transparente** escrita en **Go** (`pet/desktop/`). Se conecta en tiempo real a **MEKA Core** (`ws://127.0.0.1:8765/v1/events`) y permite cambiar libremente de avatar/personaje desde su barra lateral oculta desplegable, siguiendo la [Filosofía Híbrida](../docs/FILOSOFIA_HIBRIDA.md) e inspirada en [Soul-of-Waifu](https://github.com/jofizcd/Soul-of-Waifu).
 
-| Navegador (con panel de pruebas) | Escritorio (ventana transparente) |
+| Escritorio nativo en Go (ventana transparente sin bordes) | Navegador / Ventana emergente (`?desktop=1`) |
 |---|---|
-| Abre `web/index.html` | `cargo run` dentro de `src-tauri/` |
+| `pet/desktop/meka-desktop.exe` (o `go run .` en `pet/desktop/`) | Abre `pet/web/index.html` |
 
-## Pruébala en 10 segundos
+---
 
-Abre [`web/index.html`](web/index.html) con doble clic. No necesita instalar nada.
+## 1. Aplicación de Escritorio Nativa en Go (`pet/desktop/`)
 
-Para ver también el **estilo pixel art con paleta reducida**, sírvela con un servidor local (el navegador no deja leer píxeles de archivos abiertos con `file://`):
+El envoltorio nativo en Go utiliza **Microsoft Edge WebView2** (`github.com/jchv/go-webview2`) y llamadas nativas a Win32/DWM (`WS_POPUP`, `WS_EX_TOPMOST`, `DwmExtendFrameIntoClientArea` y `WEBVIEW2_DEFAULT_BACKGROUND_COLOR=0`) sin requerir CGo ni Rust/Tauri.
 
-```bash
-python -m http.server 8000 --directory pet/web
-# y abre http://localhost:8000
+### Ejecutar o compilar
+
+```powershell
+cd pet/desktop
+
+# Ejecutar directamente:
+go run .
+
+# Elegir personaje inicial o URL de MEKA Core:
+go run . --skin dva_pixel
+go run . --skin clawd_pixel --core ws://127.0.0.1:8765/v1/events
+
+# Compilar binario nativo (.exe):
+go build -o meka-desktop.exe .
+
+# Compilar versión de distribución sin ventana de consola en Windows:
+go build -ldflags="-H=windowsgui -s -w" -o meka-desktop.exe .
 ```
 
+### Controles y Estados de la Dynamic Island (`pet/desktop/`)
 | Acción | Cómo |
 |---|---|
-| Acariciar | Clic sobre la mascota |
-| Moverla | Arrastrar |
-| Menú (comer, jugar, dormir, hablar, personaje, estilo) | Clic derecho o pulsación larga |
-| Simular a MEKA Core | Botones del panel de pruebas |
-| Ver el paso del tiempo | "Velocidad del tiempo" → 600× |
+| **Modo Notch (En reposo)** | Píldora compacta de `230×44 px` en negro profundo (`#000000`) pegada al borde superior central de la pantalla, con retroiluminación tenue morada difusa que emana desde el fondo. Cero estorbo para el resto de aplicaciones. |
+| **Desplegar hacia abajo** | Pasa el cursor sobre el notch (`hover`) o haz clic en él. La ventana se expande elásticamente hacia abajo hasta `320×430 px`, revelando el avatar completo, el bocadillo y el chat. |
+| **Replegar al notch** | Retira el mouse del notch (cuenta con ~450 ms de gracia) o presiona `Escape`. |
+| **Saludar / Reaccionar** | Clic izquierdo sobre el personaje (activa animación elástica *Squash & Stretch*). |
+| **Barra lateral oculta desplegable** | Botón `☰` en la píldora superior o clic derecho → *⚙️ Configuración y avatares* (se despliega de forma fluida dentro del escenario sin salirse de la pantalla). |
+| **Hablar con el agente (Spotlight)** | Campo inferior de mensaje rápido (`user.message`). Mantiene el notch expandido mientras escribes. |
+| **Confirmar herramientas (`agent.confirm`)** | El notch se expande automáticamente y muestra los botones **Permitir** / **Cancelar** en el bocadillo de diálogo. |
+| **Cerrar aplicación** | Clic derecho → *✖ Cerrar aplicación*. |
 
-## Versión de escritorio (Tauri 2)
+---
 
-La misma web dentro de una ventana **transparente, sin bordes y siempre visible**. Tauri usa el navegador del sistema, así que la app pesa mucho menos que una de Electron.
+## 2. Modo Estudio en Navegador (`pet/web/`)
 
-**Requisitos:** [Rust](https://www.rust-lang.org/tools/install) y, en Windows, las *C++ Build Tools* de Visual Studio. WebView2 ya viene con Windows 10 y 11. En Linux necesitas además `libwebkit2gtk-4.1-dev` (ver la [guía de Tauri](https://v2.tauri.app/start/prerequisites/)).
+Para probar todos los estados de MEKA Core con el panel de simulación:
 
-```bash
-cd pet/src-tauri
-cargo run                      # abrir la mascota
-cargo install tauri-cli        # una sola vez, para crear el instalador
-cargo tauri build              # instalador .msi/.exe en target/release/bundle
+```powershell
+cd pet/desktop
+go run . --serve 127.0.0.1:8080
+# Abre http://127.0.0.1:8080/index.html
 ```
 
-En escritorio, arrastrar a la mascota **mueve la ventana** y el menú incluye "Cerrar". Además intenta conectarse sola a MEKA Core en `ws://127.0.0.1:8765/v1/events` (arráncalo con `python run.py`) y reintenta en silencio mientras no exista. Si configuraste `MEKA_API_TOKEN`, añádelo a la URL: `ws://127.0.0.1:8765/v1/events?token=...`. En el navegador puedes abrir `index.html?core=ws://127.0.0.1:8765/v1/events` para probar la conexión.
+---
 
-## Cómo funciona
+## Estructura de Archivos
 
 ```
-web/
-├── index.html          # Escenario + panel de pruebas (solo navegador)
-├── pet.css             # Animaciones por estado, bocadillo, menú
-├── pet.js              # Máquina de estados, Tamagotchi, eventos, WebSocket
-└── skins/
-    ├── manifest.js     # Personajes: sprites por estado y frases
-    └── <personaje>/*.webp
-src-tauri/              # Envoltorio de escritorio (ventana transparente)
-tools/stickerize.py     # Quita el fondo a stickers y los convierte a WebP
+pet/
+├── desktop/
+│   ├── main.go             # Servidor loopback efímero (127.0.0.1:0) + CLI
+│   ├── window_windows.go   # Ventana nativa transparente sin bordes (Win32 + DWM + WebView2)
+│   ├── window_other.go     # Lanzador multiplataforma
+│   ├── main_test.go        # Pruebas unitarias en Go (go test ./...)
+│   ├── go.mod / go.sum     # Módulo Go (sin CGo, cero dependencias de Rust)
+│   └── icons/              # Iconos de la aplicación
+├── web/
+│   ├── index.html          # Escenario, barra lateral desplegable (Drawer popover) y estudio
+│   ├── pet.css             # Estética minimalista Apple, materiales translúcidos y animaciones
+│   ├── pet.js              # Máquina de estados, puente Go (mekaStartDrag/mekaSetDrawerExpanded) y WebSocket
+│   └── skins/
+│       ├── manifest.js     # Catálogo de avatares (todos desbloqueados desde el inicio)
+│       ├── dva_pixel/      # Pixel Art animado 64×64 (Hana · Pixel)
+│       ├── clawd_pixel/    # Pixel Art animado 64×64 (Clawd · Pixel)
+│       └── <personaje>/*.webp
+└── tools/
+    ├── pixelize.py         # Conversor de stickers/GIFs a Pixel Art 64×64 WebP animado
+    └── stickerize.py       # Recorte de fondo para stickers ilustrados
 ```
 
-- **Estados:** `idle`, `happy`, `working`, `thinking`, `sleeping`, `eating`, `error`, `celebrate`, `sad`. Cada uno tiene su movimiento, sus partículas y su duración en `pet.js` (`FX`).
-- **Tamagotchi:** energía, saciedad, ánimo y afecto evolucionan con el tiempo, también con la app cerrada (hasta 48 h). **Nunca baja de 5**: no muere ni castiga. Duerme sola si está agotada o es de madrugada y no le haces caso.
-- **Desbloqueos:** la Espadachina aparece con afecto 50 y la Kitsune con 70.
-- **Eventos:** acepta los eventos de MEKA Core descritos en [VISION.md](../docs/VISION.md#contrato-de-eventos). Desde la consola del navegador: `MEKA.emit({type: "agent.done", data: {summary: "¡Listo!"}})`.
+## Pruebas Automatizadas
 
-## Añadir un personaje
+```powershell
+# Pruebas del cliente de escritorio en Go:
+cd pet/desktop
+go test -v ./...
 
-1. Genera los stickers del personaje, idealmente uno por estado y con el mismo encuadre (ver la [guía de arte](../docs/VISION.md#guía-de-arte-para-los-personajes)).
-2. Quítales el fondo y conviértelos:
-   ```bash
-   pip install pillow numpy
-   python pet/tools/stickerize.py sticker.jpg pet/web/skins/mi_personaje/idle.webp
-   ```
-3. Añade el personaje a `web/skins/manifest.js`. Basta con tener `idle`: los estados sin arte pueden reutilizar ese sprite.
-4. Ejecuta `pytest tests/test_pet_skins.py`, que comprueba que no falten estados, frases ni archivos.
-
-> [!NOTE]
-> El modo "pixel art" del menú es un pixelado automático para comparar estilos. Un pixel art de verdad se dibuja a mano, por ejemplo con [Pixelorama](https://orama-interactive.itch.io/pixelorama) (gratis) o Aseprite.
+# Pruebas del catálogo de skins y sprites Pixel Art:
+.\venv\Scripts\python.exe -m pytest tests/test_pet_skins.py -v
+```

@@ -2266,7 +2266,7 @@
       "id": "T-061",
       "titulo": "Isla recogida: foco momentáneo en el hero al llegar una notificación o cambiar de canción",
       "responsable": "antigravity",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "alta",
       "descripcion": "Pedido por el usuario. Solo en modo isla (notch recogido): al llegar system.notification o al cambiar de canción (system.media con otro title/artist; isNewTrack en updateMedia) expandir unos segundos y mostrarlo en el panel hero, y volver a recoger. Si la isla ya está expandida o el usuario interactúa, no cambiar de vista. Hoy: onNotification expande a 'notifs' 5 s (pet.js ~1826) y el cambio de canción solo hace previewBrief('media') (~2260), sin expandir. No en pausa/reanudar ni en avance de posición; respetar focusActive. El backend no cambia: los eventos ya llevan todo.",
       "archivos": [
@@ -2280,15 +2280,21 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-15T17:36:38-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Implementado: al llegar system.notification o cambiar de cancion (isNewTrack) con isla recogida, sin modo foco y sin interaccion activa, la isla se despliega momentaneamente (5s) en vista hero mostrando el aviso/pista en #stageHero y #agentReplyDock antes de recogerse sola. Verificado con tests de contrato v1.12 y binario Go."
         }
       ],
-      "actualizada": "2026-11-15T17:00:03-06:00"
+      "actualizada": "2026-11-15T17:36:38-06:00"
     },
     {
       "id": "T-062",
       "titulo": "Isla: arreglos menores que vio Claude (doble POST /v1/focus, errores de fetch silenciados, aviso de formato)",
       "responsable": "antigravity",
-      "estado": "pendiente",
+      "estado": "hecha",
       "prioridad": "media",
       "descripcion": "1) Al activar concentración la isla envía POST /v1/focus dos veces seguidas y luego un DELETE /v1/focus que da 404 (log del Core, 14/11 21:03): ¿doble clic o doble envío? 2) Los fetch a /v1/system, /v1/system/notifications, etc. tienen catch vacío: registrar el error en consola para que un fallo (Core apagado, CORS) no pase desapercibido; hoy la isla queda vacía sin explicación. Ideal: indicar 'Core desconectado' en la isla. 3) Aviso: Claude ejecutó por error 'ruff format' sobre pet/tools/pixelize.py (solo estilo: comillas y saltos de línea, sin cambiar lógica); revísalo. Detalle en coordinacion/README.md (T-055, T-060).",
       "archivos": [
@@ -2302,9 +2308,77 @@
           "estado": "pendiente",
           "por": "claude",
           "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-15T17:36:38-06:00",
+          "estado": "hecha",
+          "por": "antigravity",
+          "nota": "Corregido: 1) startFocus/stopFocus/renewFocus/notification/media usan WS cuando core.connected=true y HTTP fetch solo como fallback offline + cooldown 350ms (elimina doble POST y 404 en DELETE /v1/focus); 2) errores de fetch se registran con console.warn y muestran 'Core desconectado' en la UI; 3) pixelize.py verificado con ruff format --check; 4) blur Liquid Glass optimizado a una sola capa backdrop-filter en .stage y sin getBoundingClientRect en el resorte 60fps. LISTO PARA COMMITEAR FRONTEND."
         }
       ],
-      "actualizada": "2026-11-15T17:12:04-06:00"
+      "actualizada": "2026-11-15T17:36:38-06:00"
+    },
+    {
+      "id": "T-063",
+      "titulo": "Integración: juntar los commits de la isla (Antigravity) con el backend",
+      "responsable": "claude",
+      "estado": "bloqueada",
+      "prioridad": "alta",
+      "descripcion": "Esperando a Antigravity: cuando sus commits de pet/ estén hechos, que deje una nota en esta tarea ('listo para integrar'). Antes de su commit puede correr: venv\\Scripts\\python -m pytest tests/test_pet_contract.py (comprueba que la isla y el núcleo hablan el mismo contrato). Capturas: a petición del usuario, Claude dejó 6 capturas con datos de demostración (sin datos personales) en docs/screenshots/ (área de Antigravity) y la sección Capturas del README que las enlaza; Antigravity puede incluirlas en su commit o dejar que las commitee Claude. Después Claude: suite completa, prueba en vivo de la isla con el Core y commit de lo que quede.",
+      "archivos": [
+        "README.md",
+        "tests/test_pet_contract.py"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-15T17:21:40-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-15T17:21:49-06:00",
+          "estado": "bloqueada",
+          "por": "claude",
+          "nota": "Esperando la nota 'listo para integrar' de Antigravity en esta tarea."
+        }
+      ],
+      "actualizada": "2026-11-15T17:21:49-06:00"
+    },
+    {
+      "id": "T-064",
+      "titulo": "Revisión del backend: 23 hallazgos confirmados y arreglados (privacidad, DNS rebinding, eventos desde hilos, WebSocket, fechas, Telegram)",
+      "responsable": "claude",
+      "estado": "hecha",
+      "prioridad": "alta",
+      "descripcion": "Revisión con 3 revisores + verificación adversarial (4 descartados). Arreglos: eventos de rutas def entregados con call_soon_threadsafe; WebSocket que no se cae por un mensaje y chat en segundo plano; señal remote (Telegram/MCP) sin tareas ni recuerdos privados en el prompt; Host comprobado sin token (DNS rebinding); fechas (12 de la noche, 'el 20 hacer', 29 de febrero, hora ya pasada); bandeja llena sin notificaciones falsas; carátula que se reintenta; avisos que esperan a que haya alguien conectado; quiet_hours desactivable; posponer reabre; Telegram que no muere y avisos solo del dueño.",
+      "archivos": [
+        "ai/**",
+        "core/**",
+        "server/**",
+        "channels/**",
+        "config.yml",
+        "tests/**"
+      ],
+      "depende_de": [],
+      "commits": [],
+      "historial": [
+        {
+          "fecha": "2026-11-15T17:46:56-06:00",
+          "estado": "pendiente",
+          "por": "claude",
+          "nota": "creada"
+        },
+        {
+          "fecha": "2026-11-15T17:47:03-06:00",
+          "estado": "hecha",
+          "por": "claude",
+          "nota": "496 tests (20 nuevos), lint limpio. En vivo: Host ajeno → 403, CORS de la mascota OK, task.changed llega con la respuesta HTTP (15 ms), Spotify detectado. Sin commitear."
+        }
+      ],
+      "actualizada": "2026-11-15T17:47:03-06:00"
     }
   ]
 }

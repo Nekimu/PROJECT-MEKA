@@ -2,19 +2,20 @@
 
 > ⚠️ **Archivo generado automáticamente.** No lo edites a mano: usa `python scripts/tareas.py` (ver [README](README.md)). Fuente: `tareas.json`.
 
-_Última actualización: 2026-11-15T17:12:04-06:00_
+_Última actualización: 2026-11-15T17:47:03-06:00_
 
 ## Resumen
 
 | Agente | Rol | ⬜ pendiente | 🔄 en_progreso | ⛔ bloqueada | 👀 en_revision | ✅ hecha | 🚫 descartada |
 |---|---|---|---|---|---|---|---|
-| **Claude Code** | Backend, IA, agente y canales | 4 | 0 | 0 | 0 | 29 | 1 |
-| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 2 | 0 | 0 | 0 | 26 | 0 |
+| **Claude Code** | Backend, IA, agente y canales | 4 | 0 | 1 | 0 | 30 | 1 |
+| **Antigravity (Gemini)** | Frontend, UI/UX y arte | 0 | 0 | 0 | 0 | 28 | 0 |
 
 ## Claude Code
 
 | ID | Estado | Prioridad | Tarea | Depende de | Actualizada |
 |---|---|---|---|---|---|
+| T-063 | ⛔ bloqueada | alta | Integración: juntar los commits de la isla (Antigravity) con el backend | — | 2026-11-15 17:21 |
 | T-042 | ⬜ pendiente | media | Aislamiento de las manos antes de activar la escritura: usuario restringido de Windows (NTFS) vs Docker/WSL2 | — | 2026-11-11 10:52 |
 | T-009 | ⬜ pendiente | baja | Configuración tipada y validada al arrancar (pydantic) | — | 2026-11-09 19:30 |
 | T-010 | ⬜ pendiente | baja | Presupuesto de API en la nube y evento budget.low | — | 2026-11-09 19:30 |
@@ -36,6 +37,7 @@ _Última actualización: 2026-11-15T17:12:04-06:00_
 | T-055 | ✅ hecha | alta | Isla sin Spotify ni notificaciones al arrancar: CORS para la mascota, primera lectura y estado inicial por WebSocket | — | 2026-11-14 20:35 |
 | T-056 | ✅ hecha | alta | Agenda y Hanna proactiva: tareas y recordatorios hablando, avisos a su hora y resumen no invasivo | — | 2026-11-14 20:35 |
 | T-058 | ✅ hecha | alta | Avisos de Hanna en Telegram cuando no estás al equipo (botones Hecho/Posponer, /tareas) | — | 2026-11-14 21:42 |
+| T-064 | ✅ hecha | alta | Revisión del backend: 23 hallazgos confirmados y arreglados (privacidad, DNS rebinding, eventos desde hilos, WebSocket, fechas, Telegram) | — | 2026-11-15 17:47 |
 | T-005 | ✅ hecha | media | Fase 3 · Manos (escritura): punto de restauración git + confirmación + deshacer | T-003, T-004 | 2026-11-11 12:00 |
 | T-006 | 🚫 descartada | media | Estado de la mascota en el núcleo: GET/PUT /v1/pet/state persistido en SQLite | — | 2026-11-11 11:59 |
 | T-007 | ✅ hecha | media | Contrato publicado y versionado: GET /v1/contract (eventos, emociones, versión) | — | 2026-11-11 10:07 |
@@ -54,8 +56,6 @@ _Última actualización: 2026-11-15T17:12:04-06:00_
 
 | ID | Estado | Prioridad | Tarea | Depende de | Actualizada |
 |---|---|---|---|---|---|
-| T-061 | ⬜ pendiente | alta | Isla recogida: foco momentáneo en el hero al llegar una notificación o cambiar de canción | — | 2026-11-15 17:00 |
-| T-062 | ⬜ pendiente | media | Isla: arreglos menores que vio Claude (doble POST /v1/focus, errores de fetch silenciados, aviso de formato) | — | 2026-11-15 17:12 |
 | T-013 | ✅ hecha | alta | Rediseño visual del escenario de la mascota y HUD Tamagotchi (glassmorphism, animaciones y menú contextual) | — | 2026-11-09 19:30 |
 | T-014 | ✅ hecha | alta | Dashboard de control y simulador en navegador (tema oscuro/claro, log de eventos, selector visual de skins y estado Core) | — | 2026-11-09 19:30 |
 | T-022 | ✅ hecha | alta | Integración de assets Pixel Art animados (Hana y Clawd), herramienta pixelize.py y GUI minimalista estilo Apple con ventana emergente | — | 2026-11-09 21:14 |
@@ -71,6 +71,7 @@ _Última actualización: 2026-11-15T17:12:04-06:00_
 | T-047 | ✅ hecha | alta | Pila de tarjetas tipo Brief en la isla con animaciones (música, batería, notificaciones, agentes, permisos, mensajes de MEKA) | — | 2026-11-11 13:11 |
 | T-049 | ✅ hecha | alta | Quitar las mecánicas de cuidado del prototipo: alimentar, energía, saciedad, ánimo, afecto y desbloqueos | — | 2026-11-11 12:31 |
 | T-057 | ✅ hecha | alta | Isla: agenda de Hanna (tarjeta de aviso con Hecho/Posponer, resumen proactivo, lista de tareas y botón ¿Qué tengo pendiente?) | T-056 | 2026-11-14 20:53 |
+| T-061 | ✅ hecha | alta | Isla recogida: foco momentáneo en el hero al llegar una notificación o cambiar de canción | — | 2026-11-15 17:36 |
 | T-011 | ✅ hecha | media | (Propuesta) UI de confirmación en la mascota para agent.confirm / user.confirm | T-003 | 2026-11-11 10:58 |
 | T-023 | ✅ hecha | media | Lint: RUF002 (signo × ambiguo) en pet/tools/pixelize.py rompe ruff check . del CI | — | 2026-11-09 21:39 |
 | T-024 | ✅ hecha | media | App de escritorio nativa en Python (ventana transparente sin bordes + Pixel Art + Drawer) | — | 2026-11-09 21:24 |
@@ -81,6 +82,7 @@ _Última actualización: 2026-11-15T17:12:04-06:00_
 | T-048 | ✅ hecha | media | Modo compañero al desplegar la isla: avatar flotante y chat con MEKA | — | 2026-11-11 12:31 |
 | T-051 | ✅ hecha | media | Modo concentración en la isla: botón empezar/terminar, cuenta atrás y tarjeta de resumen | — | 2026-11-14 20:02 |
 | T-059 | ✅ hecha | media | Settings en menú 3 puntos, reply dock inferior, Liquid Glass blur, carátulas media e integraciones Core | — | 2026-11-14 21:27 |
+| T-062 | ✅ hecha | media | Isla: arreglos menores que vio Claude (doble POST /v1/focus, errores de fetch silenciados, aviso de formato) | — | 2026-11-15 17:36 |
 | T-012 | ✅ hecha | baja | (Propuesta) Sincronizar el Tamagotchi con /v1/pet/state | T-006 | 2026-11-09 21:14 |
 
 ## Detalle
@@ -721,20 +723,40 @@ artwork y album en system.media (SMTC, solo al cambiar de canción) y GET /v1/sy
 
 ### T-061 · Isla recogida: foco momentáneo en el hero al llegar una notificación o cambiar de canción
 
-**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** alta
+**Responsable:** Antigravity (Gemini) · **Estado:** ✅ hecha · **Prioridad:** alta
 
 Pedido por el usuario. Solo en modo isla (notch recogido): al llegar system.notification o al cambiar de canción (system.media con otro title/artist; isNewTrack en updateMedia) expandir unos segundos y mostrarlo en el panel hero, y volver a recoger. Si la isla ya está expandida o el usuario interactúa, no cambiar de vista. Hoy: onNotification expande a 'notifs' 5 s (pet.js ~1826) y el cambio de canción solo hace previewBrief('media') (~2260), sin expandir. No en pausa/reanudar ni en avance de posición; respetar focusActive. El backend no cambia: los eventos ya llevan todo.
 
 **Archivos:** `pet/**`
 
-**Última nota (claude):** creada
+**Última nota (antigravity):** Implementado: al llegar system.notification o cambiar de cancion (isNewTrack) con isla recogida, sin modo foco y sin interaccion activa, la isla se despliega momentaneamente (5s) en vista hero mostrando el aviso/pista en #stageHero y #agentReplyDock antes de recogerse sola. Verificado con tests de contrato v1.12 y binario Go.
 
 ### T-062 · Isla: arreglos menores que vio Claude (doble POST /v1/focus, errores de fetch silenciados, aviso de formato)
 
-**Responsable:** Antigravity (Gemini) · **Estado:** ⬜ pendiente · **Prioridad:** media
+**Responsable:** Antigravity (Gemini) · **Estado:** ✅ hecha · **Prioridad:** media
 
 1) Al activar concentración la isla envía POST /v1/focus dos veces seguidas y luego un DELETE /v1/focus que da 404 (log del Core, 14/11 21:03): ¿doble clic o doble envío? 2) Los fetch a /v1/system, /v1/system/notifications, etc. tienen catch vacío: registrar el error en consola para que un fallo (Core apagado, CORS) no pase desapercibido; hoy la isla queda vacía sin explicación. Ideal: indicar 'Core desconectado' en la isla. 3) Aviso: Claude ejecutó por error 'ruff format' sobre pet/tools/pixelize.py (solo estilo: comillas y saltos de línea, sin cambiar lógica); revísalo. Detalle en coordinacion/README.md (T-055, T-060).
 
 **Archivos:** `pet/**`
 
-**Última nota (claude):** creada
+**Última nota (antigravity):** Corregido: 1) startFocus/stopFocus/renewFocus/notification/media usan WS cuando core.connected=true y HTTP fetch solo como fallback offline + cooldown 350ms (elimina doble POST y 404 en DELETE /v1/focus); 2) errores de fetch se registran con console.warn y muestran 'Core desconectado' en la UI; 3) pixelize.py verificado con ruff format --check; 4) blur Liquid Glass optimizado a una sola capa backdrop-filter en .stage y sin getBoundingClientRect en el resorte 60fps. LISTO PARA COMMITEAR FRONTEND.
+
+### T-063 · Integración: juntar los commits de la isla (Antigravity) con el backend
+
+**Responsable:** Claude Code · **Estado:** ⛔ bloqueada · **Prioridad:** alta
+
+Esperando a Antigravity: cuando sus commits de pet/ estén hechos, que deje una nota en esta tarea ('listo para integrar'). Antes de su commit puede correr: venv\Scripts\python -m pytest tests/test_pet_contract.py (comprueba que la isla y el núcleo hablan el mismo contrato). Capturas: a petición del usuario, Claude dejó 6 capturas con datos de demostración (sin datos personales) en docs/screenshots/ (área de Antigravity) y la sección Capturas del README que las enlaza; Antigravity puede incluirlas en su commit o dejar que las commitee Claude. Después Claude: suite completa, prueba en vivo de la isla con el Core y commit de lo que quede.
+
+**Archivos:** `README.md`, `tests/test_pet_contract.py`
+
+**Última nota (claude):** Esperando la nota 'listo para integrar' de Antigravity en esta tarea.
+
+### T-064 · Revisión del backend: 23 hallazgos confirmados y arreglados (privacidad, DNS rebinding, eventos desde hilos, WebSocket, fechas, Telegram)
+
+**Responsable:** Claude Code · **Estado:** ✅ hecha · **Prioridad:** alta
+
+Revisión con 3 revisores + verificación adversarial (4 descartados). Arreglos: eventos de rutas def entregados con call_soon_threadsafe; WebSocket que no se cae por un mensaje y chat en segundo plano; señal remote (Telegram/MCP) sin tareas ni recuerdos privados en el prompt; Host comprobado sin token (DNS rebinding); fechas (12 de la noche, 'el 20 hacer', 29 de febrero, hora ya pasada); bandeja llena sin notificaciones falsas; carátula que se reintenta; avisos que esperan a que haya alguien conectado; quiet_hours desactivable; posponer reabre; Telegram que no muere y avisos solo del dueño.
+
+**Archivos:** `ai/**`, `core/**`, `server/**`, `channels/**`, `config.yml`, `tests/**`
+
+**Última nota (claude):** 496 tests (20 nuevos), lint limpio. En vivo: Host ajeno → 403, CORS de la mascota OK, task.changed llega con la respuesta HTTP (15 ms), Spotify detectado. Sin commitear.
