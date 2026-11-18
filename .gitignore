@@ -62,7 +62,8 @@ pet/desktop/frontend/dist/
 .postman/
 /postman/
 
-# Tablero de coordinación: bloqueo y escritura temporal de scripts/tareas.py
+# Tablero de coordinación: carpeta local, bloqueo y escritura temporal de scripts/tareas.py
+coordinacion/
 coordinacion/.tareas.lock
 coordinacion/*.tmp
 
