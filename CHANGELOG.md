@@ -8,6 +8,12 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 - El Tamagotchi pasa a ser solo **inspiración para interactuar y conversar** con el asistente. Sin mecánicas de cuidado (alimentar, energía, saciedad, ánimo, afecto, desbloqueos): MEKA ayuda, no distrae. `docs/VISION.md` actualizado.
 - **Modo concentración** (`core/focus.py`, `/v1/focus`): durante un bloque de trabajo el núcleo retiene notificaciones, música y avisos de agentes, deja pasar permisos, errores, apps importantes y la batería crítica, y al terminar envía un resumen de lo que esperó (`focus.started` / `focus.ended`, contrato 1.9).
 
+### Seguridad y fiabilidad (revisión del backend)
+- Telegram y MCP ya no reciben datos privados en las respuestas aunque el cerebro sea local; sin token, el núcleo rechaza peticiones con un `Host` ajeno (*DNS rebinding*).
+- Las acciones hechas por la API (botón «Hecho» de Telegram, permisos) llegan a la isla al instante; el WebSocket de la isla no se cae por un mensaje que falla, y Telegram se recupera solo.
+- Fechas (*«a las 12 de la noche»*, *«el 20 hay que…»*, 29 de febrero), notificaciones con la bandeja llena, carátulas que llegan tarde y avisos al arrancar.
+- `scripts\iniciar_meka.cmd` y `tests/test_pet_contract.py` (la isla y el núcleo hablan el mismo contrato).
+
 ### Agenda y Hanna proactiva
 - **Carátulas**: `system.media` trae `album` y `artwork` (URL de la imagen que el reproductor entrega a Windows, p. ej. Spotify); se lee solo al cambiar de canción (~40 ms) y se sirve en `GET /v1/system/media/artwork`. Contrato 1.12.
 - **«Mientras no estabas…»**: al volver tras `welcome_minutes` sin tocar el equipo, Hanna te resume los avisos que sonaron, lo vencido y cuántas notificaciones llegaron (`nudge` con `kind: welcome`, solo en la isla).

@@ -560,15 +560,17 @@ Pruebas de la API real con Postman (con MEKA Core en marcha): ver [`tests/postma
 
 ¿Quieres contribuir? Lee [CONTRIBUTING.md](CONTRIBUTING.md) y abre un [issue](https://github.com/Nekimu/PROJECT-MEKA/issues/new/choose). Los cambios de cada versión están en el [CHANGELOG](CHANGELOG.md).
 
-<!--
 ## 📸 Capturas
 
-Guarda las capturas en docs/screenshots/ (chat.png, voz.png, multimodal.png) y elimina este comentario:
+La Dynamic Island en Windows (ventana de 380×480, datos de demostración):
 
-| Conversación | Nota de voz | Análisis multimodal |
+| Recogida | Con música | Hana |
 |:---:|:---:|:---:|
-| ![Chat](docs/screenshots/chat.png) | ![Voz](docs/screenshots/voz.png) | ![Multimodal](docs/screenshots/multimodal.png) |
--->
+| ![Isla recogida](docs/screenshots/isla-recogida.jpg) | ![Isla con música](docs/screenshots/isla-musica.jpg) | ![Hana en el hero](docs/screenshots/hero.jpg) |
+
+| Música con carátula | Notificaciones y tareas | Aviso de Hanna |
+|:---:|:---:|:---:|
+| ![Tarjeta de música](docs/screenshots/tarjeta-musica.jpg) | ![Notificaciones](docs/screenshots/notificaciones.jpg) | ![Aviso proactivo](docs/screenshots/aviso-proactivo.jpg) |
 
 ## 📄 Licencia y créditos
 
