@@ -21,6 +21,12 @@ def run(coro):
 
 # ---------------------------------------------------------------------- detector
 
+# Credenciales FALSAS armadas al vuelo: así ningún escáner de secretos (GitGuardian)
+# las confunde con reales, y el detector sigue viendo el texto completo.
+FAKE_JWT = ".".join(["eyJhbGciOiJIUzI1NiJ9", "eyJzdWIiOiJwcnVlYmEifQ", "x" * 43])
+FAKE_ANTHROPIC_KEY = "sk-ant-" + "api03-" + "a" * 24
+FAKE_AWS_KEY = "AKIA" + "EXAMPLE0" * 2
+
 
 @pytest.mark.parametrize(
     "text",
@@ -28,11 +34,11 @@ def run(coro):
         "mi contraseña es Gato.2026",
         "el password: hunter2!",
         "Mi NIP es 4821",
-        "usa esta key sk-ant-api03-abcdefghijklmnopqrstuvwx",
-        "AKIAABCDEFGHIJKLMNOP es la de AWS",
+        f"usa esta key {FAKE_ANTHROPIC_KEY}",
+        f"{FAKE_AWS_KEY} es la de AWS",
         "mi tarjeta 4111 1111 1111 1111 vence en 2028",
         "CURP: GOMA800101HDFRRN09",
-        "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+        FAKE_JWT,
         "-----BEGIN OPENSSH PRIVATE KEY-----",
     ],
 )

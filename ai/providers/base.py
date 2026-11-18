@@ -51,17 +51,30 @@ class Provider(Protocol):
     def unload(self) -> None: ...
 
 
+# El tipo que adivina `mimetypes` depende del sistema (en Linux .wav es audio/x-wav);
+# las APIs esperan los nombres estándar
+CANONICAL_MIME = {
+    "audio/x-wav": "audio/wav",
+    "audio/vnd.wave": "audio/wav",
+    "audio/x-flac": "audio/flac",
+}
+
+
+def guess_mime(path: Path, default: str) -> str:
+    mime = mimetypes.guess_type(path.name)[0] or default
+    return CANONICAL_MIME.get(mime, mime)
+
+
 def image_bytes(path: str | Path) -> tuple[bytes, str]:
     """Lee una imagen y adivina su tipo MIME (las APIs en la nube lo piden)."""
     path = Path(path)
-    mime = mimetypes.guess_type(path.name)[0] or "image/jpeg"
-    return path.read_bytes(), mime
+    return path.read_bytes(), guess_mime(path, "image/jpeg")
 
 
 def file_bytes(path: str | Path, default_mime: str) -> tuple[bytes, str]:
     """Audio o documento con su tipo MIME."""
     path = Path(path)
-    return path.read_bytes(), mimetypes.guess_type(path.name)[0] or default_mime
+    return path.read_bytes(), guess_mime(path, default_mime)
 
 
 def build_provider(name: str, config: dict) -> Provider:
