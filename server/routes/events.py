@@ -57,6 +57,18 @@ class ClientSession:
         self.local_user: str = websocket.app.state.local_user
         self.name = "cliente"
         self.counted = False
+        self.queue: asyncio.Queue | None = None
+
+    def send(self, message: dict):
+        """Mensaje solo para este cliente, por la misma cola que los eventos del bus.
+
+        Así conserva el orden (el "thinking" de la mascota llega antes que la respuesta,
+        no después) y un solo emisor escribe en el socket.
+        """
+        if self.queue.full():
+            with contextlib.suppress(asyncio.QueueEmpty):
+                self.queue.get_nowait()
+        self.queue.put_nowait(message)
 
     async def handle(self, type_: str, data: dict):
         if type_ == "client.hello":
@@ -78,9 +90,7 @@ class ClientSession:
             focused = self.engine.focus.active
             if not self.engine.broadcast or focused:
                 text = " ".join(r.text for r in replies)
-                await self.websocket.send_json(
-                    {"type": "message", "data": {"text": text, "emotion": "happy"}}
-                )
+                self.send(event("message", text=text, emotion="happy"))
                 if focused and self.engine.broadcast:
                     self.engine.focus.delivered("message")  # La respuesta sí te llegó
         elif type_ == "user.focus":
@@ -128,7 +138,7 @@ class ClientSession:
             logger.exception(f"Fallo atendiendo {type_} de {self.name}; la conexión sigue")
 
     async def run(self):
-        queue = self.engine.bus.subscribe()
+        queue = self.queue = self.engine.bus.subscribe()
         sender: asyncio.Task | None = None
         chats: set[asyncio.Task] = set()  # Respuestas en curso (pueden tardar minutos)
         try:
