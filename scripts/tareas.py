@@ -120,6 +120,13 @@ def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     args = _parser().parse_args(argv)
+    if not datos.RUTAS.data.exists():
+        # El tablero es local (coordinacion/ está en .gitignore): en un clon sin él, los hooks
+        # de git y de los agentes no deben bloquear nada
+        if args.cmd in ("hook-pretooluse", "hook-session", "check-commit", "sync"):
+            return 0
+        print(f"No hay tablero en {datos.RUTAS.data}", file=sys.stderr)
+        return 1
     if args.cmd in ("hook-pretooluse", "hook-session", "propietario", "check-commit", "lista"):
         return _read_only(args, datos.load())
     with datos.locked():

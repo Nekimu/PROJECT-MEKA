@@ -13,6 +13,8 @@ from scripts import tareas
 datos, gitsync, hooks = tareas.datos, tareas.gitsync, tareas.hooks
 
 REAL_DATA = Path(__file__).resolve().parent.parent / "coordinacion" / "tareas.json"
+# El tablero es local (coordinacion/ está en .gitignore): en un clon o en CI no existe
+pytestmark = pytest.mark.skipif(not REAL_DATA.exists(), reason="sin tablero local (coordinacion/)")
 
 
 @pytest.fixture
