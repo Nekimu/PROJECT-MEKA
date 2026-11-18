@@ -14,6 +14,10 @@ class ChatRequest(BaseModel):
     audio: bool = Field(True, description="Sintetizar las frases marcadas con [AUDIO]")
     use_memory: bool = True
     private: bool = Field(False, description="Solo proveedores locales: nada sale del equipo")
+    remote: bool = Field(
+        False,
+        description="La respuesta sale del equipo (Telegram, MCP): sin tareas ni recuerdos privados",
+    )
 
 
 class SpeechRequest(BaseModel):

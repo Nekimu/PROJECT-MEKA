@@ -176,6 +176,7 @@ class AIService(MultimodalMixin):
         task: str = "chat",
         private: bool = False,
         extra_context: str = "",
+        remote: bool = False,
     ) -> Answer:
         """Genera una respuesta dividida en varios mensajes, con su resultado.
         `extra_context`: datos reales que el cerebro debe conocer (la agenda, core/tasks/)."""
@@ -184,7 +185,11 @@ class AIService(MultimodalMixin):
         private = self._privacy(chat_id, user_text, requested)
         context = (
             await self.recaller.context(
-                user_id, user_text, private=private, local=self._stays_local(task, private)
+                user_id,
+                user_text,
+                private=private,
+                # `remote`: la respuesta sale del equipo; los recuerdos privados no entran
+                local=self._stays_local(task, private) and not remote,
             )
             if use_memory
             else ""

@@ -237,3 +237,83 @@ def test_me_is_the_owner(tmp_path):
             client.post(f"/v1/users/me/tasks/{task_id}", json={"action": "done"}).status_code == 200
         )
         assert engine.tasks.store.get(task_id).user_id == "12345"
+
+
+# ---------------------------------------------------------------------- casos límite (revisión)
+
+
+def test_twelve_at_night_is_midnight_not_noon():
+    morning = datetime(2026, 11, 15, 10, 0).astimezone()
+    result = parse_when(numbers_as_digits("tomar la pastilla a las 12 de la noche"), morning)
+    assert result.due.strftime("%d/%m %H:%M") == "15/11 23:59"
+
+
+def test_day_followed_by_a_word_starting_with_h():
+    for text in ("para el 20 hacer la declaración", "el 20 hay que pagar"):
+        assert at(when(text)) == "20/11 23:59", text
+
+
+def test_february_29_after_it_passed_goes_to_the_next_leap_year():
+    leap_march = datetime(2028, 3, 10, 9, 0).astimezone()
+    result = parse_when("el 29 de febrero", leap_march)
+    assert result.due.strftime("%d/%m/%Y") == "29/02/2032"
+
+
+def test_times_that_already_passed_today():
+    late = datetime(2026, 11, 14, 22, 30).astimezone()
+    tonight = parse_when("sacar la basura esta noche", late)
+    assert tonight.due.strftime("%H:%M") == "23:00" and tonight.remind == tonight.due
+    past = parse_when("hoy a las 9", late)
+    assert past.due.strftime("%d/%m %H:%M") == "14/11 09:00" and past.remind is None
+
+
+def test_replies_that_leave_the_computer_never_carry_private_data(tmp_path):
+    """Telegram y MCP envían `remote`: ni tareas ni recuerdos privados, aunque el cerebro sea local."""
+    engine = make_engine(tmp_path)
+    brain = FakeProvider("ollama", "ok", "ok", "ok", local=True)
+    engine.ai.providers["ollama"] = brain
+    engine.tasks.add("u", "renovar el pasaporte", private=True)
+    engine.memory.add_fact("u", "mi pin del banco es 4321", private=True)
+
+    replies = asyncio.run(engine.chat("telegram:1", "u", "mis pendientes", remote=True))
+    assert "pasaporte" not in " ".join(r.text for r in replies)
+    assert "pasaporte" not in brain.calls[-1]["system"]
+
+    asyncio.run(engine.chat("telegram:1", "u", "¿recuerdas mi pin del banco?", remote=True))
+    assert "4321" not in brain.calls[-1]["system"]
+
+    # En el equipo (la isla) sí, porque el cerebro es local
+    asyncio.run(engine.chat("ws:pet", "u", "¿recuerdas mi pin del banco?"))
+    assert "4321" in brain.calls[-1]["system"]
+
+
+def test_a_private_task_created_remotely_is_still_private(tmp_path):
+    engine = make_engine(tmp_path)
+    engine.ai.providers["ollama"] = FakeProvider("ollama", "ok", local=True)
+    asyncio.run(
+        engine.chat(
+            "telegram:1", "u", "recuérdame pagar la tarjeta mañana", private=True, remote=True
+        )
+    )
+    (task,) = engine.tasks.store.list("u")
+    assert task.private is True
+
+
+def test_channels_always_mark_their_replies_as_remote():
+    import json
+
+    import httpx
+
+    from channels.client import CoreClient
+
+    sent = []
+
+    def handler(request):
+        sent.append(request.content)
+        return httpx.Response(200, json={"replies": [], "transcription": None})
+
+    client = CoreClient("http://core", transport=httpx.MockTransport(handler))
+    asyncio.run(client.chat("telegram:1", "u", "hola"))
+    asyncio.run(client.voice("telegram:1", "u", b"OggS"))
+    assert json.loads(sent[0])["remote"] is True
+    assert b'name="remote"\r\n\r\ntrue' in sent[1]

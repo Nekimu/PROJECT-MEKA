@@ -173,3 +173,54 @@ def test_harmless_windows_disconnects_are_silenced():
     assert logged == []
     run._quiet_disconnects(loop, {"exception": ValueError("de verdad")})
     assert len(logged) == 1  # Los demás errores se siguen viendo
+
+
+# ---------------------------------------------------------------------- casos límite (revisión)
+
+
+def test_a_telegram_error_does_not_stop_the_listener():
+    from telegram.error import NetworkError
+
+    from channels.telegram.alerts import _send
+
+    class Bot:
+        def __init__(self):
+            self.calls = 0
+
+        async def send_message(self, chat_id, text, reply_markup=None):
+            self.calls += 1
+            raise NetworkError("sin red")
+
+    bot = Bot()
+    run(_send(bot, 1, "⏰ x", None))  # No lanza: el bucle de avisos sigue vivo
+    assert bot.calls == 1
+
+
+def test_only_the_owners_reminders_go_to_the_phone(tmp_path):
+    watcher, tasks, events = proactive(tmp_path, at_desk=False)
+    mine = tasks.store.add("u", "lo mío", due_at=MORNING + 600, remind_at=MORNING - 60)
+    other = tasks.store.add(
+        "otra", "lo de otra persona", due_at=MORNING + 600, remind_at=MORNING - 60
+    )
+    watcher.tick(MORNING)
+    sent = [events.get_nowait() for _ in range(events.qsize())]
+    remote = {m["data"]["id"]: m["data"]["remote"] for m in sent if m["type"] == "reminder.due"}
+    assert remote == {mine.id: True, other.id: False}
+
+
+def test_telegram_restarts_after_a_failure(monkeypatch):
+    from channels.telegram import app
+
+    attempts = []
+
+    async def failing(*args):
+        attempts.append(1)
+        if len(attempts) < 3:
+            raise RuntimeError("Telegram no responde")
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(app, "_serve_telegram", failing)
+    config = {"telegram": {"token": "123456:" + "A" * 35}}
+    with pytest.raises(asyncio.CancelledError):
+        run(app.run_telegram(config, retry=0.01))
+    assert len(attempts) == 3

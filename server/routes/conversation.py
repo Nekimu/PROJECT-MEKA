@@ -20,6 +20,7 @@ async def chat(body: ChatRequest, request: Request):
         audio=body.audio,
         use_memory=body.use_memory,
         private=body.private,
+        remote=body.remote,
     )
     return {"replies": [r.to_dict() for r in replies]}
 
@@ -32,12 +33,13 @@ async def voice(
     user: str = Form(...),
     audio: bool = Form(True),
     private: bool = Form(False),
+    remote: bool = Form(False),
 ):
     """Nota de voz → transcripción (Whisper) → respuesta."""
     path = await save_upload(file, request)
     try:
         transcription, replies = await get_engine(request).voice(
-            session, user, path, audio=audio, private=private
+            session, user, path, audio=audio, private=private, remote=remote
         )
     finally:
         path.unlink(missing_ok=True)

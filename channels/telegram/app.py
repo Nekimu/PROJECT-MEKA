@@ -128,14 +128,32 @@ def _start_alerts(application: Application, core: CoreClient, telegram_config: d
     return asyncio.create_task(forward_alerts(application.bot, core, int(owners[0])))
 
 
-async def run_telegram(config: dict):
-    """Conecta con MEKA Core y atiende Telegram hasta que se cancele la tarea."""
+async def run_telegram(config: dict, *, retry: float = 10.0):
+    """Conecta con MEKA Core y atiende Telegram hasta que se cancele la tarea. Si algo falla
+    (sin red al arrancar, el núcleo tardó, Telegram caído), se reintenta en vez de morir."""
     telegram_config = config.get("telegram", {})
     token = telegram_config.get("token")
     if not is_valid_token(token):
         logger.critical("Token de Telegram no configurado: añade TELEGRAM_TOKEN en .env")
         return
+    delay = retry
+    while True:
+        started = asyncio.get_running_loop().time()
+        try:
+            await _serve_telegram(config, token, telegram_config)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.error(
+                f"Telegram se detuvo ({type(e).__name__}: {e}); reintento en {delay:.0f} s"
+            )
+        if asyncio.get_running_loop().time() - started > 300:
+            delay = retry  # Funcionó un buen rato: el fallo es nuevo
+        await asyncio.sleep(delay)
+        delay = min(delay * 2, 300)
 
+
+async def _serve_telegram(config: dict, token: str, telegram_config: dict):
     core = CoreClient.from_config(config)
     try:
         persona = await core.wait_ready()

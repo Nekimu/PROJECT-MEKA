@@ -22,6 +22,7 @@ class InboxMixin:
         self.max_notifications = int(cfg.get("max_items", 20))
         self.intervals["notifications"] = float(cfg.get("interval", 3))
         self._inbox: dict[int, dict] | None = None  # id → notificación (con su aumid)
+        self._seen: set[int] = set()  # Todas las visibles en Windows, también las recortadas
 
     def notifications(self) -> list[dict]:
         """Las notificaciones visibles ahora, de la más reciente a la más antigua."""
@@ -37,13 +38,16 @@ class InboxMixin:
         ]  # fmt: skip
         visible.sort(key=lambda n: -n["time"])
         current = {n["id"]: n for n in visible[: self.max_notifications]}
+        everything = {n["id"] for n in visible}
         first_read = self._inbox is None
-        previous = self._inbox or {}
-        self._inbox = current
+        previous, seen = self._inbox or {}, self._seen
+        self._inbox, self._seen = current, everything
         if first_read:
             return [], []
-        added = [i for i in current if i not in previous]
-        removed = [i for i in previous if i not in current]
+        # Nueva = no estaba en Windows antes (no una antigua que entra al quitar otra del tope);
+        # quitada = ya no está en Windows (no la que sale del tope al llegar una nueva)
+        added = [i for i in current if i not in seen]
+        removed = [i for i in previous if i not in everything]
         for notification_id in sorted(added, key=lambda i: current[i]["time"]):
             data = present(current[notification_id], hide_codes=self.hide_codes)
             self.bus.publish(

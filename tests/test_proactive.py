@@ -246,3 +246,32 @@ def test_digest_does_not_repeat_what_was_just_reminded(tmp_path):
     assert result["reminded"] == 1 and result["nudge"] is None  # Un solo mensaje, no dos
     tasks.store.mark_reminded(1, MORNING - 7200)  # Avisada hace horas: el resumen la recuerda
     assert proactive.tick(MORNING + 60)["nudge"] is not None
+
+
+# ---------------------------------------------------------------------- casos límite (revisión)
+
+
+def test_reminders_wait_until_someone_listens(tmp_path):
+    proactive, tasks, events = setup(tmp_path)
+    task = tasks.store.add("u", "pagar la luz", due_at=MORNING + 600, remind_at=MORNING - 60)
+    proactive.bus.unsubscribe(events)  # Recién arrancado: nadie conectado
+    assert proactive.tick(MORNING)["reminded"] == 0
+    assert tasks.store.get(task.id).reminded_at is None  # No se pierde
+    proactive.bus.subscribe()  # Se conecta la isla
+    assert proactive.tick(MORNING + 60)["reminded"] == 1
+
+
+def test_quiet_hours_can_be_turned_off(tmp_path):
+    for value in ([], None):
+        proactive, _, _ = setup(tmp_path / str(value), quiet_hours=value)
+        assert proactive.quiet is None
+    default, _, _ = setup(tmp_path / "default")
+    assert default.quiet is not None
+
+
+def test_snoozing_a_done_task_brings_it_back(tmp_path):
+    _, tasks, _ = setup(tmp_path)
+    task = tasks.add("u", "llamar al banco", due_at=MORNING)
+    tasks.complete(task.id)
+    snoozed = tasks.act(task.id, "snooze", minutes=10)
+    assert snoozed.status == "pending" and snoozed.reminded_at is None

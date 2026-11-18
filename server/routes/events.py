@@ -118,35 +118,59 @@ class ClientSession:
         else:
             logger.debug(f"Mensaje de cliente sin manejar: {type_}")
 
+    async def _safe(self, type_: str, data: dict):
+        """Un mensaje que falla (WinRT, SQLite, datos raros) no debe cerrar la conexión."""
+        try:
+            await self.handle(type_, data)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception(f"Fallo atendiendo {type_} de {self.name}; la conexión sigue")
+
     async def run(self):
         queue = self.engine.bus.subscribe()
-        if not self.engine.focus.active:  # En concentración la isla no se llena de golpe
-            for type_, data in self.engine.system.initial_events():
-                await self.websocket.send_json(event(type_, **data))
-
-        async def pump():
-            while True:
-                await self.websocket.send_json(await queue.get())
-
-        sender = asyncio.create_task(pump())
+        sender: asyncio.Task | None = None
+        chats: set[asyncio.Task] = set()  # Respuestas en curso (pueden tardar minutos)
         try:
+            if not self.engine.focus.active:  # En concentración la isla no se llena de golpe
+                for type_, data in self.engine.system.initial_events():
+                    await self.websocket.send_json(event(type_, **data))
+
+            async def pump():
+                while True:
+                    await self.websocket.send_json(await queue.get())
+
+            sender = asyncio.create_task(pump())
             while True:
                 try:
                     message = json.loads(await self.websocket.receive_text())
                     type_, data = message["type"], message.get("data") or {}
-                except (ValueError, KeyError, TypeError):
+                    if not isinstance(type_, str) or not isinstance(data, dict):
+                        raise TypeError("type debe ser texto y data un objeto")
+                except (ValueError, KeyError, TypeError, AttributeError):
                     logger.warning("Mensaje WebSocket no válido; se ignora")
                     continue
-                await self.handle(type_, data)
+                if type_ == "user.message":
+                    # En segundo plano: mientras el cerebro piensa, la isla puede seguir
+                    # respondiendo permisos (user.confirm) o pausando la música
+                    chat = asyncio.create_task(self._safe(type_, data))
+                    chats.add(chat)
+                    chat.add_done_callback(chats.discard)
+                else:
+                    await self._safe(type_, data)
         except WebSocketDisconnect:
             pass
         finally:
             self.engine.bus.unsubscribe(queue)
             if self.counted:
                 self.engine.clients[self.name] -= 1
-            sender.cancel()
-            with contextlib.suppress(asyncio.CancelledError, Exception):
-                await sender
+            for task in [sender, *chats]:
+                if task is not None:
+                    task.cancel()
+            for task in [sender, *chats]:
+                if task is not None:
+                    with contextlib.suppress(asyncio.CancelledError, Exception):
+                        await task
             logger.info(f"Cliente desconectado: {self.name}")
 
 

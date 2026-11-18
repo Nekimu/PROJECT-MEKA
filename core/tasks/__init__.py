@@ -90,9 +90,14 @@ class TaskService:
 
     # ------------------------------------------------------------------ desde el chat
 
-    def handle(self, user, text: str, *, private: bool, local: bool) -> Agenda:
+    def handle(
+        self, user, text: str, *, private: bool, local: bool, remote: bool = False
+    ) -> Agenda:
         """Crea, completa o lista tareas según lo que se dijo. `local`: el cerebro que leerá el
         contexto es local (solo entonces puede ver las tareas privadas)."""
+        # Lo privado se muestra si lo lee un cerebro local o la charla es privada, pero nunca si
+        # la respuesta sale del equipo (`remote`: Telegram, MCP). Crear sigue respetando `private`.
+        show_private = (local or private) and not remote
         agenda = Agenda()
         if not self.enabled:
             return agenda
@@ -106,7 +111,7 @@ class TaskService:
             agenda.replies.append(self.line("task_added", title=task.title, when=self._when(task)))
             notes.append(f"Se acaba de apuntar «{task.title}»{self._when(task)}.")
         if request.done:
-            pending = self.store.list(user, include_private=local or private)
+            pending = self.store.list(user, include_private=show_private)
             task_id = best_match(request.done, {t.id: t.title for t in pending})
             if task_id is None:
                 agenda.replies.append(self.line("task_done_unknown"))
@@ -115,7 +120,7 @@ class TaskService:
                 agenda.replies.append(self.line("task_done", title=task.title))
                 notes.append(f"Se marcó como hecha «{task.title}».")
         if request.show:
-            pending = self.store.list(user, include_private=local or private)
+            pending = self.store.list(user, include_private=show_private)
             agenda.replies.append(self.summary(pending, now))
             notes.append(
                 "Agenda real del usuario (no inventes otras tareas): "
@@ -182,6 +187,8 @@ class TaskService:
             task = self.store.set_status(task_id, "pending")
         elif action == "snooze":
             minutes = max(1, min(int(minutes or 10), 7 * 24 * 60))
+            if task.status == "done":  # Posponer una hecha = «recuérdamela otra vez»
+                self.store.set_status(task_id, "pending")
             task = self.store.snooze(task_id, time.time() + minutes * 60)
         else:
             self.store.delete(task_id)

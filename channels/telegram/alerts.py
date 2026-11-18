@@ -15,6 +15,7 @@ import json
 
 import websockets
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.error import RetryAfter, TelegramError
 from telegram.ext import ContextTypes
 
 from channels.client import CoreClient, CoreRequestError, CoreUnavailableError
@@ -58,15 +59,30 @@ async def forward_alerts(bot, core: CoreClient, owner: int, *, retry: float = 5.
                     with contextlib.suppress(ValueError, KeyError, TypeError):
                         alert = to_phone(json.loads(raw))
                         if alert is not None:
-                            text, buttons = alert
-                            await bot.send_message(owner, text, reply_markup=buttons)
-                            logger.info("Aviso enviado a Telegram")
+                            await _send(bot, owner, *alert)
         except asyncio.CancelledError:
             raise
         except Exception as e:  # Núcleo reiniciándose, red caída...
             logger.warning(f"Avisos desconectados ({type(e).__name__}); reintento en {delay:.0f} s")
         await asyncio.sleep(delay)
         delay = min(delay * 2, 60)
+
+
+async def _send(bot, owner: int, text: str, buttons):
+    """Un fallo de Telegram con un aviso no corta la escucha (se perderían los siguientes)."""
+    for attempt in range(2):
+        try:
+            await bot.send_message(owner, text, reply_markup=buttons)
+            logger.info("Aviso enviado a Telegram")
+            return
+        except RetryAfter as e:  # Demasiados mensajes seguidos: Telegram dice cuánto esperar
+            if attempt:
+                break
+            await asyncio.sleep(min(float(getattr(e, "retry_after", 5) or 5), 60))
+        except TelegramError as e:
+            logger.warning(f"No se pudo enviar un aviso a Telegram: {e}")
+            return
+    logger.warning("No se pudo enviar un aviso a Telegram tras reintentarlo")
 
 
 # ---------------------------------------------------------------------- manejadores

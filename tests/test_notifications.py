@@ -176,3 +176,18 @@ def test_api_and_websocket(tmp_path):
         removed = ws.receive_json()
     assert removed == {"type": "system.notification_removed", "data": {"id": 7}}
     assert source.opened == ["WhatsApp.App"] and source.dismissed == [7]
+
+
+def test_full_tray_does_not_invent_new_or_removed_notifications():
+    # Tope de 2: hay 3 en Windows; la más antigua (1) no se muestra
+    monitor, source, events = make_inbox(
+        note(1, time=10.0), note(2, time=20.0), note(3, time=30.0), max_items=2
+    )
+    asyncio.run(monitor.refresh_notifications())
+    drain(events)
+    source.items = [i for i in source.items if i["id"] != 3]  # Descartas la más reciente
+    added, removed = asyncio.run(monitor.refresh_notifications())
+    assert added == [] and removed == [3]  # La 1 entra a la vista, pero no es «nueva»
+    source.items.append(note(4, time=40.0))  # Llega una nueva con la bandeja llena
+    added, removed = asyncio.run(monitor.refresh_notifications())
+    assert added == [4] and removed == []  # La 1 sale de la vista, pero sigue en Windows

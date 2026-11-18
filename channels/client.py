@@ -92,7 +92,8 @@ class CoreClient:
     # ------------------------------------------------------------------ conversación
 
     async def chat(self, session: str, user: str, text: str, **options) -> list[dict]:
-        body = {"session": session, "user": user, "text": text, **options}
+        # Los canales llevan la respuesta fuera del equipo: nada privado en el prompt
+        body = {"session": session, "user": user, "text": text, "remote": True, **options}
         return (await self._json("POST", "/v1/chat", json=body))["replies"]
 
     async def voice(
@@ -101,7 +102,12 @@ class CoreClient:
         data = await self._json(
             "POST",
             "/v1/voice",
-            data={"session": session, "user": user, "audio": str(audio_reply).lower()},
+            data={
+                "session": session,
+                "user": user,
+                "audio": str(audio_reply).lower(),
+                "remote": "true",
+            },
             files={"file": (filename, audio)},
         )
         return data["transcription"], data["replies"]

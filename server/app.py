@@ -67,7 +67,12 @@ def create_app(
     app.state.max_upload = int(server.get("max_upload_mb", 20)) * 1024 * 1024
     app.state.local_user = default_user(config)
 
-    add_browser_access(app, server.get("allowed_origins") or [])
+    add_browser_access(
+        app,
+        server.get("allowed_origins") or [],
+        check_host=not token,  # Sin token, solo escucha en este equipo: Host local o nada
+        extra_hosts=server.get("allowed_hosts") or [],
+    )
     for router in ROUTERS:
         app.include_router(router)
     return app

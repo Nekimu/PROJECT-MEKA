@@ -13,6 +13,7 @@ server:
   url: ""                    # Cómo lo encuentran los canales; vacío = http://host:port (o MEKA_CORE_URL)
   # El token va en .env (MEKA_API_TOKEN). Es obligatorio si host no es 127.0.0.1/localhost
   allowed_origins: []        # Webs extra que pueden conectarse (la mascota y localhost ya lo tienen)
+  allowed_hosts: []          # Sin token, solo se aceptan peticiones a 127.0.0.1/localhost (evita el «DNS rebinding»); añade aquí otros nombres de este equipo
   max_upload_mb: 20          # Tamaño máximo de notas de voz, imágenes y documentos
   broadcast_messages: true   # La mascota también dice lo que MEKA responde por Telegram o MCP
   confirm_timeout_seconds: 120  # Espera máxima de un permiso (agent.confirm); sin respuesta = no

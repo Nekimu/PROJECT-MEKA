@@ -11,7 +11,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 
-from core.events import EventBus
+from core.events import EventBus, in_loop
 from core.logger import setup_logger
 
 logger = setup_logger("Confirm")
@@ -78,7 +78,11 @@ class ConfirmationRegistry:
         confirmation = self._pending.get(str(confirmation_id))
         if confirmation is None or confirmation.future.done():
             return False
-        confirmation.future.set_result(bool(approved))
+        loop = confirmation.future.get_loop()
+        if in_loop(loop):
+            confirmation.future.set_result(bool(approved))
+        else:  # Desde una ruta `def` (otro hilo): el futuro se resuelve en su bucle
+            loop.call_soon_threadsafe(_settle, confirmation.future, bool(approved))
         self._finish(confirmation.id, bool(approved), by)
         return True
 
@@ -90,3 +94,8 @@ class ConfirmationRegistry:
         """Al apagar: todo lo pendiente se rechaza."""
         for confirmation_id in list(self._pending):
             self.resolve(confirmation_id, False, "apagado")
+
+
+def _settle(future: asyncio.Future, approved: bool):
+    if not future.done():  # Pudo caducar mientras tanto
+        future.set_result(approved)

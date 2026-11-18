@@ -65,7 +65,7 @@ class Proactive(WelcomeMixin):
             raise ValueError("proactive.remote debe ser away, always o never")
         self.away_seconds = float(cfg.get("away_minutes", 10)) * 60
         self._setup_welcome(cfg)
-        quiet = cfg.get("quiet_hours") or ["22:00", "08:00"]
+        quiet = cfg.get("quiet_hours", ["22:00", "08:00"])  # [] o null: sin horas de silencio
         self.quiet = (_minutes(quiet[0]), _minutes(quiet[1])) if quiet else None
         self.tasks, self.bus, self.user = tasks, bus, user
         self.focus, self.system = focus, system
@@ -113,8 +113,13 @@ class Proactive(WelcomeMixin):
         remote = self.remote()
         self.mark_leaving(now)
         reminded = []
-        for task in self.tasks.store.due_reminders(now):
-            reminded.append(self.tasks.remind(task, remote=remote and not task.private, now=now))
+        # Sin nadie escuchando (la isla y Telegram aún no se conectaron tras arrancar), los avisos
+        # esperan: si se dieran ahora, se marcarían como avisados sin que nadie los viera
+        due = self.tasks.store.due_reminders(now) if self.bus.subscribers else []
+        for task in due:
+            # Al móvil solo los del dueño del bot: el resto de usuarios no tienen su Telegram aquí
+            to_phone = remote and not task.private and task.user_id == str(self.user)
+            reminded.append(self.tasks.remind(task, remote=to_phone, now=now))
             self.note_missed(task.title)
         welcome = self.track_presence(now)  # ¿Acabas de volver? (core/tasks/welcome.py)
         if welcome is not None:

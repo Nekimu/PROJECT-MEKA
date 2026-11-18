@@ -27,7 +27,14 @@ class MediaMixin:
     # ------------------------------------------------------------------ voz
 
     async def voice(
-        self, session: str, user: str, audio_path: Path, *, audio: bool = True, private=False
+        self,
+        session: str,
+        user: str,
+        audio_path: Path,
+        *,
+        audio: bool = True,
+        private=False,
+        remote=False,
     ) -> tuple[str | None, list[Reply]]:
         """Responde a una nota de voz. Devuelve (transcripción, respuestas).
 
@@ -47,7 +54,7 @@ class MediaMixin:
                     self._emotion("sad")  # No entendió el audio
                     return None, []
                 parsed, answer = await self._answer_with_agenda(
-                    session, user, transcription, private=private
+                    session, user, transcription, private=private, remote=remote
                 )
             else:
                 self.last_activity = time.time()

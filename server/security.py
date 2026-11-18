@@ -57,7 +57,18 @@ def websocket_authorized(websocket: WebSocket) -> bool:
     return token_matches(websocket.app.state.token, supplied)
 
 
-def add_browser_access(app, extra_origins: list[str]):
+LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+
+
+def host_name(value: str) -> str:
+    """'127.0.0.1:8765' → '127.0.0.1'; '[::1]:8765' → '::1'."""
+    value = value.strip().lower()
+    if value.startswith("["):
+        return value[1 : value.find("]")] if "]" in value else value
+    return value.rsplit(":", 1)[0] if value.count(":") == 1 else value
+
+
+def add_browser_access(app, extra_origins: list[str], *, check_host=False, extra_hosts=()):
     """Deja que las páginas permitidas lean la API REST (CORS) y rechaza las demás.
 
     La mascota se sirve desde otro puerto (`127.0.0.1:<aleatorio>`): para el navegador es otro
@@ -76,16 +87,20 @@ def add_browser_access(app, extra_origins: list[str]):
         allow_headers=["Authorization", "Content-Type"],
         max_age=600,
     )
-    app.add_middleware(OriginGuard, extra_origins=extra)  # Por fuera: lo ajeno ni llega a CORS
+    # Por fuera de CORS: lo ajeno ni llega. `check_host`: sin token, solo nombres de este equipo
+    # (una web externa puede apuntar su dominio a 127.0.0.1: «DNS rebinding»)
+    hosts = (LOCAL_HOSTS | {h.lower() for h in extra_hosts}) if check_host else None
+    app.add_middleware(OriginGuard, extra_origins=extra, hosts=hosts)
 
 
 class OriginGuard:
     """Rechaza peticiones de webs ajenas (un navegador puede llamar a localhost desde cualquier
     página). Las herramientas sin navegador (Telegram, MCP, curl) no envían Origin."""
 
-    def __init__(self, app, extra_origins: list[str]):
+    def __init__(self, app, extra_origins: list[str], hosts: frozenset | set | None = None):
         self.app = app
         self.extra = {origin.rstrip("/") for origin in extra_origins}
+        self.hosts = hosts  # None: no se comprueba (hay token)
 
     def allowed(self, origin: str | None) -> bool:
         return not origin or bool(DEFAULT_ORIGINS.match(origin)) or origin in self.extra
@@ -94,8 +109,14 @@ class OriginGuard:
         if scope["type"] in {"http", "websocket"}:
             headers = dict(scope.get("headers") or [])
             origin = headers.get(b"origin", b"").decode("latin-1") or None
+            host = host_name(headers.get(b"host", b"").decode("latin-1"))
+            problem = None
             if not self.allowed(origin):
-                logger.warning(f"Conexión rechazada desde un origen no permitido: {origin}")
+                problem = f"origen no permitido: {origin}"
+            elif self.hosts is not None and host and host not in self.hosts:
+                problem = f"Host ajeno: {host}"
+            if problem:
+                logger.warning(f"Conexión rechazada ({problem})")
                 if scope["type"] == "websocket":
                     await send({"type": "websocket.close", "code": 1008})
                     return

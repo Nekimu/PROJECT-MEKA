@@ -180,12 +180,14 @@ class MekaEngine(MediaMixin, AgendaMixin):
         audio: bool = True,
         use_memory: bool = True,
         private: bool = False,
+        remote: bool = False,
     ) -> list[Reply]:
         """Responde a un mensaje de texto. Con `audio`, sintetiza las frases marcadas con [AUDIO].
-        Con `private`, solo responden proveedores locales (ai/routing.py)."""
+        Con `private`, solo responden proveedores locales (ai/routing.py). Con `remote`, la
+        respuesta sale del equipo (Telegram, MCP): ni tareas ni recuerdos privados en el prompt."""
         async with self._busy(), self.lock:
             parsed, answer = await self._answer_with_agenda(
-                session, user, text, private=private, use_memory=use_memory
+                session, user, text, private=private, use_memory=use_memory, remote=remote
             )
             replies = await self._build_replies(parsed, with_audio=audio, private=answer.private)
         self._say(replies, "happy" if answer.ok else "error")

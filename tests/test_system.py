@@ -304,3 +304,27 @@ def test_artwork_arriving_late_is_a_change():
     asyncio.run(monitor.refresh("media"))
     sent = [m for m in drain(events) if m["type"] == "system.media"]
     assert len(sent) == 2 and sent[1]["data"]["artwork"] == "/a?v=1"
+
+
+def test_artwork_published_late_by_the_player_is_retried():
+    from core.system.artwork import MAX_ATTEMPTS, ArtworkCache
+
+    cache, calls = ArtworkCache(), []
+    answers = [(None, None), (None, None), (b"\x89PNG-tarde", "image/png")]
+
+    async def reader():
+        calls.append(1)
+        return answers.pop(0) if answers else (None, None)
+
+    song = ("Spotify", "Tarde", "x", None)
+    assert asyncio.run(cache.update(song, reader)) is None  # Aún no la tiene
+    assert asyncio.run(cache.update(song, reader)) is None
+    assert asyncio.run(cache.update(song, reader)).startswith("/v1/system/media/artwork?v=")
+    for _ in range(10):
+        asyncio.run(cache.update(song, reader))
+    assert len(calls) == 3  # Con la carátula ya no se vuelve a leer
+
+    other = ArtworkCache()
+    for _ in range(MAX_ATTEMPTS + 3):
+        asyncio.run(other.update(("sin carátula",), reader))
+    assert len(calls) == 3 + MAX_ATTEMPTS  # Un reproductor sin carátula no se lee para siempre

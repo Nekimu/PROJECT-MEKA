@@ -23,12 +23,21 @@ def event(type_: str, **data) -> dict:
     return {"type": type_, "data": data}
 
 
+def in_loop(loop: asyncio.AbstractEventLoop | None) -> bool:
+    """¿Estamos en el hilo de ese bucle? (las rutas `def` de FastAPI corren en otro hilo)."""
+    try:
+        return loop is None or asyncio.get_running_loop() is loop
+    except RuntimeError:  # Ningún bucle en este hilo: es el threadpool
+        return False
+
+
 class EventBus:
     """Reparte cada evento a todos los suscriptores (una cola por cliente WebSocket)."""
 
     def __init__(self, queue_size: int = 100):
         self.queue_size = queue_size
         self._subscribers: set[asyncio.Queue] = set()
+        self._loop: asyncio.AbstractEventLoop | None = None  # El de los suscriptores
         # Filtro opcional (modo concentración, core/focus.py): si devuelve False, el evento
         # se retiene en lugar de enviarse
         self.gate: Callable[[str, dict], bool] | None = None
@@ -39,6 +48,8 @@ class EventBus:
 
     def subscribe(self) -> asyncio.Queue:
         queue: asyncio.Queue = asyncio.Queue(self.queue_size)
+        with contextlib.suppress(RuntimeError):
+            self._loop = asyncio.get_running_loop()
         self._subscribers.add(queue)
         return queue
 
@@ -51,11 +62,20 @@ class EventBus:
             logger.debug(f"Evento {type_} retenido por el modo concentración")
             return False
         message = event(type_, **data)
+        loop = self._loop
+        if not in_loop(loop) and loop.is_running():
+            # Desde un hilo (rutas `def`): las colas de asyncio no son seguras entre hilos y
+            # el bucle no se despertaría; se entrega desde su propio hilo
+            loop.call_soon_threadsafe(self._deliver, message)
+        else:
+            self._deliver(message)
+        logger.debug(f"Evento {type_} enviado a {len(self._subscribers)} cliente(s)")
+        return True
+
+    def _deliver(self, message: dict):
         for queue in list(self._subscribers):
             if queue.full():
                 # Un cliente lento no frena a los demás: se descarta su evento más antiguo
                 with contextlib.suppress(asyncio.QueueEmpty):
                     queue.get_nowait()
             queue.put_nowait(message)
-        logger.debug(f"Evento {type_} enviado a {len(self._subscribers)} cliente(s)")
-        return True

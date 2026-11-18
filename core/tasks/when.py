@@ -88,7 +88,8 @@ _DATE = re.compile(
     r"(?:\s+de\s+(" + _MONTH + r")(?:\s+(?:de|del)\s+(\d{4}))?|/(\d{1,2})(?:/(\d{2,4}))?)"
 )
 _DATE_DAY_ONLY = re.compile(
-    r"\b(antes\s+del?|para\s+el|hasta\s+el|el|del)\s+(?:dia\s+)?(\d{1,2})\b(?!\s*[:h])"
+    r"\b(antes\s+del?|para\s+el|hasta\s+el|el|del)\s+(?:dia\s+)?(\d{1,2})\b"
+    r"(?!\s*(?::|h\b|hrs?\b))"  # «el 5:30» o «el 5h» son horas; «el 20 hacer…» es un día
 )
 _BEFORE_DAY = re.compile(r"\bantes\s+del?\s+(?:el\s+)?(" + "|".join(WEEKDAYS) + r"|manana)\b")
 _TIME = re.compile(
@@ -143,7 +144,11 @@ def parse_when(text: str, now: datetime, *, morning_hour: int = 9) -> When:
         return when
     if time_of_day is not None:
         moment = day.replace(hour=time_of_day[0], minute=time_of_day[1])
-        when.due = when.remind = moment
+        if moment <= now and time_span is None:
+            # «Esta noche» dicho a las 22:30: no es una tarea vencida, es para dentro de un rato
+            moment = (now + timedelta(minutes=30)).replace(second=0, microsecond=0)
+        when.due = moment
+        when.remind = moment if moment > now else None  # «Hoy a las 9» a las 10: ya pasó
         return when
     if before:  # «Antes del 15»: vence al empezar el 15; aviso la mañana anterior
         when.due = day
@@ -182,7 +187,9 @@ def _find_day(folded: str, now: datetime):
         except ValueError:
             return None, False, None
         if day < today and not (year2 or match.group(4)):
-            day = day.replace(year=day.year + 1)
+            day = _next_year(day)
+            if day is None:
+                return None, False, None
         return day, prefix.startswith("antes"), match.span()
     match = _DATE_DAY_ONLY.search(folded)
     if match and 1 <= int(match.group(2)) <= 31:
@@ -213,6 +220,16 @@ def _find_day(folded: str, now: datetime):
     return None, False, None
 
 
+def _next_year(day: datetime) -> datetime | None:
+    """El mismo día el año que viene; el 29 de febrero, el próximo año bisiesto."""
+    for years in range(1, 9):
+        try:
+            return day.replace(year=day.year + years)
+        except ValueError:
+            continue
+    return None
+
+
 def _next_weekday(today: datetime, name: str) -> datetime:
     ahead = (WEEKDAYS.index(name) - today.weekday()) % 7 or 7  # «El lunes» un lunes: el próximo
     return today + timedelta(days=ahead)
@@ -234,6 +251,8 @@ def _find_time(folded: str):
     part = match.group(4)
     if hour > 23 or minute > 59:
         return None, None
+    if part == "noche" and hour == 12:
+        return (23, 59), match.span()  # «A las 12 de la noche» = medianoche, no mediodía
     if (suffix == "pm" or part in ("tarde", "noche")) and hour < 12:
         hour += 12
     elif (suffix == "am" or part in ("manana", "madrugada")) and hour == 12:

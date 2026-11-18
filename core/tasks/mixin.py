@@ -34,18 +34,26 @@ class AgendaMixin:
         )
 
     async def _answer_with_agenda(
-        self, session: str, user: str, text: str, *, private: bool, use_memory: bool = True
+        self,
+        session: str,
+        user: str,
+        text: str,
+        *,
+        private: bool,
+        use_memory: bool = True,
+        remote: bool = False,
     ):
         """Primero la agenda (determinista), luego el cerebro con la agenda real de contexto.
         Devuelve (mensajes listos, respuesta del cerebro)."""
         self.last_activity = time.time()
         private = self.ai.decide_privacy(session, text, private)
-        agenda = self.tasks.handle(
-            user, text, private=private, local=self.ai.stays_local("chat", private)
-        )
+        # Lo privado solo entra en el prompt si lo lee un cerebro local Y la respuesta no sale
+        # del equipo (Telegram o MCP la llevarían fuera)
+        local = self.ai.stays_local("chat", private) and not remote
+        agenda = self.tasks.handle(user, text, private=private, local=local, remote=remote)
         answer = await self.ai.answer(
             session, user, text, use_memory=use_memory, private=private,
-            extra_context=agenda.context,
+            extra_context=agenda.context, remote=remote,
         )  # fmt: skip
         # Las frases de la agenda no pasan por el filtro de acotaciones: «(antes del 15)» es dato
         parsed = [ParsedMessage(text=reply) for reply in agenda.replies]
