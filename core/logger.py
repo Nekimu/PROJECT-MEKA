@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import sys
 from typing import ClassVar
@@ -27,10 +28,20 @@ class ColorFormatter(logging.Formatter):
         return f"{color}{message}{Style.RESET_ALL}"
 
 
+def _tolerant_console():
+    """En Windows, si la salida no es una consola (redirigida a un archivo, un servicio o
+    lanzada desde otra app), Python usa cp1252 y un emoji del personaje lanzaba
+    UnicodeEncodeError a mitad de una respuesta. Se sustituyen en lugar de fallar."""
+    for stream in (sys.stdout, sys.stderr):
+        with contextlib.suppress(AttributeError, ValueError, OSError):
+            stream.reconfigure(errors="backslashreplace")
+
+
 def configure_logging(level: str | int | None = None) -> logging.Logger:
     """Configura (una sola vez) el logger raíz del proyecto y, opcionalmente, su nivel."""
     root = logging.getLogger(ROOT_LOGGER_NAME)
     if not root.handlers:
+        _tolerant_console()
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(
             ColorFormatter(
@@ -64,8 +75,17 @@ def setup_logger(name: str = "Core") -> logging.Logger:
 
 
 def log_conversation(role, message):
-    """Imprime la conversación en la consola con colores específicos."""
+    """Imprime la conversación en la consola con colores específicos.
+
+    Es solo informativo: un problema de la consola nunca debe romper una respuesta.
+    """
     if role.lower().startswith("user"):
-        print(f"\n{Fore.BLUE}{Style.BRIGHT}Tú: {Style.RESET_ALL}{message}")
+        line = f"\n{Fore.BLUE}{Style.BRIGHT}Tú: {Style.RESET_ALL}{message}"
     else:  # El personaje activo (su nombre llega en `role`)
-        print(f"{Fore.MAGENTA}{Style.BRIGHT}{role}: {Style.RESET_ALL}{message}\n")
+        line = f"{Fore.MAGENTA}{Style.BRIGHT}{role}: {Style.RESET_ALL}{message}\n"
+    try:
+        print(line)
+    except UnicodeEncodeError:
+        print(line.encode("ascii", "backslashreplace").decode("ascii"))
+    except (OSError, ValueError):
+        pass  # Consola cerrada o no disponible

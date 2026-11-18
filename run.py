@@ -10,14 +10,23 @@ import argparse
 import asyncio
 import contextlib
 
-from core.config import settings
 from core.logger import configure_logging, log_to_stderr, setup_logger
 
 logger = setup_logger("Run")
 
 
+def _quiet_disconnects(loop: asyncio.AbstractEventLoop, context: dict):
+    """En Windows, un cliente que cierra de golpe (la isla al recargarse) deja un
+    ConnectionResetError (WinError 10054) inofensivo en el registro. Se ignora solo ese."""
+    if isinstance(context.get("exception"), ConnectionResetError):
+        return
+    loop.default_exception_handler(context)
+
+
 async def _serve(config: dict, *, with_channels: bool):
     from server.app import build_server
+
+    asyncio.get_running_loop().set_exception_handler(_quiet_disconnects)
 
     server = build_server(config)
     channels = []
@@ -43,7 +52,11 @@ def main(argv: list[str] | None = None):
     args = parser.parse_args(argv)
 
     if args.mode == "mcp":
-        log_to_stderr()  # stdout es del protocolo MCP
+        # stdout es del protocolo MCP: los logs van a stderr ANTES de importar nada que
+        # pueda registrar algo al cargarse (core.config lo hace al leer la configuración)
+        log_to_stderr()
+    from core.config import settings
+
     configure_logging(settings.get("app", {}).get("log_level", "INFO"))
 
     with contextlib.suppress(KeyboardInterrupt):

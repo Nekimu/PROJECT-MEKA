@@ -85,10 +85,11 @@ El documento completo, con las iteraciones previstas (Google Home, Home Assistan
 |:---:|---|---|
 | 🎭 | **Personajes intercambiables** | D.Va, Marin o Yotsuba, o el tuyo propio: [paquetes en `personas/`](personas/README.md) que se eligen con una línea de configuración. |
 | 🧠 | **Cerebro a elegir** | Ollama en local (por defecto `gemma3:12b`), Claude o Gemini, con un cerebro distinto para imágenes, uno de respaldo y un modo `local_only` que no deja salir nada del equipo. |
-| 🎙️ | **Escucha tus audios** | Transcribe las notas de voz con Whisper y responde como a un mensaje escrito. |
+| 🎙️ | **Escucha tus audios** | Transcribe las notas de voz con faster-whisper (3 veces menos RAM que Whisper, sin PyTorch) y responde como a un mensaje escrito. |
 | 🔊 | **Habla** | Cada personaje tiene su voz (Edge-TTS por defecto; Qwen3-TTS y Piper opcionales). Llega como nota de voz nativa (OGG/Opus). |
 | 🖼️ | **Ve tus fotos** | Comenta las imágenes con un modelo multimodal. |
 | 📄 | **Lee documentos** | PDF, DOCX (con tablas), XLSX, TXT, MD y CSV. |
+| ⏰ | **Agenda y avisos** | *«Recuérdame pagar la luz antes del 15»*, *«¿qué tareas me quedan?»*, *«ya pagué la luz»*. Entiende fechas en español sin depender del modelo y te avisa a su hora. De vez en cuando revisa tus pendientes y notificaciones y te lo recuerda, **sin interrumpir**: nunca en horas de silencio, en modo concentración ni mientras hablas con ella. |
 | 💭 | **Recuerda** | Recuerdos por usuario (*«recuerda esto: …»*) e historial de cada chat en SQLite. Busca **por significado** con embeddings locales: *«¿qué te conté de mi mascota?»* encuentra *«mi perro se llama Toby»*. |
 | 🔒 | **Privada** | Lista blanca de usuarios, historial aislado y archivos temporales que se borran al procesarse. |
 | 🪶 | **Ligera** | Descarga los modelos tras cada respuesta para funcionar con 16 GB de RAM (configurable). |
@@ -114,7 +115,9 @@ cp .env.example .env
 ```
 
 > [!TIP]
-> En Linux sin GPU NVIDIA, instala antes PyTorch para CPU y te ahorrarás varios GB de librerías CUDA:
+> La instalación base **no incluye PyTorch**: la voz usa faster-whisper. Solo hace falta para el respaldo
+> `openai-whisper` (`pip install -r requirements-whisper.txt`) o para Qwen3-TTS. En Linux sin GPU NVIDIA,
+> instala antes PyTorch para CPU y te ahorrarás varios GB de librerías CUDA:
 > `pip install torch --index-url https://download.pytorch.org/whl/cpu`
 
 </details>
@@ -138,6 +141,7 @@ ollama pull gemma3:12b                  # 1. Descarga el modelo
 ollama pull embeddinggemma              #    y el de la memoria semántica (~600 MB)
 pip install -r requirements-qwen.txt    # 2. Opcional: Qwen3-TTS (clonar tu propia voz)
 pip install -r requirements-cloud.txt   #    Opcional: Claude y Gemini como cerebro
+pip install -r requirements-whisper.txt #    Opcional: respaldo openai-whisper (instala PyTorch)
 python run.py                           # 3. ¡A charlar! (MEKA Core + Telegram)
 ```
 
@@ -147,6 +151,7 @@ python run.py                           # 3. ¡A charlar! (MEKA Core + Telegram)
 | `python run.py core` | Solo MEKA Core en `http://127.0.0.1:8765` (API interactiva en `/docs`) |
 | `python run.py telegram` | Solo el bot; se conecta a un MEKA Core ya en marcha, incluso en otro equipo |
 | `python run.py mcp` | Servidor MCP por stdio para agentes ([ver abajo](#-canales-y-api)) |
+| `scripts\iniciar_meka.cmd` | En Windows, con doble clic: arranca Ollama si hace falta y luego MEKA Core con Telegram, en su propia ventana. La isla necesita que el Core esté en marcha: sin él no hay música, notificaciones ni avisos. Para que arranque al iniciar sesión, pon un acceso directo a este archivo en `shell:startup` (Win+R); bórralo de ahí para quitarlo. |
 
 Antes de arrancar, edita `.env` con tu token y tu ID de Telegram (puedes obtenerlo con [@userinfobot](https://t.me/userinfobot)):
 
@@ -165,7 +170,7 @@ ALLOWED_USER_IDS=123456789
 |---|---|---|
 | **RAM** | 8 GB (`gemma3:4b` + `edge-tts`) | 16 GB (`gemma3:12b` + Qwen3-TTS en CPU) |
 | **GPU** | No necesaria | ≥ 8 GB de VRAM para respuestas fluidas |
-| **Disco** | ~6 GB | ~15 GB (modelos de Ollama, Whisper y Qwen) |
+| **Disco** | ~4 GB | ~15 GB (modelos de Ollama, Whisper y Qwen) |
 
 </details>
 
@@ -209,14 +214,23 @@ Instala el SDK (`pip install -r requirements-mcp.txt`) y, con MEKA Core en march
 }
 ```
 
-En Claude Code también vale `claude mcp add meka -- python /ruta/a/PROJECT-MEKA/run.py mcp`. Usa el Python del entorno virtual del proyecto.
+O desde la terminal (usa siempre el **Python del entorno virtual**: `venv/Scripts/python.exe` en Windows, `venv/bin/python` en Linux/macOS):
+
+```bash
+claude mcp add meka -s local -- /ruta/a/PROJECT-MEKA/venv/Scripts/python.exe /ruta/a/PROJECT-MEKA/run.py mcp
+gemini mcp add -s project meka /ruta/a/PROJECT-MEKA/venv/Scripts/python.exe /ruta/a/PROJECT-MEKA/run.py mcp
+```
+
+Comprueba la conexión con `claude mcp list` o `gemini mcp list` (debe decir *Connected*). Las herramientas que tocan la mascota o la memoria necesitan MEKA Core en marcha; si está apagado, responden con un error claro en lugar de romper la conexión.
 
 | Herramienta | Qué hace |
 |---|---|
 | `pet_status` | Avisa a la mascota de que el agente empieza (`working`), termina (`done`) o falla (`error`) una tarea |
 | `pet_emotion` | Cambia la expresión de la mascota |
 | `chat` | Habla con el personaje (conversación propia, separada de Telegram) |
-| `remember` · `memories` | Guarda y consulta la memoria del usuario (`memories` acepta un tema y busca por significado) |
+| `remember` · `memories` | Guarda y consulta la memoria del usuario (`memories` acepta un tema y busca por significado; nunca devuelve recuerdos privados) |
+| `ask_permission` | Pide permiso antes de algo irreversible: la mascota muestra el diálogo y el agente espera tu respuesta (sin respuesta = no) |
+| `list_folders` · `list_files` · `read_file` · `search_files` | Leen las carpetas que autorizaste en `hands.folders` (solo lectura; nunca las marcadas `private`) |
 
 </details>
 
@@ -269,13 +283,32 @@ Los secretos van en `.env` y todo lo demás en [`config.yml`](config.yml).
 | `ai.provider` | `ollama` | Cerebro de la conversación: `ollama`, `claude` o `gemini`. |
 | `ai.vision_provider` / `ai.fallback_provider` | `""` | Cerebro para imágenes y cerebro de respaldo si el principal falla o se niega. |
 | `ai.local_only` | `false` | `true` ignora los proveedores en la nube: nada sale del equipo. |
+| `ai.routing.chat` / `vision` / `document` | `""` | Cerebro por tarea (vacío = `ai.provider`). |
+| `ai.privacy.provider` | `ollama` | Cerebro local para lo privado. Lo privado **nunca** va a la nube, ni como respaldo; si no hay proveedor local, no se envía. |
+| `ai.privacy.documents` / `detect_sensitive` | `true` / `true` | Documentos siempre privados; contraseñas, llaves de API, tokens, tarjetas o CURP vuelven privada la conversación hasta reiniciarla. Lo que pidas recordar en privado solo vuelve a prompts de proveedores locales y nunca sale por MCP ni Telegram. |
+| `system.notifications.apps` / `blocked` / `hide_codes` | `["*"]` / `[]` / `true` | Notificaciones de Windows que ve la isla. Son privadas: nunca van a la nube ni al MCP, y los códigos de verificación se ocultan. |
+| `tasks.morning_hour` | `9` | Las tareas de un día sin hora (*«el viernes»*) se avisan a esta hora; *«antes del 15»*, la mañana anterior. |
+| `proactive.enabled` | `true` | **Hanna proactiva**: cada `check_seconds` (60) mira si toca un aviso (una consulta a SQLite, sin IA ni red). Los avisos que pediste llegan a su hora, también en modo concentración. |
+| `proactive.digest_minutes` / `max_per_day` / `repeat_hours` | `120` / `6` / `4` | El resumen por su cuenta (vencidas, lo de hoy, cuántas notificaciones nuevas) sale como mucho cada 2 h, 6 al día, sin repetir lo mismo, y solo si hay algo que contar. |
+| `proactive.remote` / `away_minutes` | `away` / `10` | **Avisos en el móvil (Telegram)**: con `away`, solo si no estás frente al equipo (la isla cerrada o 10 min sin tocar teclado ni ratón); `always` o `never`. Al móvil nunca van las tareas privadas ni las notificaciones de Windows. Llegan al primer ID de `ALLOWED_USER_IDS`, con botones *Hecho* y *Posponer*; `/tareas` lista lo pendiente. |
+| `proactive.quiet_hours` / `idle_minutes` | `22:00–08:00` / `5` | Sin resúmenes de noche, en modo concentración, con el núcleo ocupado o si le hablaste hace menos de 5 min. De las notificaciones solo dice cuántas y de qué apps, nunca su texto. |
+| `proactive.welcome_minutes` | `20` | **«Mientras no estabas…»**: al volver al equipo tras este tiempo sin tocarlo, Hanna te resume en una frase los avisos que sonaron, lo vencido y cuántas notificaciones llegaron (solo en la isla). `0` lo desactiva. |
+| `system.media` | `true` | Lo que suena en cualquier reproductor de Windows, **con su carátula** (`GET /v1/system/media/artwork`, solo se lee al cambiar de canción y nunca sale del equipo). |
+| Telegram en la isla | — | La isla muestra las notificaciones de **Telegram Desktop** si en Telegram activas *Ajustes → Notificaciones y sonidos → Usar notificaciones de Windows*. Con sus ventanas propias, Windows no las ve. |
+| `focus.default_minutes` / `allow_apps` / `battery_alert` | `25` / `[]` / `15` | **Modo concentración**: retiene notificaciones, música y avisos de agentes; los permisos, los errores, las apps de `allow_apps` y la batería crítica pasan igual. Al terminar, resumen de lo que esperó. |
+| `hands.folders` | `{}` | Carpetas que MEKA puede **leer** (nombre: ruta, o `{path, private}`). Fuera de ellas nada; `.env`, llaves, `.git` y similares nunca, aunque estén dentro. La escritura (`writable: true`, con permiso y deshacer) existe pero está **pospuesta** hasta aislar el sistema: no la actives todavía. |
 | `ai.history_size` | `20` | Mensajes recientes que recuerda por chat. |
 | `ai.providers.ollama.model` | `gemma3:12b` | Modelo de Ollama. Debe ser **multimodal** para ver fotos. |
 | `ai.providers.ollama.keep_alive` | `0` | `0` descarga el modelo tras responder (ahorra RAM); `"5m"` lo mantiene cargado (más rápido). |
 | `ai.providers.ollama.*` | — | `base_url`, `temperature`, `options` y `vision_options` de Ollama. |
 | `ai.providers.claude.model` / `effort` | `claude-opus-5-5` / `low` | Modelo de Claude y cuánto piensa (`low` a `max`). Requiere `ANTHROPIC_API_KEY`. |
 | `ai.providers.gemini.model` | `gemini-flash-latest` | Modelo de Gemini. Requiere `GEMINI_API_KEY`. |
-| `stt.model_size` | `base` | Whisper: `tiny`, `base`, `small`, `medium`, `large`, `turbo`. |
+| `stt.mode` | `auto` | `auto`: si el cerebro entiende audio, la nota de voz va tal cual y se omite la transcripción; `always`: transcribir siempre. |
+| `ai.providers.<cerebro>.capabilities` | por cerebro | Lo que entiende de forma nativa: `text`, `vision`, `audio`, `pdf` (Ollama: texto e imagen · Claude: + PDF · Gemini: + audio y PDF). Corrígelo por modelo. MEKA usa la ruta nativa si existe y, si no o si falla, la clásica (transcribir, extraer texto). |
+| `ai.providers.openai_compat` | — | Cualquier servidor compatible con OpenAI: **llama.cpp**, LM Studio, vLLM u Ollama (`/v1`). Solo cuenta como local si `base_url` es de este equipo. Úsalo como `ai.provider: openai_compat`. |
+| `ai.privacy.audio_to_cloud` | `false` | Las notas de voz sin transcribir no pasan por el detector de datos sensibles: por defecto solo van a cerebros locales. |
+| `stt.engine` / `fallback_engine` | `faster-whisper` / `whisper` | Motor de voz a texto y su respaldo. faster-whisper usa ~3 veces menos RAM con el mismo resultado. |
+| `stt.model_size` | `base` | Whisper: `tiny`, `base`, `small`, `medium`, `large-v3`, `turbo`. |
 | `stt.unload_after_use` | `true` | Libera Whisper de la RAM tras cada nota de voz. |
 | `tts.engine` | `edge-tts` | `edge-tts`, `qwen-tts` o `piper`. La voz de edge-tts la pone cada personaje. |
 | `tts.fallback_engine` | `""` | Motor de respaldo si falla el principal. |
@@ -326,6 +359,41 @@ La RAM necesaria es algo mayor que el tamaño de descarga. Consulta los tamaños
 
 </details>
 
+<details>
+<summary><b>🎙️ Gemma 4 con audio nativo (llama.cpp)</b></summary>
+
+Gemma 4 (E2B, E4B, 12B) entiende audio de forma nativa, así que MEKA puede saltarse la transcripción
+(`stt.mode: auto`). Ollama aún no le pasa el audio de forma fiable; **llama.cpp** sí, con su proyector
+multimodal (`mmproj`, que `-hf` descarga solo). Probado con el build 12282 en Windows:
+
+```bash
+winget install ggml.llamacpp
+llama-server -hf ggml-org/gemma-4-E2B-it-GGUF:Q4_0 --port 8080 -c 8192 --jinja
+```
+
+La primera vez descarga unos 3,5 GB. En el registro debe aparecer `init_audio` (el audio aún es
+*experimental* en llama.cpp). Ese repositorio trae `Q4_0`, `Q8_0` y `BF16`, no `Q4_K_M`.
+
+```yaml
+ai:
+  provider: "openai_compat"
+  providers:
+    openai_compat:
+      base_url: "http://127.0.0.1:8080"
+      model: "gemma-4-e2b"
+      capabilities: [text, vision, audio]
+      thinking: false      # Sin esto, Gemma 4 gasta los tokens razonando y la respuesta llega vacía
+```
+
+Medido en un equipo con 16 GB de RAM y solo CPU, con una nota de voz de 6 s: ~30 s la llamada
+directa y ~70 s dentro de MEKA (el prompt del personaje y la memoria pesan). Sin GPU, E2B es la
+opción más holgada; con GPU, prueba E4B.
+
+> La ruta nativa responde a lo que oye, pero no hay texto que analizar: *«recuerda esto: …»* no se
+> guarda como recuerdo ni se buscan recuerdos por palabras. Si los necesitas por voz, `stt.mode: always`.
+
+</details>
+
 ## 🧠 Cómo funciona
 
 ```mermaid
@@ -336,11 +404,11 @@ flowchart LR
     MCP <-->|REST| API
     PET([Mascota pet/]) <-->|WebSocket /v1/events| API
     subgraph CORE[MEKA Core · 127.0.0.1:8765]
-        API[server/app.py<br/>FastAPI · token · origen] --> ENG[core/engine.py]
-        ENG --> STT[ai/stt.py<br/>Whisper]
+        API[server/<br/>FastAPI · routes/ · token · origen] --> ENG[core/engine.py]
+        ENG --> STT[ai/stt/<br/>faster-whisper · Whisper]
         ENG --> DOC[core/documents.py]
         ENG --> AI[ai/service.py]
-        ENG --> TTS[ai/tts.py<br/>Edge-TTS · Qwen3-TTS · Piper]
+        ENG --> TTS[ai/tts/<br/>Edge-TTS · Qwen3-TTS · Piper]
         ENG --> BUS((core/events.py))
         P[[personas/&lt;id&gt;]] -.-> ENG
         AI <-->|ai/providers| OL[(Ollama · Claude · Gemini)]
@@ -376,18 +444,19 @@ flowchart LR
 ```
 PROJECT-MEKA/
 ├── run.py                  # Punto de entrada: all | core | telegram | mcp
-├── server/                 # MEKA Core: API REST + WebSocket (FastAPI)
+├── server/                 # MEKA Core: app.py compone; routes/ (una por dominio), security.py
 ├── core/                   # Motor, eventos, configuración, memoria, documentos y personajes
-├── ai/                     # Proveedores de IA (ai/providers), STT, TTS, prompts y texto
+├── ai/                     # Proveedores de IA (ai/providers), STT, TTS (ai/tts/), prompts y texto
 ├── channels/               # Clientes del núcleo: Telegram, MCP y el cliente HTTP común
 ├── personas/               # Paquetes de personaje (D.Va, Marin, Yotsuba...)
 ├── pet/                    # Mascota de escritorio (web + Tauri), prototipo
-├── scripts/                # Herramientas de diagnóstico
+├── scripts/                # Diagnóstico y tablero de tareas (tareas.py + tablero/)
+├── coordinacion/           # Tablero compartido Claude Code ↔ Antigravity
 ├── tests/                  # Tests automatizados (pytest)
 ├── docs/                   # Filosofía híbrida, visión, auditoría e imágenes
 ├── config.yml              # Configuración general
 ├── .env.example            # Plantilla de secretos
-└── requirements*.txt       # Dependencias: base, nube, MCP, Qwen3-TTS y desarrollo
+└── requirements*.txt       # Dependencias: base, nube, MCP, Whisper, Qwen3-TTS y desarrollo
 ```
 
 Se generan al ejecutar o son personales (ignorados por git): `data/` (la base de datos), `temp/`, `logs/`, `models/` y `voices/`.
@@ -402,7 +471,7 @@ Se generan al ejecutar o son personales (ignorados por git): `data/` (la base de
 - 👤 **`ALLOWED_USER_IDS`** decide quién puede hablar con el bot.
 - 🧱 El **historial** se separa por chat y los **recuerdos** por usuario: nadie puede leer lo que otra persona le contó al asistente.
 - 🗑️ Las **fotos, documentos y notas de voz** se borran justo después de procesarse.
-- 🏠 Con Ollama la inferencia es **local**. Si eliges Claude o Gemini, el texto (y las fotos) de la conversación va a su API; `ai.local_only: true` lo impide. `edge-tts` sintetiza la voz en los servidores de Microsoft.
+- 🏠 Con Ollama la inferencia es **local**. Si eliges Claude o Gemini, el texto (y las fotos) de la conversación va a su API; `ai.local_only: true` lo impide del todo, y `"private": true` (o un dato sensible detectado) lo impide para una conversación. `edge-tts` sintetiza la voz en los servidores de Microsoft.
 - 🤐 Los errores internos no se muestran al usuario y los logs no incluyen el contenido de los mensajes (salvo con `app.log_conversations`).
 
 > [!WARNING]
@@ -473,9 +542,9 @@ python -m scripts.semantic_check "¿qué te conté de mi mascota?"   # Similitud
 - [ ] Base del Funko del Meka (ESP32-S3, luces, sensor táctil) y caja de holograma ([planos](https://claude.ai/artifact/TVgmmCCLpmyd2KxQCpEEki))
 - [ ] Google Drive como memoria documental compartida con otros agentes
 - [ ] Gestionar carpetas autorizadas desde el móvil, con confirmación y git
-- [ ] Tamagotchi completo: logros, disfraces y rutinas
+- [ ] Compañera de productividad: tarjetas tipo Brief, modo concentración y resumen del día (sin mecánicas de cuidado: MEKA ayuda, no distrae)
 - [ ] App móvil: Android con burbuja flotante, iOS con widget
-- [ ] Transcripción más rápida con [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
+- [x] Transcripción más ligera con [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
 
 La dirección del proyecto está en la [filosofía híbrida](docs/FILOSOFIA_HIBRIDA.md) y la [visión](docs/VISION.md); las alternativas técnicas evaluadas, en la [auditoría](docs/AUDITORIA.md).
 
@@ -487,17 +556,21 @@ ruff check . && ruff format --check .
 pytest
 ```
 
+Pruebas de la API real con Postman (con MEKA Core en marcha): ver [`tests/postman/`](tests/postman/README.md).
+
 ¿Quieres contribuir? Lee [CONTRIBUTING.md](CONTRIBUTING.md) y abre un [issue](https://github.com/Nekimu/PROJECT-MEKA/issues/new/choose). Los cambios de cada versión están en el [CHANGELOG](CHANGELOG.md).
 
-<!--
 ## 📸 Capturas
 
-Guarda las capturas en docs/screenshots/ (chat.png, voz.png, multimodal.png) y elimina este comentario:
+La Dynamic Island en Windows (ventana de 380×480, datos de demostración):
 
-| Conversación | Nota de voz | Análisis multimodal |
+| Recogida | Con música | Hana |
 |:---:|:---:|:---:|
-| ![Chat](docs/screenshots/chat.png) | ![Voz](docs/screenshots/voz.png) | ![Multimodal](docs/screenshots/multimodal.png) |
--->
+| ![Isla recogida](docs/screenshots/isla-recogida.jpg) | ![Isla con música](docs/screenshots/isla-musica.jpg) | ![Hana en el hero](docs/screenshots/hero.jpg) |
+
+| Música con carátula | Notificaciones y tareas | Aviso de Hanna |
+|:---:|:---:|:---:|
+| ![Tarjeta de música](docs/screenshots/tarjeta-musica.jpg) | ![Notificaciones](docs/screenshots/notificaciones.jpg) | ![Aviso proactivo](docs/screenshots/aviso-proactivo.jpg) |
 
 ## 📄 Licencia y créditos
 

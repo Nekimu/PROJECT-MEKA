@@ -52,3 +52,15 @@ def test_repository_memory_pattern_works():
     memory = load_config()["memory"]
     match = re.search(memory["remember_pattern"], "Recuerda esto: me gusta el ramen", re.IGNORECASE)
     assert match.group(1) == "me gusta el ramen"
+
+
+def test_load_config_applies_local_overrides(tmp_path):
+    (tmp_path / "config.yml").write_text(
+        "ai:\n  provider: ollama\n  providers:\n    ollama:\n      model: grande\n      temperature: 0.7\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "config_local.yml").write_text(
+        "ai:\n  providers:\n    ollama:\n      model: gemma3:270m\n", encoding="utf-8"
+    )
+    ollama = load_config(tmp_path / "config.yml")["ai"]["providers"]["ollama"]
+    assert ollama == {"model": "gemma3:270m", "temperature": 0.7}

@@ -13,13 +13,16 @@ server:
   url: ""                    # Cómo lo encuentran los canales; vacío = http://host:port (o MEKA_CORE_URL)
   # El token va en .env (MEKA_API_TOKEN). Es obligatorio si host no es 127.0.0.1/localhost
   allowed_origins: []        # Webs extra que pueden conectarse (la mascota y localhost ya lo tienen)
+  allowed_hosts: []          # Sin token, solo se aceptan peticiones a 127.0.0.1/localhost (evita el «DNS rebinding»); añade aquí otros nombres de este equipo
   max_upload_mb: 20          # Tamaño máximo de notas de voz, imágenes y documentos
   broadcast_messages: true   # La mascota también dice lo que MEKA responde por Telegram o MCP
+  confirm_timeout_seconds: 120  # Espera máxima de un permiso (agent.confirm); sin respuesta = no
   audio_ttl_seconds: 300     # Tiempo que se guardan los audios generados hasta que un canal los pide
 
 paths:
   memory_db: "data/meka.db"  # Recuerdos e historial en SQLite (ignorado por git)
   temp_dir: "temp"           # Audios y archivos temporales (ignorado por git)
+  hands_dir: "data/hands"    # Puntos de restauración de las manos (git "sombra", ignorado por git)
 
 memory:
   remember_pattern: 'recuerda\s+esto\s*:\s*(.+)'   # "Recuerda esto: ..." guarda un recuerdo
@@ -44,6 +47,19 @@ ai:
   local_only: false          # true = nada sale del equipo: se ignoran los proveedores en la nube
   history_size: 20           # Mensajes recientes que recuerda por chat
 
+  routing:                   # Cerebro por tarea (vacío = provider). Ej.: chat en la nube, documentos en local
+    chat: ""
+    vision: ""               # Si está vacío se usa vision_provider
+    document: ""
+
+  privacy:                   # Lo privado NUNCA sale del equipo, ni siquiera como respaldo
+    provider: "ollama"       # Cerebro local para lo privado; si no hay ninguno local, no se envía
+    documents: true          # Los documentos se tratan como privados (análisis privado = local)
+    detect_sensitive: true   # Contraseñas, llaves de API, tokens, tarjetas o CURP vuelven privada la conversación
+    audio_to_cloud: false    # Notas de voz SIN transcribir a cerebros en la nube (no pasan por el detector)
+    # Una conversación privada lo sigue siendo hasta reiniciarla (/v1/sessions/{id}/reset):
+    # así su historial no viaja a la nube en el siguiente mensaje.
+
   providers:
     ollama:
       model: "gemma3:12b"    # Debe ser multimodal para analizar imágenes
@@ -64,13 +80,84 @@ ai:
       effort: "low"          # low | medium | high | xhigh | max (más = piensa más y cuesta más)
       max_tokens: 16000
       fallbacks: true        # Si un filtro de seguridad la rechaza, la API reintenta con otro modelo
+    # Servidores compatibles con OpenAI: llama.cpp (llama-server), LM Studio, vLLM, Ollama /v1.
+    # Ejemplo: Gemma 4 con audio nativo en llama.cpp (ver README, «Gemma 4 con audio»):
+    # openai_compat:
+    #   base_url: "http://127.0.0.1:8080"    # Solo cuenta como local si es de este equipo
+    #   model: "gemma-4-e2b"
+    #   capabilities: [text, vision, audio]
+    #   thinking: false                     # Gemma 4 / Qwen: sin razonamiento previo
+    #   max_tokens: 1024
+    # Cada cerebro trae lo que entiende de forma nativa; corrígelo por modelo si hace falta:
+    #   capabilities: [text, vision, audio, pdf]
+    # (Ollama: text, vision · Claude: text, vision, pdf · Gemini: text, vision, audio, pdf)
     gemini:                  # Requiere GEMINI_API_KEY en .env y requirements-cloud.txt
       model: "gemini-flash-latest"  # Alias de la última versión de Flash
       temperature: 0.8
       max_output_tokens: 2048
 
+system:                      # Música y batería para la Dynamic Island (eventos system.*)
+  enabled: true
+  media: true                # Lo que suena en cualquier reproductor de Windows (API SMTC)
+  battery: true
+  media_interval: 2          # Segundos entre lecturas (solo se publica si algo cambia)
+  battery_interval: 60
+  notifications:             # Notificaciones de Windows en la isla (privadas: nunca a la nube ni al MCP)
+    enabled: true
+    apps: ["*"]              # Apps permitidas por nombre ("WhatsApp", "Outlook"...); "*" = todas
+    blocked: []              # Apps que nunca se muestran
+    hide_codes: true         # Oculta códigos de verificación (2FA, OTP, PIN)
+    max_items: 20
+    interval: 3              # Segundos entre lecturas
+
+focus:                       # Modo concentración: retiene lo que distrae durante un bloque de trabajo
+  default_minutes: 25
+  max_minutes: 240
+  allow_apps: []             # Notificaciones que pasan igual (p. ej. ["Teams"] para llamadas)
+  battery_alert: 15          # La batería por debajo de este % (sin cargar) avisa igual
+
+tasks:                       # Agenda: «recuérdame…», «¿qué tareas me quedan?», «ya pagué la luz»
+  enabled: true
+  morning_hour: 9            # Las tareas de un día sin hora se avisan a esta hora
+
+proactive:                   # Hanna proactiva: revisa pendientes y notificaciones y te los recuerda
+  enabled: true
+  check_seconds: 60          # Cada cuánto mira si toca algún aviso (una consulta a SQLite, sin IA)
+  digest_minutes: 120        # Como mucho, un resumen cada este tiempo...
+  startup_minutes: 2         # ...y el primero poco después de arrancar
+  idle_minutes: 5            # No interrumpe si le hablaste hace menos de esto
+  quiet_hours: ["22:00", "08:00"]  # Sin resúmenes (los avisos que pediste sí llegan)
+  max_per_day: 6
+  repeat_hours: 4            # No repite el mismo resumen antes de este tiempo
+  notifications: true        # Incluir cuántas notificaciones nuevas hay (nunca su texto)
+  remote: away               # También por Telegram: away (si no estás al equipo) | always | never
+  away_minutes: 10           # "No estás" = la isla cerrada o este tiempo sin tocar teclado/ratón
+  desk_clients: ["pet"]      # Clientes que cuentan como "la isla está abierta"
+  welcome_minutes: 20        # Al volver tras este tiempo fuera: «Mientras no estabas…» (0 = nunca)
+
+hands:                       # Las "manos" de MEKA (fase 3): leer carpetas que tú autorizas
+  enabled: true
+  folders: {}                # Fuera de estas carpetas, nada. Ejemplos:
+  #  descargas: "~/Downloads"
+  #  notas: {path: "~/Documents/Notas", private: true}   # private: el MCP (nube) no la ve
+  # ⚠️ ESCRITURA POSPUESTA (T-042): no uses writable: true hasta resolver el aislamiento del
+  #    sistema (usuario restringido de Windows o Docker). El código existe y está probado, pero
+  #    por decisión del proyecto ninguna carpeta real admite cambios todavía.
+  #  ordenar: {path: "~/Ordenar", writable: true}       # Admite cambios: cada uno pide permiso
+  #                                                     # y deja un punto de restauración
+  deny: []                   # Patrones extra que nunca se tocan (ya protegidos: .env, llaves, .git...)
+  max_read_chars: 20000      # Caracteres máximos al leer un archivo
+  max_results: 200           # Resultados máximos al listar o buscar
+  max_scanned_files: 5000    # Archivos máximos que recorre una búsqueda
+  max_write_chars: 200000    # Tamaño máximo de un archivo que MEKA escribe
+
 stt:
-  model_size: "base"         # tiny | base | small | medium | large | turbo
+  mode: "auto"               # auto: si el cerebro entiende audio, la nota va tal cual (sin transcribir) | always
+  engine: "faster-whisper"   # faster-whisper (menos RAM, sin PyTorch) | whisper
+  fallback_engine: "whisper" # Respaldo si el principal falla; requiere requirements-whisper.txt (PyTorch)
+  model_size: "base"         # tiny | base | small | medium | large-v3 | turbo
+  compute_type: "int8"       # faster-whisper en CPU: int8 (ligero) | float32 (algo más preciso)
+  vad: true                  # faster-whisper salta los silencios
   language: "es"
   unload_after_use: true     # Libera Whisper de la RAM tras cada nota de voz
 
@@ -109,6 +196,7 @@ telegram:
   request_timeout: 30
   drop_pending_updates: false  # true = ignora los mensajes recibidos mientras el bot estaba apagado
   typing_delay: 1.0          # Pausas de "escribiendo..." para parecer humana (0 = sin pausas)
+  alerts: true               # Avisos de Hanna al primer ID de ALLOWED_USER_IDS (ver proactive.remote)
   # file_id de stickers que el personaje puede enviar con [STICKER]. Envíale un sticker al bot
   # y su file_id aparecerá en la consola.
   stickers: []

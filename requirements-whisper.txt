@@ -1,0 +1,6 @@
+# Respaldo opcional de voz a texto: openai-whisper (stt.fallback_engine: "whisper").
+# El motor por defecto es faster-whisper (requirements.txt), que no necesita PyTorch.
+# Esto instala PyTorch (varios GB). En Linux sin GPU NVIDIA, antes:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+-r requirements.txt
+openai-whisper>=20250625

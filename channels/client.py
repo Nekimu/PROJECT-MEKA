@@ -16,6 +16,10 @@ class CoreUnavailableError(RuntimeError):
     """MEKA Core no responde."""
 
 
+class CoreRequestError(ValueError):
+    """MEKA Core rechazó la petición (4xx). El mensaje es el `detail` del servidor."""
+
+
 class CoreClient:
     def __init__(
         self,
@@ -25,6 +29,7 @@ class CoreClient:
         timeout: float = 300.0,
         transport: httpx.AsyncBaseTransport | None = None,
     ):
+        self.token = token
         headers = {"Authorization": f"Bearer {token}"} if token else {}
         # Los modelos locales pueden tardar minutos en responder (sobre todo con keep_alive=0)
         self.http = httpx.AsyncClient(
@@ -39,11 +44,23 @@ class CoreClient:
     async def close(self):
         await self.http.aclose()
 
+    def events_url(self) -> str:
+        """WebSocket de eventos (el token va en `?token=`: así lo acepta el núcleo)."""
+        base = str(self.http.base_url).rstrip("/")
+        url = base.replace("https://", "wss://", 1).replace("http://", "ws://", 1) + "/v1/events"
+        return f"{url}?token={quote(self.token, safe='')}" if self.token else url
+
     async def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
         try:
             response = await self.http.request(method, path, **kwargs)
         except httpx.TransportError as e:
             raise CoreUnavailableError(f"MEKA Core no responde en {self.http.base_url}: {e}") from e
+        if 400 <= response.status_code < 500:
+            try:
+                detail = response.json().get("detail")
+            except ValueError:
+                detail = None
+            raise CoreRequestError(str(detail or f"HTTP {response.status_code}"))
         response.raise_for_status()
         return response
 
@@ -75,7 +92,8 @@ class CoreClient:
     # ------------------------------------------------------------------ conversación
 
     async def chat(self, session: str, user: str, text: str, **options) -> list[dict]:
-        body = {"session": session, "user": user, "text": text, **options}
+        # Los canales llevan la respuesta fuera del equipo: nada privado en el prompt
+        body = {"session": session, "user": user, "text": text, "remote": True, **options}
         return (await self._json("POST", "/v1/chat", json=body))["replies"]
 
     async def voice(
@@ -84,7 +102,12 @@ class CoreClient:
         data = await self._json(
             "POST",
             "/v1/voice",
-            data={"session": session, "user": user, "audio": str(audio_reply).lower()},
+            data={
+                "session": session,
+                "user": user,
+                "audio": str(audio_reply).lower(),
+                "remote": "true",
+            },
             files={"file": (filename, audio)},
         )
         return data["transcription"], data["replies"]
@@ -113,8 +136,12 @@ class CoreClient:
 
     # ------------------------------------------------------------------ memoria
 
-    async def memories(self, user: str, query: str | None = None) -> list[str]:
-        params = {"q": query} if query else None
+    async def memories(
+        self, user: str, query: str | None = None, *, include_private: bool = True
+    ) -> list[str]:
+        params = {"q": query} if query else {}
+        if not include_private:
+            params["include_private"] = "false"
         return (
             await self._json("GET", f"/v1/users/{quote(user, safe='')}/memories", params=params)
         )["memories"]
@@ -125,6 +152,49 @@ class CoreClient:
                 "POST", f"/v1/users/{quote(user, safe='')}/memories", json={"fact": fact}
             )
         )["added"]
+
+    # ------------------------------------------------------------------ agenda
+
+    async def tasks(self, user: str, *, include_private: bool = True) -> list[dict]:
+        params = {} if include_private else {"include_private": "false"}
+        path = f"/v1/users/{quote(user, safe='')}/tasks"
+        return (await self._json("GET", path, params=params))["tasks"]
+
+    async def add_task(self, user: str, title: str, when: str | None = None, **extra) -> dict:
+        body = {"title": title, "when": when or None, **extra}
+        return await self._json("POST", f"/v1/users/{quote(user, safe='')}/tasks", json=body)
+
+    async def task_action(self, user: str, task_id: int, action: str, **extra) -> dict:
+        path = f"/v1/users/{quote(user, safe='')}/tasks/{int(task_id)}"
+        return await self._json("POST", path, json={"action": action, **extra})
+
+    async def ask_permission(
+        self, action: str, *, timeout: float = 120, details: dict | None = None
+    ) -> bool:
+        """Pide permiso al usuario (la mascota muestra el diálogo) y espera su respuesta."""
+        body = {"action": action, "timeout": timeout, "details": details or {}}
+        response = await self._json("POST", "/v1/confirmations", json=body, timeout=timeout + 15)
+        return response["approved"]
+
+    # ------------------------------------------------------------------ manos (solo lectura)
+
+    async def hands(self, action: str, folder: str | None = None, **params) -> dict:
+        """`action`: "folders", "list", "read" o "search" (ver server/routes/hands.py)."""
+        params = {k: ("true" if v is True else "false" if v is False else v)
+                  for k, v in params.items() if v is not None}  # fmt: skip
+        path = (
+            "/v1/hands" if action == "folders" else f"/v1/hands/{quote(folder, safe='')}/{action}"
+        )
+        return await self._json("GET", path, params=params)
+
+    async def hands_change(
+        self, action: str, folder: str, body: dict | None = None, *, include_private: bool = True
+    ) -> dict:
+        """`action`: "write", "move", "delete", "mkdir" o "undo". Espera al permiso del
+        usuario (la mascota muestra el diálogo); si lo niega, lanza CoreRequestError."""
+        params = None if include_private else {"include_private": "false"}
+        path = f"/v1/hands/{quote(folder, safe='')}/{action}"
+        return await self._json("POST", path, json=body or {}, params=params)
 
     async def forget(self, user: str) -> int:
         return (await self._json("DELETE", f"/v1/users/{quote(user, safe='')}/memories"))["removed"]

@@ -7,7 +7,13 @@ para mejorar sus productos.
 import importlib.util
 import os
 
-from ai.providers.base import ProviderError, RefusalError, image_bytes
+from ai.providers.base import (
+    ProviderError,
+    ProviderReply,
+    RefusalError,
+    file_bytes,
+    image_bytes,
+)
 from core.logger import setup_logger
 
 logger = setup_logger("Gemini")
@@ -16,6 +22,7 @@ logger = setup_logger("Gemini")
 class GeminiProvider:
     name = "gemini"
     local = False
+    capabilities = frozenset({"text", "vision", "audio", "pdf"})  # Audio y PDF nativos
 
     def __init__(self, settings: dict, client=None):
         # Alias que Google actualiza con cada versión de Flash; fija uno concreto si prefieres
@@ -38,13 +45,21 @@ class GeminiProvider:
             self._client = genai.Client()  # Lee GEMINI_API_KEY (o GOOGLE_API_KEY) del entorno
         return self._client
 
-    async def chat(self, system: str, messages: list[dict], *, vision: bool = False) -> str:
+    async def chat(
+        self, system: str, messages: list[dict], *, vision: bool = False
+    ) -> ProviderReply:
         from google.genai import types
 
         contents = []
         for message in messages:
             parts = [types.Part.from_bytes(data=d, mime_type=m)
                      for d, m in map(image_bytes, message.get("images") or [])]  # fmt: skip
+            for path in message.get("audio") or []:
+                data, mime = file_bytes(path, "audio/wav")
+                parts.append(types.Part.from_bytes(data=data, mime_type=mime))
+            for path in message.get("documents") or []:
+                data, mime = file_bytes(path, "application/pdf")
+                parts.append(types.Part.from_bytes(data=data, mime_type=mime))
             parts.append(types.Part.from_text(text=message["content"]))
             role = "model" if message["role"] == "assistant" else "user"
             contents.append(types.Content(role=role, parts=parts))
@@ -66,7 +81,12 @@ class GeminiProvider:
         feedback = getattr(response, "prompt_feedback", None)
         if feedback is not None and getattr(feedback, "block_reason", None):
             raise RefusalError(f"Gemini bloqueó la petición ({feedback.block_reason})")
-        return (response.text or "").strip()
+        usage = getattr(response, "usage_metadata", None)
+        return ProviderReply(
+            text=(response.text or "").strip(),
+            input_tokens=getattr(usage, "prompt_token_count", None),
+            output_tokens=getattr(usage, "candidates_token_count", None),
+        )
 
     def check_health(self) -> bool:
         try:

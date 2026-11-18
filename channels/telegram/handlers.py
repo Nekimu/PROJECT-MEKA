@@ -79,7 +79,8 @@ async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def memories_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """/recuerdos: muestra los hechos guardados del usuario."""
     persona = _persona(context)
-    facts = await _core(context).memories(_ids(update)[1])
+    # Los recuerdos privados no se muestran: pasarían por los servidores de Telegram
+    facts = await _core(context).memories(_ids(update)[1], include_private=False)
     if not facts:
         text = persona.line("memories_empty")
     else:
@@ -129,7 +130,8 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Error procesando voz: {e}")
         transcription, replies = None, []
 
-    if not transcription:
+    # Con un cerebro que entiende audio no hay transcripción, pero sí respuesta (T-053)
+    if not transcription and not replies:
         await message.reply_text(persona.line("voice_fail"))
         return
     await _deliver(update, context, replies)

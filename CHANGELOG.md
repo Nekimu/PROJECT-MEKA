@@ -4,6 +4,65 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ## [Sin publicar]
 
+### Filosofía: compañera de productividad
+- El Tamagotchi pasa a ser solo **inspiración para interactuar y conversar** con el asistente. Sin mecánicas de cuidado (alimentar, energía, saciedad, ánimo, afecto, desbloqueos): MEKA ayuda, no distrae. `docs/VISION.md` actualizado.
+- **Modo concentración** (`core/focus.py`, `/v1/focus`): durante un bloque de trabajo el núcleo retiene notificaciones, música y avisos de agentes, deja pasar permisos, errores, apps importantes y la batería crítica, y al terminar envía un resumen de lo que esperó (`focus.started` / `focus.ended`, contrato 1.9).
+
+### Seguridad y fiabilidad (revisión del backend)
+- Telegram y MCP ya no reciben datos privados en las respuestas aunque el cerebro sea local; sin token, el núcleo rechaza peticiones con un `Host` ajeno (*DNS rebinding*).
+- Las acciones hechas por la API (botón «Hecho» de Telegram, permisos) llegan a la isla al instante; el WebSocket de la isla no se cae por un mensaje que falla, y Telegram se recupera solo.
+- Fechas (*«a las 12 de la noche»*, *«el 20 hay que…»*, 29 de febrero), notificaciones con la bandeja llena, carátulas que llegan tarde y avisos al arrancar.
+- `scripts\iniciar_meka.cmd` y `tests/test_pet_contract.py` (la isla y el núcleo hablan el mismo contrato).
+
+### Agenda y Hanna proactiva
+- **Carátulas**: `system.media` trae `album` y `artwork` (URL de la imagen que el reproductor entrega a Windows, p. ej. Spotify); se lee solo al cambiar de canción (~40 ms) y se sirve en `GET /v1/system/media/artwork`. Contrato 1.12.
+- **«Mientras no estabas…»**: al volver tras `welcome_minutes` sin tocar el equipo, Hanna te resume los avisos que sonaron, lo vencido y cuántas notificaciones llegaron (`nudge` con `kind: welcome`, solo en la isla).
+- El resumen ya no repite lo que se acaba de avisar (te llegaban dos mensajes sobre lo mismo).
+- **Avisos en Telegram** cuando no estás frente al equipo (la isla cerrada o `away_minutes` sin tocar teclado ni ratón, `proactive.remote: away`): el aviso llega con botones *✅ Hecho*, *⏰ 10 min* y *⏰ 1 h*, y `/tareas` lista lo pendiente. Nunca salen las tareas privadas ni las notificaciones de Windows (`shareable`). Solo al dueño del bot; los botones también comprueban `ALLOWED_USER_IDS`. Contrato 1.11.
+- **Tareas y recordatorios hablando**: *«recuérdame pagar la luz antes del 15»*, *«apunta comprar pan»*, *«¿qué tareas me quedan?»*, *«ya pagué la luz»*. Las fechas en español (*«mañana a las 5 de la tarde»*, *«en media hora»*, *«el viernes»*, números escritos) se entienden **sin el modelo**: funciona con cualquier cerebro, con la transcripción de una nota de voz y aunque el cerebro no responda.
+- La confirmación y la lista son exactas (no las redacta el modelo) y el cerebro recibe la agenda real como contexto para no inventar tareas. Lo dicho en privado se guarda como privado y no llega a la nube ni al MCP.
+- **Hanna proactiva** (`core/tasks/proactive.py`): avisa a su hora (`reminder.due`) y, de vez en cuando, resume lo vencido, lo de hoy y las notificaciones nuevas (`nudge`). Una consulta a SQLite por minuto, sin IA; respeta horas de silencio, modo concentración, la conversación en curso y un límite diario.
+- API `/v1/users/{user}/tasks` (listar, crear con fecha en lenguaje natural, hecha, reabrir, posponer, borrar), `/v1/proactive` y `POST /v1/proactive/check`; WebSocket `user.task`; herramientas MCP `tasks`, `add_task` y `complete_task`. Contrato 1.10.
+
+### Dynamic Island: datos del sistema (backend)
+- **Música en reproducción** de cualquier reproductor de Windows (SMTC) y **batería**: eventos `system.media` y `system.battery`, solo cuando cambian; controles con `user.media` (pausa, siguiente, anterior).
+- **Notificaciones de Windows**: `system.notification` / `system.notification_removed`, con apps permitidas o bloqueadas, **códigos de verificación ocultos** y textos sensibles ocultos. Privadas: nunca van a la nube, a la memoria ni al MCP. Se pueden descartar o abrir la app.
+- `GET /v1/system` y `GET /v1/system/notifications` para los clientes que se conectan tarde.
+- **Corregido: la isla no veía Spotify ni las notificaciones al arrancar.** La app de Go sirve la mascota en `127.0.0.1:<puerto>`, otro origen para el navegador, y el Core no enviaba cabeceras CORS: WebView2 bloqueaba las lecturas REST y las acciones con POST, y solo llegaba el WebSocket. Ahora los orígenes permitidos pueden usar la API (las webs ajenas siguen rechazadas).
+- El Core lee música, batería y notificaciones **antes** de aceptar clientes, y cada cliente nuevo recibe por WebSocket el estado actual de `system.media` y `system.battery` (salvo en modo concentración).
+- La isla muestra el reproductor **que está sonando**, aunque Windows marque como actual otro en pausa (p. ej. un vídeo del navegador).
+
+### Enrutamiento por capacidades
+- Cada cerebro declara lo que entiende de forma nativa (`text`, `vision`, `audio`, `pdf`) y `config.yml` lo corrige por modelo. El objetivo del asistente es fijo; la ruta interna se elige según el cerebro:
+  - **Notas de voz**: si el cerebro oye (Gemini; Gemma 4 vía llama.cpp, T-054), la nota va tal cual y **se omite la transcripción**; si no, faster-whisper.
+  - **PDF**: si el cerebro lo lee (Claude, Gemini), va el documento entero (tablas y maquetación); si no, se extrae el texto.
+  - Si la ruta nativa falla, se usa la clásica. `stt.mode: always` fuerza la transcripción.
+- El audio sin transcribir no pasa por el detector de datos sensibles: solo va a cerebros locales salvo `ai.privacy.audio_to_cloud: true`.
+- Telegram ya no dice "no te entendí" cuando la respuesta llega sin transcripción.
+
+### Servidores compatibles con OpenAI
+- Nuevo cerebro `openai_compat`: **llama.cpp** (`llama-server`), LM Studio, vLLM u Ollama por `/v1`. Envía imágenes (`image_url`) y audio (`input_audio`): la vía para usar **Gemma 4 con audio nativo** en local (probado con Gemma 4 E2B en llama.cpp: la nota de voz llega sin transcribir). `thinking: false` evita que los modelos que razonan devuelvan la respuesta vacía; si solo llega razonamiento, cuenta como fallo y se usa la ruta clásica. Cuenta tokens, y solo se considera local si su dirección es de este equipo.
+
+### Voz a texto
+- **faster-whisper** pasa a ser el motor por defecto (`ai/stt/`, un módulo por motor como el TTS) y openai-whisper queda de respaldo. Medido con la misma nota de voz: misma transcripción, ~15-20 % más rápido y **~3 veces menos RAM** (179 MB frente a 536 MB). El audio se decodifica con FFmpeg, así que no depende de PyAV.
+- **Instalación base sin PyTorch**: openai-whisper pasa a `requirements-whisper.txt` (opcional). La instalación base resuelve 71 paquetes sin PyTorch, frente a 86 con él; el CI ya no instala PyTorch.
+
+### Manos (fase 3)
+- **Lectura** de carpetas autorizadas (`hands.folders`): listar, leer (también PDF, DOCX y XLSX) y buscar, por API y MCP. Sin escapes (`..`, enlaces simbólicos), archivos sensibles siempre protegidos y carpetas `private` ocultas al MCP.
+- **Escritura** (escribir, mover, borrar, crear carpetas) con permiso por cambio, punto de restauración en un git "sombra" y deshacer. **Inactiva** hasta resolver el aislamiento del sistema (T-042).
+
+### Contrato y pruebas
+- Contrato **1.4 → 1.8** (siempre aditivo, con su historial en `core/contract.py`).
+- Colección de Postman: 35 peticiones y 44 comprobaciones.
+
+### Modularidad (backend)
+- **`server/` dividido por responsabilidades**: `app.py` solo compone la aplicación; las rutas viven en `server/routes/` (estado, conversación, voz, memoria y eventos), la seguridad en `security.py`, los modelos en `schemas.py` y las dependencias en `deps.py`. Mismas rutas y contrato.
+- **Voz como paquete `ai/tts/`** con la interfaz `TTSEngine`: un módulo por motor (`edge.py`, `piper.py`, `qwen.py`), conversión a OGG en `audio.py` y respaldo entre motores en `service.py`. `TTSService.unload_qwen()` pasa a `unload()`.
+- Del motor y la memoria salen `core/audio_store.py` (audios pendientes de descarga), `core/history.py` (historial por conversación), `core/textsearch.py` (normalización y vectores) y `core/legacy_import.py` (migración de `memory.json`).
+- **Guardia de tamaño** (`tests/test_modularidad.py`): ningún módulo del backend supera 300 líneas.
+- `config_local.yml` (ignorado por git) se mezcla sobre `config.yml` para ajustes de un solo equipo, como un modelo ligero de pruebas.
+- **Coordinación entre agentes** (`coordinacion/`, `scripts/tareas.py`): tablero de tareas compartido con Antigravity, con estados automáticos desde git y protección de áreas.
+
 ### Cerebro intercambiable
 - **Adaptadores de IA** (`ai/providers/`): Ollama (local), **Claude** (SDK oficial de Anthropic, `claude-opus-5-5` con `effort: low`, reintento automático si un filtro lo rechaza) y **Gemini** (`google-genai`, `gemini-flash-latest`). Los tres reciben el mismo prompt del personaje.
 - **Enrutamiento** en `config.yml`: `ai.provider` (conversación), `ai.vision_provider` (imágenes), `ai.fallback_provider` (si el principal falla o se niega) y `ai.local_only` (nada sale del equipo).

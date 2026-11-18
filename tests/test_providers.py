@@ -31,7 +31,7 @@ def test_ollama_receives_system_prompt_and_images(tmp_path):
         )
     )
     call = client.calls[0]
-    assert text == "Bonita" and call["model"] == "gemma3:4b"
+    assert text.text == "Bonita" and call["model"] == "gemma3:4b"
     assert call["messages"][0] == {"role": "system", "content": "SISTEMA"}
     assert call["messages"][1]["images"] == [str(image)]
     assert call["options"]["temperature"] == 0.6  # opciones de visión
@@ -88,7 +88,7 @@ def test_claude_request_shape(tmp_path):
         {"role": "assistant", "content": "¡hey!"},
         {"role": "user", "content": "mira", "images": [image]},
     ]
-    assert run(provider.chat("Eres MEKA", messages)) == "¡GG!"
+    assert run(provider.chat("Eres MEKA", messages)).text == "¡GG!"
 
     body = sent["body"]
     assert body["model"] == "claude-opus-5-5" and body["system"] == "Eres MEKA"
@@ -138,7 +138,7 @@ def test_gemini_request_shape(tmp_path):
         {"role": "assistant", "content": "¡hey!"},
         {"role": "user", "content": "mira", "images": [image]},
     ]
-    assert run(provider.chat("Eres MEKA", messages)) == "Hola"
+    assert run(provider.chat("Eres MEKA", messages)).text == "Hola"
 
     call = models.calls[0]
     assert call["model"] == "gemini-flash-latest"

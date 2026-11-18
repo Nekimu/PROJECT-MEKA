@@ -1,28 +1,34 @@
 """Bus de eventos de MEKA Core: lo que pasa en el núcleo llega a la mascota y a otros clientes.
 
-Contrato completo en docs/VISION.md («Contrato de eventos»). Cada evento es un JSON
+Contrato: core/contract.py (también en GET /v1/contract) y docs/VISION.md. Cada evento es un JSON
 `{"type": ..., "data": {...}}`.
 """
 
 import asyncio
 import contextlib
+from collections.abc import Callable
 
+from core.contract import CORE_ONLY_EVENTS, EMOTIONS, OUTBOUND
 from core.logger import setup_logger
+
+__all__ = ["CORE_ONLY_EVENTS", "EMOTIONS", "OUTBOUND_EVENTS", "EventBus", "event"]
 
 logger = setup_logger("Events")
 
-# Eventos que MEKA Core (o un agente externo, vía POST /v1/events) envía a los clientes
-OUTBOUND_EVENTS = frozenset({
-    "agent.working", "agent.done", "agent.error", "agent.confirm",
-    "message", "emotion", "budget.low",
-})  # fmt: skip
-EMOTIONS = frozenset({
-    "idle", "happy", "working", "thinking", "sleeping", "eating", "error", "celebrate", "sad",
-})  # fmt: skip
+# El contrato (eventos, campos y emociones) vive en core/contract.py
+OUTBOUND_EVENTS = frozenset(OUTBOUND)
 
 
 def event(type_: str, **data) -> dict:
     return {"type": type_, "data": data}
+
+
+def in_loop(loop: asyncio.AbstractEventLoop | None) -> bool:
+    """¿Estamos en el hilo de ese bucle? (las rutas `def` de FastAPI corren en otro hilo)."""
+    try:
+        return loop is None or asyncio.get_running_loop() is loop
+    except RuntimeError:  # Ningún bucle en este hilo: es el threadpool
+        return False
 
 
 class EventBus:
@@ -31,6 +37,10 @@ class EventBus:
     def __init__(self, queue_size: int = 100):
         self.queue_size = queue_size
         self._subscribers: set[asyncio.Queue] = set()
+        self._loop: asyncio.AbstractEventLoop | None = None  # El de los suscriptores
+        # Filtro opcional (modo concentración, core/focus.py): si devuelve False, el evento
+        # se retiene en lugar de enviarse
+        self.gate: Callable[[str, dict], bool] | None = None
 
     @property
     def subscribers(self) -> int:
@@ -38,18 +48,34 @@ class EventBus:
 
     def subscribe(self) -> asyncio.Queue:
         queue: asyncio.Queue = asyncio.Queue(self.queue_size)
+        with contextlib.suppress(RuntimeError):
+            self._loop = asyncio.get_running_loop()
         self._subscribers.add(queue)
         return queue
 
     def unsubscribe(self, queue: asyncio.Queue):
         self._subscribers.discard(queue)
 
-    def publish(self, type_: str, **data):
+    def publish(self, type_: str, **data) -> bool:
+        """Envía el evento a todos los clientes. False si el filtro lo retuvo."""
+        if self.gate is not None and not self.gate(type_, data):
+            logger.debug(f"Evento {type_} retenido por el modo concentración")
+            return False
         message = event(type_, **data)
+        loop = self._loop
+        if not in_loop(loop) and loop.is_running():
+            # Desde un hilo (rutas `def`): las colas de asyncio no son seguras entre hilos y
+            # el bucle no se despertaría; se entrega desde su propio hilo
+            loop.call_soon_threadsafe(self._deliver, message)
+        else:
+            self._deliver(message)
+        logger.debug(f"Evento {type_} enviado a {len(self._subscribers)} cliente(s)")
+        return True
+
+    def _deliver(self, message: dict):
         for queue in list(self._subscribers):
             if queue.full():
                 # Un cliente lento no frena a los demás: se descarta su evento más antiguo
                 with contextlib.suppress(asyncio.QueueEmpty):
                     queue.get_nowait()
             queue.put_nowait(message)
-        logger.debug(f"Evento {type_} enviado a {len(self._subscribers)} cliente(s)")

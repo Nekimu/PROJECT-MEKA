@@ -1,0 +1,4 @@
+#!/bin/sh
+# Rechaza commits que mezclan archivos de Claude Code y de Antigravity (coordinacion/README.md).
+. "$(dirname "$0")/_python.sh"
+exec "$PY" scripts/tareas.py check-commit "$1"

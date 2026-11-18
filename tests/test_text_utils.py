@@ -78,3 +78,17 @@ def test_split_long_message_by_lines_then_sentences():
 def test_split_paragraphs():
     assert split_paragraphs("A\n\nB\n\n") == ["A", "B"]
     assert split_paragraphs("   ") == []
+
+
+def test_console_with_legacy_encoding_never_breaks_a_reply(monkeypatch):
+    """En Windows con la salida redirigida (cp1252), un emoji del personaje daba error 500."""
+    import io
+    import sys
+
+    from core.logger import log_conversation
+
+    console = io.TextIOWrapper(io.BytesIO(), encoding="cp1252")  # errors="strict"
+    monkeypatch.setattr(sys, "stdout", console)
+    log_conversation("MEKA", "¡Hola! 😉 GG")  # No debe lanzar UnicodeEncodeError
+    console.flush()
+    assert b"GG" in console.buffer.getvalue()

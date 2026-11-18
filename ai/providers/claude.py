@@ -4,7 +4,13 @@ import base64
 import importlib.util
 import os
 
-from ai.providers.base import ProviderError, RefusalError, image_bytes
+from ai.providers.base import (
+    ProviderError,
+    ProviderReply,
+    RefusalError,
+    file_bytes,
+    image_bytes,
+)
 from core.logger import setup_logger
 
 logger = setup_logger("Claude")
@@ -16,6 +22,7 @@ FALLBACK_BETA = "server-side-fallback-2026-07-01"
 class ClaudeProvider:
     name = "claude"
     local = False
+    capabilities = frozenset({"text", "vision", "pdf"})  # Sin audio nativo
 
     def __init__(self, settings: dict, client=None):
         self.model = settings.get("model", "claude-opus-5-5")
@@ -40,10 +47,17 @@ class ClaudeProvider:
 
     @staticmethod
     def _content(message: dict):
-        if not message.get("images"):
+        if not message.get("images") and not message.get("documents"):
             return message["content"]
         blocks = []
-        for path in message["images"]:
+        for path in message.get("documents") or []:
+            data, mime = file_bytes(path, "application/pdf")
+            blocks.append({
+                "type": "document",
+                "source": {"type": "base64", "media_type": mime,
+                           "data": base64.standard_b64encode(data).decode()},
+            })  # fmt: skip
+        for path in message.get("images") or []:
             data, mime = image_bytes(path)
             blocks.append({
                 "type": "image",
@@ -53,7 +67,9 @@ class ClaudeProvider:
         blocks.append({"type": "text", "text": message["content"]})
         return blocks
 
-    async def chat(self, system: str, messages: list[dict], *, vision: bool = False) -> str:
+    async def chat(
+        self, system: str, messages: list[dict], *, vision: bool = False
+    ) -> ProviderReply:
         request = {
             "model": self.model,
             "max_tokens": self.max_tokens,
@@ -79,7 +95,12 @@ class ClaudeProvider:
             raise RefusalError(f"Claude declinó responder (categoría: {category})")
         if response.stop_reason == "max_tokens":
             logger.warning("La respuesta de Claude se cortó por max_tokens")
-        return "".join(b.text for b in response.content if b.type == "text").strip()
+        usage = getattr(response, "usage", None)
+        return ProviderReply(
+            text="".join(b.text for b in response.content if b.type == "text").strip(),
+            input_tokens=getattr(usage, "input_tokens", None),
+            output_tokens=getattr(usage, "output_tokens", None),
+        )
 
     def check_health(self) -> bool:
         if importlib.util.find_spec("anthropic") is None:

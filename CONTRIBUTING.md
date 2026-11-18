@@ -34,10 +34,10 @@ El CI ejecuta lo mismo en Python 3.11, 3.12 y 3.13.
 
 | Carpeta | Responsabilidad |
 |---|---|
-| `server/` | MEKA Core: API REST + WebSocket (FastAPI), token y control de origen |
+| `server/` | MEKA Core: `app.py` compone la app; `routes/` (una por dominio), `security.py` (token y origen), `schemas.py` y `deps.py` |
 | `core/` | Motor (`engine.py`), bus de eventos, configuración, logging, memoria, documentos y personajes |
-| `ai/` | Proveedores de IA (`ai/providers/`: Ollama, Claude, Gemini), STT, TTS, prompts y utilidades de texto |
+| `ai/` | Proveedores de IA (`ai/providers/`: Ollama, Claude, Gemini), STT, TTS (`ai/tts/`: un módulo por motor), prompts y utilidades de texto |
 | `channels/` | Clientes del núcleo: `client.py` (HTTP), `telegram/` y `mcp/` |
 | `personas/` | Paquetes de personaje |
-| `scripts/` | Herramientas manuales de diagnóstico |
+| `scripts/` | Herramientas manuales de diagnóstico y el tablero de tareas (`tareas.py`, `tablero/`) |
 | `tests/` | Tests automatizados (pytest) |

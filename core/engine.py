@@ -8,53 +8,34 @@ Aquí viven el personaje, la memoria, la IA, la voz y el bus de eventos.
 import asyncio
 import contextlib
 import gc
-import shutil
 import sys
-import time
-import uuid
-from dataclasses import asdict, dataclass
-from pathlib import Path
 
-from ai.prompts import build_document_prompt
 from ai.service import AIService
 from ai.stt import STTService
-from ai.text_utils import ParsedMessage, parse_message
 from ai.tts import TTSService
+from core.audio_store import AudioStore
 from core.config import resolve_path
-from core.documents import DOCUMENT_EXTENSIONS, IMAGE_EXTENSIONS, extract_text
+from core.confirmations import ConfirmationRegistry
 from core.events import EventBus
+from core.focus import FocusMode
+from core.hands import Hands
+from core.hands.restore import RestorePoints
 from core.logger import setup_logger
+from core.media import MediaMixin
 from core.memory import MemoryStore
 from core.persona import Persona, load_active_persona
+from core.replies import Reply, UnsupportedFileError
+from core.runs import RunLog
 from core.semantic import SemanticMemory
+from core.system import SystemMonitor
+from core.tasks.mixin import AgendaMixin
+
+__all__ = ["MekaEngine", "Reply", "UnsupportedFileError"]
 
 logger = setup_logger("Engine")
 
 
-class UnsupportedFileError(ValueError):
-    """El tipo de archivo no se puede analizar."""
-
-
-@dataclass
-class Reply:
-    """Un mensaje de respuesta listo para cualquier canal."""
-
-    text: str
-    audio: str | None = None  # Identificador del audio en GET /v1/audio/{id}
-    sticker: bool = False
-    gif: bool = False
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-
-@dataclass
-class _Audio:
-    path: Path
-    created: float
-
-
-class MekaEngine:
+class MekaEngine(MediaMixin, AgendaMixin):
     def __init__(
         self,
         config: dict,
@@ -77,23 +58,54 @@ class MekaEngine:
             legacy_owner=allowed[0] if allowed else None,
         )
         self.semantic = SemanticMemory.from_config(self.memory, config)
+        # Registro de ejecución (sin contenido) en la misma base que la memoria
+        self.runs = RunLog(self.memory.db_path)
         self.ai = ai or AIService(
-            config, memory=self.memory, persona=self.persona, semantic=self.semantic
+            config,
+            memory=self.memory,
+            persona=self.persona,
+            semantic=self.semantic,
+            runs=self.runs,
         )
+        if self.ai.runs is None:
+            self.ai.runs = self.runs
         self.stt = stt or STTService(config)
+        # auto: si el cerebro entiende audio, la nota de voz va tal cual (T-053) | always: transcribir
+        self.stt_mode = config.get("stt", {}).get("mode", "auto")
         self.tts = tts or TTSService(config, voice=self.persona.voice)
         self.bus = bus or EventBus()
+        # Permisos antes de acciones delicadas (agent.confirm → user.confirm)
+        self.confirmations = ConfirmationRegistry(
+            self.bus, config.get("server", {}).get("confirm_timeout_seconds", 120)
+        )
+        # Modo concentración: retiene lo que distrae (core/focus.py)
+        self.focus = FocusMode(config, self.bus)
+        # Música y batería para la Dynamic Island (core/system/); arranca con el servidor
+        self.system = SystemMonitor(config, self.bus)
+        # Manos (fase 3): carpetas autorizadas; los cambios piden permiso y dejan un punto de
+        # restauración en data/hands/ (core/hands/)
+        self.hands = Hands(
+            config,
+            self.bus,
+            self.runs,
+            confirmations=self.confirmations,
+            restore_points=RestorePoints(
+                resolve_path(config.get("paths", {}).get("hands_dir", "data/hands")),
+                self.memory.db_path,
+            ),
+        )
 
         server = config.get("server", {})
         self.broadcast = server.get("broadcast_messages", True)
-        self.audio_ttl = server.get("audio_ttl_seconds", 300)
         self.max_doc_chars = config.get("documents", {}).get("max_chars", 4000)
         self.temp_dir = resolve_path(paths.get("temp_dir", "temp"))
         self.uploads_dir = self.temp_dir / "uploads"
 
         # Un solo proceso pesado a la vez (Ollama, Whisper, Qwen-TTS) para no agotar la RAM
         self.lock = asyncio.Lock()
-        self._audio: dict[str, _Audio] = {}
+        self.audio = AudioStore(server.get("audio_ttl_seconds", 300))
+        # Tareas, recordatorios y la vigilancia proactiva (core/tasks/); arranca con el servidor
+        self._setup_agenda(config)
 
     # ------------------------------------------------------------------ ciclo de vida
 
@@ -122,10 +134,17 @@ class MekaEngine:
         self.ai.unload_model()
         self.stt.unload_model()
         with contextlib.suppress(Exception):
+            self.runs.close()
+        with contextlib.suppress(Exception):
+            self.hands.restore_points.close()
+        with contextlib.suppress(Exception):
+            self._close_agenda()
+        with contextlib.suppress(Exception):
             self.memory.close()
-        self.tts.unload_qwen()
-        for audio_id in list(self._audio):
-            self._drop_audio(audio_id)
+        self.tts.unload()
+        self.audio.clear()
+        self.confirmations.cancel_all()
+        self.focus.close()
         gc.collect()
 
     # ------------------------------------------------------------------ eventos
@@ -135,9 +154,20 @@ class MekaEngine:
         if self.broadcast and replies:
             self.bus.publish("message", text=" ".join(r.text for r in replies), emotion=emotion)
 
-    def _thinking(self):
+    def _emotion(self, emotion: str):
         if self.broadcast:
-            self.bus.publish("emotion", emotion="thinking")
+            self.bus.publish("emotion", emotion=emotion)
+
+    @contextlib.asynccontextmanager
+    async def _busy(self):
+        """La mascota piensa mientras el núcleo trabaja; si algo revienta, se agobia
+        (antes se quedaba en "thinking" para siempre)."""
+        self._emotion("thinking")
+        try:
+            yield
+        except Exception:
+            self._emotion("error")
+            raise
 
     # ------------------------------------------------------------------ conversación
 
@@ -149,57 +179,18 @@ class MekaEngine:
         *,
         audio: bool = True,
         use_memory: bool = True,
+        private: bool = False,
+        remote: bool = False,
     ) -> list[Reply]:
-        """Responde a un mensaje de texto. Con `audio`, sintetiza las frases marcadas con [AUDIO]."""
-        self._thinking()
-        async with self.lock:
-            raw = await self.ai.generate_response(session, user, text, use_memory=use_memory)
-            replies = await self._build_replies([parse_message(m) for m in raw], with_audio=audio)
-        self._say(replies)
-        return replies
-
-    async def voice(
-        self, session: str, user: str, audio_path: Path, *, audio: bool = True
-    ) -> tuple[str | None, list[Reply]]:
-        """Transcribe una nota de voz y responde. Devuelve (transcripción, respuestas)."""
-        self._thinking()
-        # STT y LLM dentro del mismo lock: Whisper nunca coincide en RAM con Ollama/Qwen
-        async with self.lock:
-            try:
-                transcription = await asyncio.to_thread(self.stt.transcribe, audio_path)
-            finally:
-                self.stt.release()
-                gc.collect()
-            if not transcription:
-                return None, []
-            raw = await self.ai.generate_response(session, user, transcription)
-            replies = await self._build_replies([parse_message(m) for m in raw], with_audio=audio)
-        self._say(replies)
-        return transcription, replies
-
-    async def analyze_file(
-        self, session: str, user: str, path: Path, file_name: str, request: str | None = None
-    ) -> list[Reply]:
-        """Analiza una imagen (visión) o un documento (texto extraído)."""
-        ext = Path(file_name).suffix.lower()
-        if ext not in IMAGE_EXTENSIONS and ext not in DOCUMENT_EXTENSIONS:
-            raise UnsupportedFileError(ext or file_name)
-
-        self._thinking()
-        async with self.lock:
-            if ext in IMAGE_EXTENSIONS:
-                request = request or self.persona.line("analyze_image")
-                raw = await self.ai.generate_multimodal_response(session, request, path)
-            else:
-                request = request or self.persona.line("analyze_document")
-                extracted = await asyncio.to_thread(extract_text, path, self.max_doc_chars)
-                prompt = build_document_prompt(
-                    file_name, extracted.text, request, extracted.truncated
-                )
-                raw = await self.ai.generate_response(session, user, prompt, use_memory=False)
-        # Los análisis conservan los paréntesis ("200 € (IVA incluido)") y no llevan audio
-        replies = [self._to_reply(parse_message(m, remove_roleplay=False), None) for m in raw if m]
-        self._say(replies)
+        """Responde a un mensaje de texto. Con `audio`, sintetiza las frases marcadas con [AUDIO].
+        Con `private`, solo responden proveedores locales (ai/routing.py). Con `remote`, la
+        respuesta sale del equipo (Telegram, MCP): ni tareas ni recuerdos privados en el prompt."""
+        async with self._busy(), self.lock:
+            parsed, answer = await self._answer_with_agenda(
+                session, user, text, private=private, use_memory=use_memory, remote=remote
+            )
+            replies = await self._build_replies(parsed, with_audio=audio, private=answer.private)
+        self._say(replies, "happy" if answer.ok else "error")
         return replies
 
     def reset(self, session: str):
@@ -207,83 +198,19 @@ class MekaEngine:
 
     # ------------------------------------------------------------------ memoria
 
-    def memories(self, user: str) -> list[str]:
-        return self.memory.get_facts(user)
+    # `include_private=False` para quien lleva los datos fuera del equipo (MCP, Telegram)
 
-    async def search_memories(self, user: str, query: str) -> list[str]:
+    def memories(self, user: str, *, include_private: bool = True) -> list[str]:
+        return self.memory.get_facts(user, include_private=include_private)
+
+    async def search_memories(
+        self, user: str, query: str, *, include_private: bool = True
+    ) -> list[str]:
         """Búsqueda por significado y por palabras (la usan la API y MCP)."""
-        return await self.ai.recall(user, query)
+        return await self.ai.recall(user, query, include_private=include_private)
 
-    def remember(self, user: str, fact: str) -> bool:
-        return self.memory.add_fact(user, fact)
+    def remember(self, user: str, fact: str, *, private: bool = False) -> bool:
+        return self.memory.add_fact(user, fact, private=private)
 
     def forget(self, user: str) -> int:
         return self.memory.clear(user)
-
-    # ------------------------------------------------------------------ voz
-
-    async def speak(self, text: str) -> str | None:
-        """Sintetiza un texto suelto con la voz del personaje y devuelve el id del audio."""
-        async with self.lock:
-            try:
-                return self._store_audio(await self.tts.generate_audio(text))
-            finally:
-                self.tts.release()
-                gc.collect()
-
-    async def _build_replies(self, parsed: list[ParsedMessage], *, with_audio: bool) -> list[Reply]:
-        """Genera todos los audios de una tanda y libera el TTS una sola vez al final."""
-        replies = []
-        try:
-            for message in parsed:
-                audio_id = None
-                if with_audio and message.wants_audio and message.text:
-                    audio_id = self._store_audio(await self.tts.generate_audio(message.text))
-                replies.append(self._to_reply(message, audio_id))
-        finally:
-            if with_audio:
-                self.tts.release()
-                gc.collect()
-        return replies
-
-    @staticmethod
-    def _to_reply(message: ParsedMessage, audio_id: str | None) -> Reply:
-        return Reply(
-            text=message.text, audio=audio_id, sticker=message.wants_sticker, gif=message.wants_gif
-        )
-
-    def _store_audio(self, path: Path | None) -> str | None:
-        self.purge_audio()
-        if path is None:
-            return None
-        audio_id = uuid.uuid4().hex
-        self._audio[audio_id] = _Audio(Path(path), time.monotonic())
-        return audio_id
-
-    def take_audio(self, audio_id: str) -> Path | None:
-        """Entrega un audio una sola vez: el canal lo descarga y el núcleo lo olvida."""
-        audio = self._audio.pop(audio_id, None)
-        return audio.path if audio and audio.path.is_file() else None
-
-    def _drop_audio(self, audio_id: str):
-        audio = self._audio.pop(audio_id, None)
-        if audio:
-            audio.path.unlink(missing_ok=True)
-
-    def purge_audio(self):
-        """Borra los audios que ningún canal pidió a tiempo (`server.audio_ttl_seconds`)."""
-        limit = time.monotonic() - self.audio_ttl
-        for audio_id, audio in list(self._audio.items()):
-            if audio.created < limit:
-                self._drop_audio(audio_id)
-
-    # ------------------------------------------------------------------ archivos subidos
-
-    def new_upload_path(self, suffix: str) -> Path:
-        self.uploads_dir.mkdir(parents=True, exist_ok=True)
-        return self.uploads_dir / f"{uuid.uuid4().hex}{suffix.lower()}"
-
-    def clear_temp(self):
-        """Archivos de una ejecución anterior que se interrumpió."""
-        with contextlib.suppress(OSError):
-            shutil.rmtree(self.uploads_dir)

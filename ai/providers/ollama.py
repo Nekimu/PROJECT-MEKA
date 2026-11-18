@@ -2,7 +2,7 @@
 
 import asyncio
 
-from ai.providers.base import ProviderError
+from ai.providers.base import ProviderError, ProviderReply
 from core.logger import setup_logger
 
 logger = setup_logger("Ollama")
@@ -20,6 +20,9 @@ DEFAULT_VISION_OPTIONS = {"temperature": 0.6, "num_predict": 1024}  # Menor temp
 class OllamaProvider:
     name = "ollama"
     local = True
+    # Ollama aún no pasa audio a los modelos de forma fiable (ni siquiera a Gemma 4) ni lee PDF.
+    # La visión depende del modelo (gemma3:270m no ve): corrígelo con `capabilities` si hace falta.
+    capabilities = frozenset({"text", "vision"})
 
     def __init__(self, settings: dict, client=None):
         self.model = settings.get("model", "gemma3:12b")
@@ -39,7 +42,9 @@ class OllamaProvider:
         self.client = client
         logger.info(f"Ollama configurado en {self.host} con el modelo {self.model}")
 
-    async def chat(self, system: str, messages: list[dict], *, vision: bool = False) -> str:
+    async def chat(
+        self, system: str, messages: list[dict], *, vision: bool = False
+    ) -> ProviderReply:
         payload = [{"role": "system", "content": system}]
         for message in messages:
             item = {"role": message["role"], "content": message["content"]}
@@ -57,7 +62,11 @@ class OllamaProvider:
             )
         except Exception as e:
             raise ProviderError(f"Ollama: {e}") from e
-        return (response.message.content or "").strip()
+        return ProviderReply(
+            text=(response.message.content or "").strip(),
+            input_tokens=getattr(response, "prompt_eval_count", None),
+            output_tokens=getattr(response, "eval_count", None),
+        )
 
     def check_health(self) -> bool:
         """Verifica la conexión con Ollama y que el modelo esté descargado."""

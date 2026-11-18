@@ -1,77 +1,484 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark" data-glass="liquid" class="desktop">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MEKA · Mascota</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>MEKA · Companion</title>
   <link rel="stylesheet" href="pet.css">
 </head>
 <body>
-  <main class="desk">
-    <!-- La "ventana" de la mascota: en escritorio (Tauri) es la ventana transparente completa -->
-    <section class="stage" id="stage" aria-label="Mascota MEKA">
-      <div class="bubble" id="bubble" role="status" aria-live="polite" hidden></div>
+  <!-- Escenario Principal Minimalista (inspirado en Soul-of-Waifu & Apple Design) -->
+  <main class="desk" id="mainDesk">
+    <section class="stage" id="stage" data-state="idle" data-stage-view="hero" data-glass="liquid" aria-label="Compañera virtual MEKA">
+      <!-- Capas de refracción, desenfoque y ambientación Liquid Glass -->
+      <div class="stage__glass-fx" id="stageGlassFx" aria-hidden="true">
+        <span class="stage__glass-blob stage__glass-blob--1"></span>
+        <span class="stage__glass-blob stage__glass-blob--2"></span>
+        <span class="stage__glass-blob stage__glass-blob--3"></span>
+        <img class="stage__glass-cover" id="stageGlassCoverBlur" alt="" hidden />
+        <div class="stage__glass-frost"></div>
+      </div>
+      <!-- Cápsula superior estilo Dynamic Island -->
+      <header class="stage__top" id="stageTop">
+        <button type="button"
+                class="stage__icon-btn"
+                id="drawer-open"
+                aria-label="Abrir selector de personajes"
+                aria-expanded="false"
+                aria-controls="stageSkinsCard"
+                title="Personajes y skins">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="4" y1="7" x2="20" y2="7"></line>
+            <line x1="4" y1="12" x2="16" y2="12"></line>
+            <line x1="4" y1="17" x2="20" y2="17"></line>
+          </svg>
+        </button>
 
-      <div class="pet" id="pet" tabindex="0" aria-label="Mascota: haz clic para acariciarla, clic derecho para el menú">
-        <div class="pet__body" id="petBody" data-motion="breathe">
-          <img class="pet__sprite" id="sprite" alt="" draggable="false">
-          <canvas class="pet__sprite pet__sprite--pixel" id="pixelSprite" hidden></canvas>
+        <div class="stage__badge" id="skinBadge" data-active-brief="avatar" title="Dynamic Island · Samsung Brief">
+          <div class="brief-viewport" id="briefViewport">
+            <div class="brief-track" id="briefTrack">
+              <!-- Brief Card 1: Avatar / Identidad -->
+              <div class="brief-card brief-card--avatar is-active" id="briefAvatar" data-brief="avatar" aria-label="Resumen de compañera">
+                <div class="stage__island-left brief-card__leading">
+                  <img class="stage__mini-thumb" id="miniThumb" src="skins/hana/idle.webp" width="24" height="24" alt="" aria-hidden="true">
+                </div>
+                <div class="stage__island-center brief-card__center">
+                  <div class="marquee-wrapper">
+                    <strong class="brief-card__title marquee-content" id="skinNameLabel">Hana</strong>
+                  </div>
+                  <div class="marquee-wrapper">
+                    <small class="brief-card__subtitle marquee-content" id="stateLabel">En línea</small>
+                  </div>
+                </div>
+                <div class="stage__island-right brief-card__trailing">
+                  <i class="stage__dot" id="stateDot" aria-hidden="true"></i>
+                </div>
+              </div>
+
+              <!-- Brief Card 2: Multimedia / One UI 9 Audio -->
+              <div class="brief-card brief-card--media" id="briefMedia" data-brief="media" aria-label="Control multimedia">
+                <div class="brief-card__leading">
+                  <img class="brief-card__cover" id="briefMediaCover" alt="" hidden />
+                  <span class="brief-card__icon brief-card__icon--music" id="briefMediaIcon" aria-hidden="true">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    </svg>
+                  </span>
+                </div>
+                <div class="stage__island-center brief-card__center">
+                  <div class="marquee-wrapper marquee-360">
+                    <strong class="brief-card__title marquee-content" id="briefMediaTitle">Sin reproducción · Pausado</strong>
+                    <span id="briefMediaArtist" hidden></span>
+                  </div>
+                </div>
+                <div class="brief-card__trailing">
+                  <div class="oneui-eq" id="briefWaveform" title="Visualizador One UI 9" data-playing="false" aria-hidden="true">
+                    <span class="oneui-eq__bar"></span>
+                    <span class="oneui-eq__bar"></span>
+                    <span class="oneui-eq__bar"></span>
+                    <span class="oneui-eq__bar"></span>
+                  </div>
+                  <!-- Mini visualizador de música para compatibilidad (solo en media) -->
+                  <span class="stage__mini-music" id="miniMusicBar" title="Música en reproducción" hidden>
+                    <i></i><i></i><i></i>
+                  </span>
+                </div>
+                <div class="brief-media__bottom-glow" aria-hidden="true"></div>
+              </div>
+
+              <!-- Brief Card 3: Notificaciones / Sistema -->
+              <div class="brief-card brief-card--notif" id="briefNotif" data-brief="notif" aria-label="Notificaciones del sistema">
+                <div class="brief-card__leading">
+                  <span class="brief-card__icon brief-card__icon--notif" id="briefNotifIcon" aria-hidden="true">
+                    <span class="brief-notif-emoji" id="briefNotifEmoji" hidden>🔔</span>
+                    <svg class="brief-notif-svg" id="briefNotifSvg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                  </span>
+                </div>
+                <div class="stage__island-center brief-card__center">
+                  <div class="marquee-wrapper marquee-360">
+                    <strong class="brief-card__title marquee-content" id="briefNotifTitle">Notificaciones · Al día ✨</strong>
+                    <small class="brief-card__subtitle marquee-content" id="briefNotifSubtitle" hidden></small>
+                  </div>
+                </div>
+                <div class="brief-card__trailing">
+                  <i class="brief-card__badge-dot" id="briefNotifDot" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="pet__shadow"></div>
-        <div class="pet__particles" id="particles" aria-hidden="true"></div>
-      </div>
 
-      <div class="stats" id="statsMini" aria-label="Estado de la mascota">
-        <div class="stat" data-stat="energia" title="Energía"><span>⚡</span><i></i></div>
-        <div class="stat" data-stat="saciedad" title="Saciedad"><span>🍙</span><i></i></div>
-        <div class="stat" data-stat="animo" title="Ánimo"><span>😊</span><i></i></div>
-        <div class="stat" data-stat="afecto" title="Afecto"><span>💙</span><i></i></div>
-      </div>
-
-      <form class="chat" id="chatForm" hidden>
-        <input id="chatInput" type="text" maxlength="200" placeholder="Escríbele algo..." autocomplete="off" aria-label="Mensaje para la mascota">
-      </form>
-
-      <ul class="menu" id="menu" role="menu" hidden></ul>
-    </section>
-
-    <!-- Panel de pruebas: solo en el navegador, simula los eventos que enviará MEKA Core -->
-    <aside class="panel" id="panel" aria-label="Panel de pruebas">
-      <header class="panel__head">
-        <h1>MEKA <small>prototipo</small></h1>
-        <p>Clic: acariciar · Arrastrar: mover · Clic derecho o pulsación larga: menú</p>
+        <div class="stage__top-actions">
+          <span class="stage__focus-badge" id="focusBadge" title="Modo concentración activo" hidden>
+            <span class="stage__focus-badge-icon" aria-hidden="true">🎯</span>
+            <span class="stage__focus-badge-text" id="focusTimerText">Concentración</span>
+          </span>
+          <span class="stage__header-battery" id="headerBattery" title="Nivel de batería">
+            <span class="stage__header-battery-icon" id="headerBatteryIcon">🔋</span>
+            <span class="stage__header-battery-text" id="headerBatteryText">92%</span>
+          </span>
+          <button type="button" class="stage__icon-btn" id="menuBtn" title="Ajustes y modos rápidos" aria-label="Abrir ajustes y modos" aria-expanded="false" aria-controls="stageSettingsCard">⋯</button>
+        </div>
       </header>
 
-      <section>
-        <h2>Eventos de MEKA Core</h2>
-        <div class="buttons" id="eventButtons"></div>
-      </section>
+      <!-- Contenido expandido estilo DynamicWin HUD / Samsung Brief Shelf -->
+      <div class="stage__shelf" id="stageShelf" data-stage-view="hero">
+        <!-- Banner Proactivo (T-057) -->
+        <aside class="proactive-banner" id="proactiveBanner" role="status" aria-live="polite" hidden>
+          <div class="proactive-banner__body">
+            <span class="proactive-banner__icon" id="proactiveBannerIcon" aria-hidden="true">⏰</span>
+            <div class="proactive-banner__content">
+              <span class="proactive-banner__kicker" id="proactiveBannerKicker">Recordatorio</span>
+              <p class="proactive-banner__title" id="proactiveBannerTitle"></p>
+            </div>
+            <button type="button" class="proactive-banner__close" id="proactiveCloseBtn" title="Cerrar aviso" aria-label="Cerrar">✕</button>
+          </div>
+          <div class="proactive-banner__actions" id="proactiveBannerActions">
+            <button type="button" class="proactive-banner__btn proactive-banner__btn--done" id="proactiveDoneBtn">✓ Hecho</button>
+            <button type="button" class="proactive-banner__btn proactive-banner__btn--snooze" id="proactiveSnoozeBtn">💤 Posponer 10 min</button>
+          </div>
+        </aside>
 
-      <section>
-        <h2>Tamagotchi</h2>
-        <dl class="numbers" id="statsNumbers"></dl>
-        <label class="row">Velocidad del tiempo
-          <select id="speed">
-            <option value="1">Real (1×)</option>
-            <option value="60">1 min = 1 h (60×)</option>
-            <option value="600">Muy rápido (600×)</option>
-          </select>
-        </label>
-        <div class="buttons">
-          <button type="button" id="unlockAll">Desbloquear personajes</button>
-          <button type="button" id="resetPet">Reiniciar mascota</button>
+        <!-- Hero Card: Diálogo dinámico y Avatar -->
+        <div class="stage__hero" id="stageHero">
+          <!-- Bocadillo de diálogo + Confirmación interactiva agent.confirm -->
+          <div class="bubble" id="bubble" role="status" aria-live="polite" hidden>
+            <div class="bubble__header">
+              <span class="bubble__speaker" id="bubbleSpeaker">Hana</span>
+              <span class="bubble__tag" id="bubbleTag" hidden>Autorización</span>
+            </div>
+            <p class="bubble__text" id="bubbleText"></p>
+            <div class="bubble__confirm" id="confirmBar" hidden>
+              <button type="button" class="bubble__btn bubble__btn--approve" id="confirmApprove">Permitir</button>
+              <button type="button" class="bubble__btn bubble__btn--reject" id="confirmReject">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Avatar Animado Chibi HD -->
+          <div class="pet is-smooth" id="pet" tabindex="0" aria-label="Compañera: clic para interactuar, arrastrar para mover, clic derecho para menú">
+            <div class="pet__aura" aria-hidden="true"></div>
+            <div class="pet__body" id="petBody" data-motion="breathe">
+              <img class="pet__sprite pet__img" id="petImg" src="skins/hana/idle.webp" width="208" height="208" alt="" draggable="false">
+              <canvas class="pet__sprite pet__sprite--pixel" id="pixelSprite" width="64" height="64" hidden></canvas>
+            </div>
+            <div class="pet__shadow"></div>
+            <div class="pet__particles" id="particles" aria-hidden="true"></div>
+          </div>
+
+          <!-- Área anclada de diálogo / respuestas de Hanna (debajo del avatar) -->
+          <div class="agent-dock" id="agentReplyDock" data-tone="idle" aria-live="polite" aria-label="Última respuesta de Hanna">
+            <div class="agent-dock__head">
+              <span class="agent-dock__speaker">
+                <span class="agent-dock__dot" aria-hidden="true"></span>
+                <span id="agentDockSpeaker">Hanna</span>
+              </span>
+              <span class="agent-dock__badge" id="agentDockBadge">En reposo</span>
+              <span class="agent-dock__meta" id="agentDockMeta"></span>
+            </div>
+            <div class="agent-dock__body" id="agentDockBody">
+              <p class="agent-dock__text" id="agentDockText">Lista por aquí. Escríbeme o usa el micrófono cuando quieras.</p>
+            </div>
+          </div>
         </div>
-      </section>
 
-      <section>
-        <h2>Conexión con MEKA Core</h2>
-        <form class="row" id="coreForm">
-          <input id="coreUrl" type="text" value="ws://127.0.0.1:8765/v1/events" aria-label="URL del WebSocket">
-          <button type="submit">Conectar</button>
-        </form>
-        <p class="hint">Estado: <strong id="coreStatus">sin conectar</strong></p>
-      </section>
-    </aside>
+        <!-- Selector inline de Personajes / Avatares (acoplado a Dynamic Island) -->
+        <section class="stage__skins-card" id="stageSkinsCard" aria-label="Selector de personaje" hidden>
+          <div class="stage__skins-head">
+            <div class="stage__skins-title-group">
+              <span class="stage__skins-title">Personajes</span>
+              <span class="pill-hint" id="styleIndicator">Chibi HD</span>
+            </div>
+            <button type="button" class="stage__skins-close" id="skinsCloseBtn" title="Cerrar selector (Esc)" aria-label="Cerrar selector">✕</button>
+          </div>
+          <div class="skin-grid" id="skinCards" role="radiogroup" aria-label="Selector de personaje"></div>
+        </section>
+
+        <!-- Panel de Ajustes, Modos y Cerebro Core (botón derecho ⋯) -->
+        <section class="stage__settings-card" id="stageSettingsCard" aria-label="Ajustes y modos rápidos" hidden>
+          <div class="settings-card__head">
+            <div class="settings-card__title-group">
+              <span class="settings-card__icon" aria-hidden="true">⚙️</span>
+              <span class="settings-card__title">Ajustes y modos</span>
+              <span class="settings-card__badge">MEKA</span>
+            </div>
+            <button type="button" class="settings-card__close" id="settingsCloseBtn" title="Volver al avatar" aria-label="Cerrar ajustes">✕</button>
+          </div>
+
+          <div class="settings-scroll-area" id="settingsScrollArea">
+            <div class="settings-group">
+              <span class="settings-group__title">Modos e interfaz</span>
+              <div class="settings-switch-grid">
+                <button type="button" class="focus-toggle-btn win-switch-btn" id="focusToggleBtn" role="switch" aria-checked="false" title="Activar o desactivar modo concentración sin temporizador">
+                  <span class="win-switch__label">🎯 Concentración</span>
+                  <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
+                </button>
+                <button type="button" class="glass-toggle-btn win-switch-btn is-active" id="glassToggleBtn" role="switch" aria-checked="true" title="Cambiar entre estilo Liquid Glass y modo Normal">
+                  <span class="win-switch__label">💧 Liquid Glass</span>
+                  <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
+                </button>
+                <button type="button" class="private-toggle-btn win-switch-btn" id="privateToggleBtn" role="switch" aria-checked="false" title="Modo privado: no guarda mensajes o tareas en memoria ni los comparte fuera">
+                  <span class="win-switch__label">🔒 Privado</span>
+                  <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
+                </button>
+                <button type="button" class="sleep-toggle-btn win-switch-btn" id="sleepToggleBtn" role="switch" aria-checked="false" title="Poner o despertar a Hanna">
+                  <span class="win-switch__label">🌙 Reposo</span>
+                  <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
+                </button>
+                <button type="button" class="theme-toggle-btn win-switch-btn" id="themeToggle" role="switch" aria-checked="false" title="Cambiar entre tema oscuro y tema claro">
+                  <span class="win-switch__label" id="themeToggleLabel">☀️ Tema claro</span>
+                  <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
+                </button>
+                <button type="button" class="auto-expand-toggle-btn win-switch-btn" id="autoExpandToggleBtn" role="switch" aria-checked="false" title="Si está activo, despliega momentáneamente la isla al cambiar música o recibir notificaciones (desactivado por defecto)">
+                  <span class="win-switch__label">📣 Auto-desplegar avisos</span>
+                  <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
+                </button>
+              </div>
+              <small class="focus-summary-text" id="focusSummaryText" hidden></small>
+            </div>
+
+            <div class="settings-group">
+              <span class="settings-group__title">Acciones rápidas</span>
+              <div class="settings-quick-actions">
+                <button type="button" class="settings-action-btn" id="settingsProactiveBtn" title="Consultar recordatorios y pendientes con el backend">✨ Pendientes</button>
+                <button type="button" class="settings-action-btn" id="settingsCenterBtn" title="Centrar ventana del avatar">🎯 Centrar</button>
+                <button type="button" class="settings-action-btn" id="settingsDodgeBtn" title="Mover al borde opuesto">↔ Esquivar</button>
+                <button type="button" class="settings-action-btn" id="settingsScreenshotBtn" title="Ocultar temporalmente 10 segundos">📸 Ocultar 10s</button>
+                <button type="button" class="settings-action-btn settings-action-btn--wide" id="popoutBtn">🗗 Ventana flotante</button>
+              </div>
+            </div>
+
+            <details class="stage__settings-disclosure">
+              <summary>🧠 Cerebro y conexión Core</summary>
+              <div class="stage__settings-body">
+                <p class="stage__core-summary" id="coreRunsSummary" hidden></p>
+                <form class="row stage__core-form" id="coreForm">
+                  <input id="coreUrl" type="text" value="ws://127.0.0.1:8765/v1/events" aria-label="URL del WebSocket">
+                  <input id="coreToken" type="password" placeholder="Token" aria-label="Token MEKA_API_TOKEN" class="input-token">
+                  <button type="submit" class="btn-primary">Conectar</button>
+                </form>
+                <div class="settings-disclosure__actions">
+                  <button type="button" class="settings-action-btn" id="coreResetSessionBtn" title="Limpiar historial de esta sesión en Core">🧹 Reiniciar sesión</button>
+                </div>
+                <p class="hint" id="coreHealthInfo" hidden></p>
+                <div class="buttons" id="eventButtons" hidden></div>
+                <ul class="log-list" id="eventLog" hidden></ul>
+                <button type="button" id="clearLog" hidden></button>
+                <span class="core-badge" id="coreBadge" data-connected="false" hidden>
+                  <i class="core-badge__dot"></i>
+                  <strong id="coreStatus">sin conectar</strong>
+                </span>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <!-- Centro de Notificaciones estilo Samsung One UI 9 / Dynamic Island -->
+        <section class="stage__notif-card" id="stageNotifCard" aria-label="Centro de notificaciones" hidden>
+          <div class="notif-card__head">
+            <div class="notif-card__title-group">
+              <span class="notif-card__badge-icon" aria-hidden="true">🔔</span>
+              <span class="notif-card__title">Notificaciones</span>
+              <span class="notif-card__count" id="notifCountBadge" hidden>0</span>
+            </div>
+            <div class="notif-card__head-actions">
+              <button type="button" class="notif-card__ask-btn" id="proactiveAskBtn" title="Consultar resumen proactivo">✨ Pendientes</button>
+              <button type="button" class="notif-card__clear-all" id="notifClearAllBtn" title="Marcar todas como vistas" aria-label="Limpiar notificaciones" hidden>
+                Marcar vista
+              </button>
+            </div>
+          </div>
+
+          <div class="notif-scroll-area" id="notifScrollArea">
+            <form class="task-quick-form" id="taskQuickForm" autocomplete="off">
+              <input
+                type="text"
+                class="task-quick-form__input"
+                id="taskQuickInput"
+                placeholder="Nuevo recordatorio o tarea..."
+                maxlength="140"
+                aria-label="Crear recordatorio o tarea rápida"
+              />
+              <button type="submit" class="task-quick-form__btn" title="Guardar recordatorio o tarea" aria-label="Guardar tarea">+</button>
+            </form>
+
+            <div class="tasks-section" id="proactiveTasksSection" hidden>
+              <div class="tasks-section__head">
+                <span class="tasks-section__title">📌 Recordatorios y tareas</span>
+                <span class="tasks-section__count" id="taskCountBadge">0</span>
+              </div>
+              <div class="task-list" id="stageTaskList" role="list"></div>
+            </div>
+
+            <div class="notif-list" id="stageNotifList" role="list">
+              <!-- Items de notificación se insertan dinámicamente aquí -->
+            </div>
+
+            <!-- Estado vacío cuando no hay notificaciones -->
+            <div class="notif-empty" id="stageNotifEmpty" role="status">
+              <span class="notif-empty__icon" aria-hidden="true">✨</span>
+              <p class="notif-empty__text">Sin notificaciones pendientes ✨</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reproductor multimedia dinámico estilo Samsung One UI Now Bar (system.media) -->
+        <div class="hud-media nowbar-player" id="mediaWidget" aria-label="Reproductor multimedia" hidden>
+          <div class="hud-media__backdrop" aria-hidden="true">
+            <img class="hud-media__backdrop-img" id="mediaCoverBackdropImg" alt="" hidden />
+          </div>
+          <div class="hud-media__top-row">
+            <div class="hud-media__device-pill">
+              <svg class="hud-media__device-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+              </svg>
+              <span class="hud-media__source" id="mediaSource">Spotify</span>
+            </div>
+            <button type="button" class="hud-media__output-btn" id="mediaOutputBtn" title="Salida de audio" aria-label="Salida de audio">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hud-media__track-row">
+            <div class="hud-media__artwork" id="mediaArtworkWrap">
+              <img class="hud-media__cover" id="mediaCoverImg" alt="" hidden />
+              <span class="hud-media__disc-icon" id="mediaDiscIcon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+              </span>
+            </div>
+            <div class="hud-media__track-meta" id="mediaTrackMeta">
+              <div class="hud-media__title-line">
+                <span class="hud-media__title" id="mediaTitle">Sin reproducción</span>
+                <span class="hud-media__dot" id="mediaDot" aria-hidden="true">•</span>
+                <span class="hud-media__artist" id="mediaArtist">—</span>
+              </div>
+              <span class="hud-media__album" id="mediaAlbum" hidden></span>
+            </div>
+          </div>
+
+          <div class="hud-media__scrubber">
+            <progress class="hud-media__native-progress" id="mediaProgressNative" max="100" value="0" aria-label="Progreso de la canción"></progress>
+            <div class="hud-media__bar hud-media__bar--wave" id="mediaBar">
+              <div class="hud-media__wave-track" aria-hidden="true"></div>
+              <div class="hud-media__bar-fill" id="mediaBarFill">
+                <div class="hud-media__wave-crest" aria-hidden="true">
+                  <span class="hud-media__wave-layer hud-media__wave-layer--primary"></span>
+                  <span class="hud-media__wave-layer hud-media__wave-layer--secondary"></span>
+                </div>
+                <span class="hud-media__orb" id="mediaBarOrb" aria-hidden="true"></span>
+              </div>
+            </div>
+            <div class="hud-media__timestamps">
+              <span class="hud-media__time-current" id="mediaTimeCurrent">0:00</span>
+              <span class="hud-media__time" id="mediaTime" hidden>0:00 / 0:00</span>
+              <span class="hud-media__time-total" id="mediaTimeTotal">0:00</span>
+            </div>
+          </div>
+
+          <div class="hud-media__controls">
+            <button type="button" class="hud-media__btn hud-media__btn--subtle" id="mediaLikeBtn" aria-pressed="false" title="Me gusta" aria-label="Me gusta">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M7 10v12"/>
+                <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>
+              </svg>
+            </button>
+            <button type="button" class="hud-media__btn hud-media__btn--circle" id="mediaPrev" title="Anterior (user.media previous)" aria-label="Canción anterior">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
+              </svg>
+            </button>
+            <button type="button" class="hud-media__btn hud-media__btn--play hud-media__btn--circle-lg" id="mediaPlayPause" title="Reproducir / Pausar (user.media play_pause)" aria-label="Reproducir o pausar">▶</button>
+            <button type="button" class="hud-media__btn hud-media__btn--circle" id="mediaNext" title="Siguiente (user.media next)" aria-label="Canción siguiente">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+              </svg>
+            </button>
+            <button type="button" class="hud-media__btn hud-media__btn--subtle" id="mediaShuffleBtn" aria-pressed="false" title="Aleatorio" aria-label="Modo aleatorio">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 3h5v5"/>
+                <path d="M4 20 21 3"/>
+                <path d="M21 16v5h-5"/>
+                <path d="M15 15l6 6"/>
+                <path d="M4 4l5 5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tarjeta dedicada de Modo Concentración (vista opcional data-stage-view="focus") -->
+        <section class="stage__focus-card" id="stageFocusCard" aria-label="Modo concentración" hidden>
+          <div class="focus-card__head">
+            <span class="focus-card__title">Modo Concentración</span>
+          </div>
+          <p class="focus-card__desc" id="focusCardDesc">Silencia notificaciones y distracciones hasta que lo desactives.</p>
+          <button type="button" class="win-switch-btn focus-card__switch" id="focusCardSwitchBtn" role="switch" aria-checked="false">
+            <span class="win-switch__label" id="focusCardSwitchLabel">Desactivado</span>
+            <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
+          </button>
+        </section>
+
+        <!-- Barra de estado rápida y chips HUD (ocultos permanentemente del stage, accesibles por menús) -->
+        <div class="stage__glance stage__chips" id="stageGlance" hidden aria-hidden="true">
+          <div class="hud-chip" id="hudCoreChip" title="Estado de conexión con MEKA Core">
+            <span class="hud-chip__dot" id="hudCoreDot"></span>
+            <span id="hudCoreText">Core: 8765</span>
+          </div>
+          <div class="hud-chip" id="hudBatteryChip" title="Nivel de batería" hidden>
+            <span class="hud-chip__icon" id="hudBatteryIcon">🔋</span>
+            <span id="hudBatteryText">--%</span>
+          </div>
+          <div class="hud-chip" id="hudMoodChip" title="Estado de ánimo de la compañera">
+            <span class="hud-chip__icon" id="hudMoodIcon">💖</span>
+            <span id="hudMoodText">Feliz</span>
+          </div>
+          <div class="hud-chip" id="hudSkinChip" title="Avatar activo">
+            <span class="hud-chip__icon">🎮</span>
+            <span id="hudSkinText">Hana</span>
+          </div>
+        </div>
+
+        <!-- Barra de acciones rápidas (oculta permanentemente del stage, accesible por menús) -->
+        <div class="stage__actions" id="stageActions" hidden aria-hidden="true">
+          <button type="button" class="hud-action-btn" id="hudActionGreet" title="Interactuar / Saludar" hidden>
+            <span class="hud-action-btn__icon">💬</span> Saludar
+          </button>
+          <button type="button" class="hud-action-btn" id="hudActionSleep" title="Alternar modo reposo" hidden>
+            <span class="hud-action-btn__icon" id="hudActionSleepIcon">😴</span> <span id="hudActionSleepLabel">Reposo</span>
+          </button>
+          <button type="button" class="hud-action-btn" id="hudActionSkins" title="Cambiar personaje y skins">
+            <span class="hud-action-btn__icon">🎨</span> Skins
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra inferior de conversación directa con el agente (Prompt Capsule inmediatamente debajo de #stageShelf) -->
+      <form class="chat prompt" id="chatForm">
+        <input id="chatInput" type="text" maxlength="200" placeholder="Habla con MEKA…" autocomplete="off" aria-label="Mensaje para MEKA">
+        <button type="button" class="prompt__mic" id="promptMic" title="Activar micrófono (hablar por voz)" aria-label="Activar micrófono">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
+        </button>
+        <button type="submit" class="chat__send prompt__send" id="promptSend" title="Enviar mensaje" aria-label="Enviar">↑</button>
+      </form>
+
+      <!-- Menú contextual rápido -->
+      <ul class="menu" id="menu" role="menu" hidden></ul>
+    </section>
   </main>
 
   <script src="skins/manifest.js"></script>

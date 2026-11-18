@@ -62,8 +62,8 @@ class FakeTTS:
     def release(self):
         self.released += 1
 
-    def unload_qwen(self):
-        return False
+    def unload(self):
+        pass
 
     def check_health(self):
         return True
@@ -72,8 +72,9 @@ class FakeTTS:
 class FakeProvider:
     """Un proveedor de IA (Claude, Gemini...) con respuestas programadas."""
 
-    def __init__(self, name, *replies, error=None, local=False):
+    def __init__(self, name, *replies, error=None, local=False, capabilities=("text", "vision")):
         self.name = name
+        self.capabilities = frozenset(capabilities)
         self.model = f"{name}-test"
         self.local = local
         self.replies = list(replies)
@@ -81,10 +82,12 @@ class FakeProvider:
         self.calls = []
 
     async def chat(self, system, messages, *, vision=False):
+        from ai.providers import ProviderReply
+
         self.calls.append({"system": system, "messages": messages, "vision": vision})
         if self.error:
             raise self.error
-        return self.replies.pop(0)
+        return ProviderReply(self.replies.pop(0), input_tokens=10, output_tokens=5)
 
     def check_health(self):
         return True

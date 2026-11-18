@@ -24,7 +24,8 @@ class FakeCore:
         self.facts.append(fact)
         return True
 
-    async def memories(self, user, query=None):
+    async def memories(self, user, query=None, include_private=True):
+        assert include_private is False  # El MCP nunca pide recuerdos privados
         return list(self.facts)
 
 
@@ -77,7 +78,26 @@ def test_mcp_server_registers_tools():
 
     server = build_mcp({"mcp": {"user": "42"}}, core=FakeCore())
     names = {tool.name for tool in run(server.list_tools())}
-    assert names == {"chat", "pet_status", "pet_emotion", "remember", "memories"}
+    assert names == {
+        "chat",
+        "pet_status",
+        "pet_emotion",
+        "remember",
+        "memories",
+        "ask_permission",
+        "tasks",
+        "add_task",
+        "complete_task",
+        "list_folders",
+        "list_files",
+        "read_file",
+        "search_files",
+        "write_file",
+        "move_file",
+        "delete_file",
+        "make_folder",
+        "undo_last_change",
+    }
 
 
 def test_mcp_reports_expected_errors_to_the_agent():
@@ -95,3 +115,104 @@ def test_mcp_reports_expected_errors_to_the_agent():
     ok, bad = run(scenario())
     assert not ok.is_error
     assert bad.is_error and "furiosa" in bad.content[0].text
+
+
+def test_stdout_is_reserved_for_the_protocol(tmp_path):
+    """`python run.py mcp` no puede escribir nada en stdout que no sea JSON-RPC: un log
+    al importar la configuración rompía el protocolo en clientes estrictos."""
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    pytest.importorskip("mcp")
+    root = Path(__file__).resolve().parent.parent
+    # Un config_local.yml provoca un log al importar core.config (el caso que fallaba)
+    hello = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": "2025-06-18",
+            "capabilities": {},
+            "clientInfo": {"name": "test", "version": "1"},
+        },
+    }
+    result = subprocess.run(
+        [sys.executable, str(root / "run.py"), "mcp"],
+        input=json.dumps(hello) + "\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=root,
+        timeout=60,
+        check=False,
+    )
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    assert lines, f"El servidor no respondió. stderr:\n{result.stderr[-2000:]}"
+    for line in lines:
+        message = json.loads(line)  # Falla si se cuela un log u otro texto
+        assert message.get("jsonrpc") == "2.0"
+    assert json.loads(lines[0])["result"]["serverInfo"]["name"] == "MEKA"
+
+
+def test_ask_permission_tool():
+    class PermissionCore(FakeCore):
+        def __init__(self, approved):
+            super().__init__()
+            self.approved = approved
+            self.asked = []
+
+        async def ask_permission(self, action, *, timeout=120, details=None):
+            self.asked.append((action, timeout))
+            return self.approved
+
+    yes, no = PermissionCore(True), PermissionCore(False)
+    assert run(MekaTools(yes, "mcp", "42").ask_permission("borrar logs", 9999)).startswith(
+        "APROBADO"
+    )
+    assert yes.asked == [("borrar logs", 600)]  # Nunca más de 10 minutos
+    assert run(MekaTools(no, "mcp", "42").ask_permission("borrar logs")).startswith("DENEGADO")
+
+
+def test_file_tools_never_ask_for_private_folders():
+    class HandsCore(FakeCore):
+        def __init__(self):
+            super().__init__()
+            self.calls = []
+
+        async def hands(self, action, folder=None, **params):
+            assert params["include_private"] is False  # El agente lo enviaría a la nube
+            self.calls.append((action, folder, params))
+            return {"folders": []} if action == "folders" else {"ok": True}
+
+    core = HandsCore()
+    tools = MekaTools(core, "mcp", "42")
+    run(tools.list_folders())
+    run(tools.list_files("docs", pattern="*.pdf"))
+    run(tools.read_file("docs", "a.txt"))
+    run(tools.search_files("docs", "factura"))
+    assert [c[0] for c in core.calls] == ["folders", "list", "read", "search"]
+    assert core.calls[1][2]["pattern"] == "*.pdf" and core.calls[3][2]["q"] == "factura"
+
+
+def test_change_tools_never_touch_private_folders():
+    class ChangeCore(FakeCore):
+        def __init__(self):
+            super().__init__()
+            self.calls = []
+
+        async def hands_change(self, action, folder, body=None, *, include_private=True):
+            assert include_private is False
+            self.calls.append((action, folder, body))
+            return {"op": action}
+
+    core = ChangeCore()
+    tools = MekaTools(core, "mcp", "42")
+    run(tools.write_file("orden", "a.txt", "hola"))
+    run(tools.move_file("orden", "a.txt", "b.txt"))
+    run(tools.delete_file("orden", "b.txt"))
+    run(tools.make_folder("orden", "nueva"))
+    run(tools.undo_last_change("orden"))
+    assert [c[0] for c in core.calls] == ["write", "move", "delete", "mkdir", "undo"]
+    assert core.calls[0][2] == {"path": "a.txt", "content": "hola", "overwrite": False}
