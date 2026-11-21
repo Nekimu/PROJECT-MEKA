@@ -63,7 +63,7 @@ Revisión del repositorio (noviembre de 2026). Esto es lo que **existe hoy** y s
 | Voz a texto | `faster-whisper` (`ai/stt/`, int8 en CPU); `openai-whisper` opcional como respaldo. Si el cerebro oye audio (Gemma 4 en llama.cpp, Gemini), la transcripción se omite |
 | Texto a voz | Edge-TTS por defecto; Qwen3-TTS y Piper opcionales (`ai/tts/`, un módulo por motor) |
 | Memoria | SQLite (`data/meka.db`, `core/memory.py`): recuerdos por usuario con búsqueda FTS5 y **semántica** (embeddings locales con `embeddinggemma` + `sqlite-vec`) e historial persistente por chat. Evaluación en [MEMORIA.md](MEMORIA.md) |
-| Avatar | Mascota de escritorio propia en `pet/` (web + Tauri), que ya implementa el contrato de eventos por WebSocket |
+| Avatar | Mascota de escritorio propia en `pet/` (web + Go WebView2), que ya implementa el contrato de eventos por WebSocket |
 
 Y esto **todavía no existe**, aunque la versión 0.2 de este documento lo daba por hecho:
 

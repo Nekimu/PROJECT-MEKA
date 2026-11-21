@@ -7,6 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>MEKA · Companion</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="pet.css">
 </head>
 <body>
@@ -44,6 +45,7 @@
               <div class="brief-card brief-card--avatar is-active" id="briefAvatar" data-brief="avatar" aria-label="Resumen de compañera">
                 <div class="stage__island-left brief-card__leading">
                   <img class="stage__mini-thumb" id="miniThumb" src="skins/hana/idle.webp" width="24" height="24" alt="" aria-hidden="true">
+                  <div class="stage__mini-particles" id="miniParticles" aria-hidden="true"></div>
                 </div>
                 <div class="stage__island-center brief-card__center">
                   <div class="marquee-wrapper">
@@ -93,6 +95,7 @@
               <div class="brief-card brief-card--notif" id="briefNotif" data-brief="notif" aria-label="Notificaciones del sistema">
                 <div class="brief-card__leading">
                   <span class="brief-card__icon brief-card__icon--notif" id="briefNotifIcon" aria-hidden="true">
+                    <span class="brief-notif-brand" id="briefNotifBrand" hidden></span>
                     <span class="brief-notif-emoji" id="briefNotifEmoji" hidden>🔔</span>
                     <svg class="brief-notif-svg" id="briefNotifSvg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -124,6 +127,7 @@
             <span class="stage__header-battery-text" id="headerBatteryText">92%</span>
           </span>
           <button type="button" class="stage__icon-btn" id="menuBtn" title="Ajustes y modos rápidos" aria-label="Abrir ajustes y modos" aria-expanded="false" aria-controls="stageSettingsCard">⋯</button>
+          <button type="button" class="stage__icon-btn stage__close-app-btn" id="topCloseAppBtn" title="Cerrar aplicación MEKA" aria-label="Cerrar aplicación MEKA">✕</button>
         </div>
       </header>
 
@@ -147,17 +151,24 @@
 
         <!-- Hero Card: Diálogo dinámico y Avatar -->
         <div class="stage__hero" id="stageHero">
-          <!-- Bocadillo de diálogo + Confirmación interactiva agent.confirm -->
-          <div class="bubble" id="bubble" role="status" aria-live="polite" hidden>
+          <!-- Selector sutil de emociones / ánimo en el panel extendido -->
+          <div class="hero-mood-bar" id="heroMoodBar" role="group" aria-label="Estados de ánimo rápidos">
+            <button type="button" class="hero-mood-btn" data-mood="love" title="Amor 💖">💖</button>
+            <button type="button" class="hero-mood-btn" data-mood="excited" title="Emocionada 🤩">🤩</button>
+            <button type="button" class="hero-mood-btn" data-mood="shy" title="Tímida 🌸">🌸</button>
+            <button type="button" class="hero-mood-btn" data-mood="chill" title="Relajada ☕">☕</button>
+            <button type="button" class="hero-mood-btn" data-mood="curious" title="Curiosa 🔍">🔍</button>
+            <button type="button" class="hero-mood-btn" data-mood="gaming" title="Modo Gaming 🎮">🎮</button>
+            <button type="button" class="hero-mood-btn" data-mood="focus" title="Concentración 🎯">🎯</button>
+            <button type="button" class="hero-mood-btn" data-mood="sleeping" title="Reposo / AFK 😴">😴</button>
+          </div>
+
+          <!-- Bocadillo flotante legado (deshabilitado; el diálogo y confirmaciones viven en #agentReplyDock) -->
+          <div class="bubble" id="bubble" role="status" aria-live="polite" hidden aria-hidden="true">
             <div class="bubble__header">
               <span class="bubble__speaker" id="bubbleSpeaker">Hana</span>
-              <span class="bubble__tag" id="bubbleTag" hidden>Autorización</span>
             </div>
             <p class="bubble__text" id="bubbleText"></p>
-            <div class="bubble__confirm" id="confirmBar" hidden>
-              <button type="button" class="bubble__btn bubble__btn--approve" id="confirmApprove">Permitir</button>
-              <button type="button" class="bubble__btn bubble__btn--reject" id="confirmReject">Cancelar</button>
-            </div>
           </div>
 
           <!-- Avatar Animado Chibi HD -->
@@ -183,6 +194,11 @@
             </div>
             <div class="agent-dock__body" id="agentDockBody">
               <p class="agent-dock__text" id="agentDockText">Lista por aquí. Escríbeme o usa el micrófono cuando quieras.</p>
+            </div>
+            <span class="bubble__tag" id="bubbleTag" hidden>Autorización</span>
+            <div class="bubble__confirm" id="confirmBar" hidden>
+              <button type="button" class="bubble__btn bubble__btn--approve" id="confirmApprove">Permitir</button>
+              <button type="button" class="bubble__btn bubble__btn--reject" id="confirmReject">Cancelar</button>
             </div>
           </div>
         </div>
@@ -234,8 +250,16 @@
                   <span class="win-switch__label" id="themeToggleLabel">☀️ Tema claro</span>
                   <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
                 </button>
-                <button type="button" class="auto-expand-toggle-btn win-switch-btn" id="autoExpandToggleBtn" role="switch" aria-checked="false" title="Si está activo, despliega momentáneamente la isla al cambiar música o recibir notificaciones (desactivado por defecto)">
-                  <span class="win-switch__label">📣 Auto-desplegar avisos</span>
+                <button type="button" class="auto-expand-toggle-btn win-switch-btn" id="autoExpandToggleBtn" role="switch" aria-checked="false" title="Desactivado por defecto: la Dynamic Island usa pulso sutil y partículas en la píldora en lugar de abrirse automáticamente">
+                  <span class="win-switch__label">📣 Despliegue auto (avisos)</span>
+                  <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
+                </button>
+                <button type="button" class="win-events-toggle-btn win-switch-btn is-active" id="winEventsToggleBtn" role="switch" aria-checked="true" title="Reaccionar a eventos nativos de Windows (inactividad real, energía, sesión, contexto, dispositivos, red, capturas y volumen)">
+                  <span class="win-switch__label">🪟 Eventos Windows</span>
+                  <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
+                </button>
+                <button type="button" class="autostart-toggle-btn win-switch-btn" id="autoStartToggleBtn" role="switch" aria-checked="false" title="Iniciar MEKA automáticamente al encender Windows">
+                  <span class="win-switch__label">🚀 Iniciar con Windows</span>
                   <span class="win-switch__track" aria-hidden="true"><span class="win-switch__thumb"></span></span>
                 </button>
               </div>
@@ -250,6 +274,7 @@
                 <button type="button" class="settings-action-btn" id="settingsDodgeBtn" title="Mover al borde opuesto">↔ Esquivar</button>
                 <button type="button" class="settings-action-btn" id="settingsScreenshotBtn" title="Ocultar temporalmente 10 segundos">📸 Ocultar 10s</button>
                 <button type="button" class="settings-action-btn settings-action-btn--wide" id="popoutBtn">🗗 Ventana flotante</button>
+                <button type="button" class="settings-action-btn settings-action-btn--danger settings-action-btn--wide" id="closeAppBtn" title="Cerrar aplicación MEKA y detener servicio en segundo plano">⏻ Cerrar aplicación</button>
               </div>
             </div>
 

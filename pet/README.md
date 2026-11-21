@@ -4,7 +4,10 @@ Una compañera animada en **Pixel Art** que flota sobre tu escritorio en una ven
 
 | Escritorio nativo en Go (ventana transparente sin bordes) | Navegador / Ventana emergente (`?desktop=1`) |
 |---|---|
-| `pet/desktop/meka-desktop.exe` (o `go run .` en `pet/desktop/`) | Abre `pet/web/index.html` |
+| `pet/desktop/MEKA.exe` (o `go run .` en `pet/desktop/`) | Abre `pet/web/index.html` |
+
+> [!TIP]
+> Consulta el informe completo de consumo, latencias de arranque/cierre y comparativa de arquitectura en [docs/RENDIMIENTO.md](../docs/RENDIMIENTO.md).
 
 ---
 
@@ -12,24 +15,39 @@ Una compañera animada en **Pixel Art** que flota sobre tu escritorio en una ven
 
 El envoltorio nativo en Go utiliza **Microsoft Edge WebView2** (`github.com/jchv/go-webview2`) y llamadas nativas a Win32/DWM (`WS_POPUP`, `WS_EX_TOPMOST`, `DwmExtendFrameIntoClientArea` y `WEBVIEW2_DEFAULT_BACKGROUND_COLOR=0`) sin requerir CGo ni Rust/Tauri.
 
-### Ejecutar o compilar
+### Ejecutar o compilar ejecutable único (`MEKA.exe`)
 
 ```powershell
 cd pet/desktop
 
-# Ejecutar directamente:
+# Ejecutar directamente en segundo plano (directo a la bandeja, sin barra de tareas):
 go run .
+
+# Abrir mostrando inmediatamente la Dynamic Island sobre el escritorio:
+go run . --show
 
 # Elegir personaje inicial o URL de MEKA Core:
 go run . --skin dva_pixel
 go run . --skin clawd_pixel --core ws://127.0.0.1:8765/v1/events
 
-# Compilar binario nativo (.exe):
-go build -o meka-desktop.exe .
+# Compilar ejecutable único sin ventana de consola en Windows:
+go build -ldflags="-H=windowsgui -s -w" -o MEKA.exe .
 
-# Compilar versión de distribución sin ventana de consola en Windows:
-go build -ldflags="-H=windowsgui -s -w" -o meka-desktop.exe .
+# Instalar en %LOCALAPPDATA%\Programs\MEKA\MEKA.exe (activa autoarranque + notificaciones):
+.\MEKA.exe --install
+
+# Verificar assets embebidos/locales y entorno:
+.\MEKA.exe --self-test
 ```
+
+### Autoarranque, Notificaciones en Segundo Plano y Bandeja del Sistema
+
+| Función | Cómo configurarla / dónde vive |
+|---|---|
+| **Iniciar con Windows** | Switch *🚀 Iniciar con Windows* en el cajón de configuración de la píldora, botón en la bandeja del sistema o vía CLI (`MEKA.exe --enable-startup` / `MEKA.exe --disable-startup`). Registra `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MEKA` con `--startup`. |
+| **App de notificaciones en 2.º plano** | Registrada automáticamente como `MEKA.Desktop.Companion` (`AppUserModelID` + `HKCU\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\MEKA.Desktop.Companion` con `Enabled=1`). |
+| **Bandeja del sistema (System Tray)** | La aplicación arranca directamente en segundo plano en la bandeja (sin icono en la barra de tareas; usa `--show` para abrir la isla al instante). Un clic izquierdo muestra u oculta la Dynamic Island; clic derecho abre: *Mostrar MEKA / Ocultar en la bandeja*, *Centrar MEKA*, *Expandir / Colapsar Dynamic Island*, *Iniciar con Windows*, *Reiniciar MEKA Core*, *Abrir carpeta de logs* y *Salir de MEKA*. |
+| **Watchdogs y logs de diagnóstico** | Registro rotado en `%LOCALAPPDATA%\MEKA\desktop.log` (y `%LOCALAPPDATA%\MEKA\core-desktop.log`). Vigila salud del servidor local (`/healthz`), arranque WebView2 (`15 s`), `/v1/health` de Core (reinicio con backoff y circuit breaker), **Job Object** (`KILL_ON_JOB_CLOSE`) y cierre limpio (`shutdownCoordinator` en `< 4 s`). |
 
 ### Controles y Estados de la Dynamic Island (`pet/desktop/`)
 | Acción | Cómo |
@@ -62,12 +80,17 @@ go run . --serve 127.0.0.1:8080
 ```
 pet/
 ├── desktop/
-│   ├── main.go             # Servidor loopback efímero (127.0.0.1:0) + CLI
-│   ├── window_windows.go   # Ventana nativa transparente sin bordes (Win32 + DWM + WebView2)
-│   ├── window_other.go     # Lanzador multiplataforma
-│   ├── main_test.go        # Pruebas unitarias en Go (go test ./...)
-│   ├── go.mod / go.sum     # Módulo Go (sin CGo, cero dependencias de Rust)
-│   └── icons/              # Iconos de la aplicación
+│   ├── main.go               # Servidor loopback efímero (127.0.0.1:0), /healthz, CLI (--startup/--install/--self-test)
+│   ├── window_windows.go     # Ventana nativa transparente sin bordes (Win32 + DWM + WebView2 + monitor adaptativo)
+│   ├── startup_windows.go    # Autoarranque en Windows (Run\MEKA) y AppUserModelID + Notifications\Settings
+│   ├── tray_windows.go       # Bandeja del sistema (Shell_NotifyIconW, TaskbarCreated, WM_ENDSESSION)
+│   ├── watchdog_windows.go   # Job Object (KILL_ON_JOB_CLOSE), /v1/health, backoff, cierre <=4 s y desktop.log
+│   ├── events_windows.go     # Sensores nativos de Windows (AFK, foco/contexto, energía, sesión, volumen)
+│   ├── installer_windows.go  # Instalador/desinstalador único (MEKA.exe) y Known Folders (OneDrive safe)
+│   ├── window_other.go       # Stubs multiplataforma
+│   ├── *_test.go             # Pruebas unitarias y ABI Win32 en Go (go test -v ./...)
+│   ├── go.mod / go.sum       # Módulo Go (sin CGo, cero dependencias de Rust)
+│   └── icons/                # Iconos de la aplicación
 ├── web/
 │   ├── index.html          # Escenario, barra lateral desplegable (Drawer popover) y estudio
 │   ├── pet.css             # Estética minimalista Apple, materiales translúcidos y animaciones

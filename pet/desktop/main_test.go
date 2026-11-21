@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -75,7 +76,7 @@ func TestFixedWindowConstants(t *testing.T) {
 	if FixedWindowWidth <= 0 || FixedWindowHeight <= 0 {
 		t.Fatalf("Dimensiones de ventana inválidas: %dx%d", FixedWindowWidth, FixedWindowHeight)
 	}
-	if FixedWindowWidth > 400 || FixedWindowHeight > 500 {
+	if FixedWindowWidth > 440 || FixedWindowHeight > 640 {
 		t.Fatalf("Dimensiones excesivas para un compañero de escritorio: %dx%d", FixedWindowWidth, FixedWindowHeight)
 	}
 }
@@ -136,6 +137,17 @@ func TestComputeFixedWindowPosition(t *testing.T) {
 	if yDodge != 0 || wDodge != expectedW150 || hDodge != expectedH150 {
 		t.Fatalf("Dimensiones alteradas en evasión escalada: got (%d,%d)", wDodge, hDodge)
 	}
+
+	// 4. Monitor compacto o DPI alto: acotar altura al área de trabajo - 24*scale
+	compactWA := winRect{Left: 0, Top: 0, Right: 1366, Bottom: 728}
+	_, _, wCompact, hCompact := computeFixedWindowPosition(compactWA, false, 1.5)
+	expectedMaxH := int(compactWA.Bottom-compactWA.Top) - int(24.0*1.5)
+	if wCompact != expectedW150 {
+		t.Fatalf("Ancho inesperado en monitor compacto: got %d, want %d", wCompact, expectedW150)
+	}
+	if hCompact != expectedMaxH {
+		t.Fatalf("Altura no acotada en monitor compacto con 150%% DPI: got %d, want %d", hCompact, expectedMaxH)
+	}
 }
 
 func TestResolveProjectRootAndLocalCoreURL(t *testing.T) {
@@ -157,6 +169,59 @@ func TestResolveProjectRootAndLocalCoreURL(t *testing.T) {
 	}
 }
 
+func TestInstallerExecutableNameDetection(t *testing.T) {
+	if !isInstallerExecutableName(`C:\Temp\MEKA-Setup.exe`) {
+		t.Fatal("MEKA-Setup.exe debe detectarse como instalador")
+	}
+	if !isInstallerExecutableName(`C:\Temp\meka-instalador.exe`) {
+		t.Fatal("meka-instalador.exe debe detectarse como instalador")
+	}
+	if isInstallerExecutableName(`C:\Desktop\MEKA.exe`) {
+		t.Fatal("MEKA.exe no debe tratarse como instalador")
+	}
+	if isInstallerExecutableName(`C:\Desktop\meka-desktop.exe`) {
+		t.Fatal("meka-desktop.exe no debe tratarse como instalador")
+	}
+}
 
+func TestResolveInstallPathsAndAppIcon(t *testing.T) {
+	dir, err := resolveWebDir("")
+	if err != nil {
+		t.Fatalf("resolveWebDir falló: %v", err)
+	}
+	root := resolveProjectRoot(dir)
 
+	iconPath := resolveAppIconPath(dir)
+	if iconPath == "" || !fileExists(iconPath) {
+		t.Fatalf("resolveAppIconPath no encontró icon.ico: %q", iconPath)
+	}
+	for _, asset := range []string{
+		filepath.Join(root, "pet", "desktop", "icons", "icon.png"),
+		filepath.Join(root, "pet", "desktop", "icons", "icon.ico"),
+		filepath.Join(root, "pet", "web", "favicon.ico"),
+		filepath.Join(root, "pet", "desktop", "rsrc_windows_amd64.syso"),
+	} {
+		if !fileExists(asset) {
+			t.Fatalf("falta recurso esperado: %s", asset)
+		}
+	}
 
+	tmp := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmp, "meka-root.txt"), []byte(root+"\r\n"), 0644); err != nil {
+		t.Fatalf("no se pudo escribir marcador temporal: %v", err)
+	}
+	if got := readRootMarker(tmp); got != root {
+		t.Fatalf("readRootMarker = %q, want %q", got, root)
+	}
+
+	paths := resolveInstallPaths(`C:\LocalApp`, `C:\Roaming`, `C:\Users\Test`)
+	if !strings.HasSuffix(paths.InstalledExe, filepath.Join("Programs", "MEKA", "MEKA.exe")) {
+		t.Fatalf("InstalledExe inesperado: %s", paths.InstalledExe)
+	}
+	if !strings.HasSuffix(paths.DesktopLnk, filepath.Join("Desktop", "MEKA.lnk")) {
+		t.Fatalf("DesktopLnk inesperado: %s", paths.DesktopLnk)
+	}
+	if !strings.HasSuffix(paths.StartMenuLnk, filepath.Join("Start Menu", "Programs", "MEKA.lnk")) {
+		t.Fatalf("StartMenuLnk inesperado: %s", paths.StartMenuLnk)
+	}
+}

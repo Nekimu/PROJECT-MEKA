@@ -49,3 +49,20 @@ def test_no_orphan_sprite_files():
     referenced = {path for skin in SKINS.values() for path in skin["sprites"].values()}
     on_disk = {p.relative_to(WEB).as_posix() for p in (WEB / "skins").rglob("*.webp")}
     assert on_disk == referenced
+
+
+def test_app_icons_and_windows_resource_exist():
+    desktop = WEB.parent / "desktop"
+    icons = desktop / "icons"
+    expected = [
+        icons / "icon.png",
+        icons / "icon.ico",
+        icons / "128x128.png",
+        icons / "128x128@2x.png",
+        icons / "32x32.png",
+        WEB / "favicon.ico",
+        desktop / "rsrc_windows_amd64.syso",
+    ]
+    for path in expected:
+        assert path.is_file(), f"falta el recurso de icono: {path}"
+        assert path.stat().st_size > 0, f"recurso vacío: {path}"

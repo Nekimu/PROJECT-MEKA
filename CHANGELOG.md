@@ -4,6 +4,11 @@ Todos los cambios relevantes del proyecto. Formato basado en [Keep a Changelog](
 
 ## [Sin publicar]
 
+### Compañera de escritorio (Go + Pixel Art)
+- **App de escritorio nativa en Go** (`pet/desktop/`): cliente ultraligero con Microsoft Edge WebView2, ventana fija (`300×390 px`) no redimensionable, siempre visible (`Always on Top`) sobre cualquier ventana, fondo 100 % transparente con DWM/COM y cero dependencias de Rust ni de interfaces en Python.
+- **Pixel Art animado y física táctil**: avatares `dva_pixel` y `clawd_pixel` con WebP animados en 64×64 escalados `NEAREST`, sombras dinámicas reactivas que se comprimen/expanden con saltos y respiración, y respuesta elástica interactiva al hacer clic o arrastrar.
+- **Barra lateral oculta desplegable**: cajón semitransparente con selector de personajes, interruptores de apariencia (Pixel/HD, claro/oscuro) y conexión con MEKA Core, integrado en la ventana fija sin saltos ni cierres involuntarios.
+
 ### Filosofía: compañera de productividad
 - El Tamagotchi pasa a ser solo **inspiración para interactuar y conversar** con el asistente. Sin mecánicas de cuidado (alimentar, energía, saciedad, ánimo, afecto, desbloqueos): MEKA ayuda, no distrae. `docs/VISION.md` actualizado.
 - **Modo concentración** (`core/focus.py`, `/v1/focus`): durante un bloque de trabajo el núcleo retiene notificaciones, música y avisos de agentes, deja pasar permisos, errores, apps importantes y la batería crítica, y al terminar envía un resumen de lo que esperó (`focus.started` / `focus.ended`, contrato 1.9).

@@ -449,7 +449,7 @@ PROJECT-MEKA/
 ├── ai/                     # Proveedores de IA (ai/providers), STT, TTS (ai/tts/), prompts y texto
 ├── channels/               # Clientes del núcleo: Telegram, MCP y el cliente HTTP común
 ├── personas/               # Paquetes de personaje (D.Va, Marin, Yotsuba...)
-├── pet/                    # Mascota de escritorio (web + Tauri), prototipo
+├── pet/                    # Mascota de escritorio (web + Go WebView2), prototipo
 ├── scripts/                # Diagnóstico y tablero de tareas (tareas.py + tablero/)
 ├── coordinacion/           # Tablero compartido Claude Code ↔ Antigravity
 ├── tests/                  # Tests automatizados (pytest)
