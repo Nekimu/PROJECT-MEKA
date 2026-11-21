@@ -36,7 +36,7 @@ flowchart TB
         CORE["<b>MEKA Core</b> (FastAPI)<br/>Alma: personalidad, memoria, estado<br/>Cerebro: Ollama · Claude · Gemini<br/>Manos: agente sobre carpetas autorizadas"]
         BUS(("REST + WebSocket<br/>127.0.0.1:8765"))
         CORE <--> BUS
-        PET["Mascota de escritorio<br/>(Tauri, ventana transparente)"]
+        PET["Mascota de escritorio<br/>(Go + WebView2, ventana transparente)"]
         BUS <--> PET
         TGC["Canal Telegram"] <--> BUS
         MCPC["Canal MCP"] <--> BUS
@@ -145,7 +145,7 @@ Cada personaje necesita como mínimo `idle`. Lo ideal es una imagen por estado:
 
 | Plataforma | Cómo | Estado |
 |---|---|---|
-| Escritorio | Tauri 2: ventana transparente, sin bordes y siempre visible | ✅ Prototipo |
+| Escritorio | Go + WebView2: ventana transparente, sin bordes y siempre visible | ✅ Prototipo |
 | Telegram | Bot actual | ✅ |
 | Android | App con burbuja flotante sobre otras apps | Fase 5 |
 | iOS | Widget y Live Activity (iOS no permite superposiciones sobre otras apps) | Fase 5 |
