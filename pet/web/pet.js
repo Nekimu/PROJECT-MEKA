@@ -20,17 +20,29 @@
   const FX = {
     idle:      { motion: "breathe",  label: "Stand By" },
     standby:   { motion: "breathe",  label: "Stand By" },
-    greet:     { motion: "sway",     label: "Saludando",  particle: "👋",   every: 1100, duration: 4500 },
-    happy:     { motion: "bounce",   label: "Feliz",      particle: "💖",   every: 1000, duration: 4200 },
-    surprise:  { motion: "surprise", label: "Sorpresa",   particle: "❗",   every: 1000, duration: 4200 },
-    dance:     { motion: "dance",    label: "Bailando",   particle: "🎶",   every: 1100, duration: 5000 },
-    working:   { motion: "sway",     label: "Trabajando", particle: "⚡",   every: 1500 },
-    thinking:  { motion: "tilt",     label: "Pensando",   particle: "💭",   every: 1800, duration: 6500 },
-    sleeping:  { motion: "sleep",    label: "En reposo",  particle: "z",    every: 1400, dim: true },
-    eating:    { motion: "munch",    label: "Recargando", particle: "food", every: 900,  duration: 3800 },
-    error:     { motion: "shake",    label: "Alerta",     particle: "💦",   every: 950,  duration: 3800 },
-    celebrate: { motion: "jump",     label: "Completado", particle: "✨",   every: 850,  duration: 4200 },
-    sad:       { motion: "droop",    label: "Triste",     particle: "💧",   every: 1300, duration: 4500 },
+    greet:     { motion: "sway",     label: "Saludando",    particle: "👋",   miniParticle: "👋",    miniEvery: 1200, every: 1100, duration: 4500 },
+    happy:     { motion: "bounce",   label: "Feliz",        particle: "💖",   miniParticle: "heart", miniEvery: 1050, every: 1000, duration: 4200 },
+    love:      { motion: "love",     label: "Amorosa 💖",   particle: "💖",   miniParticle: "heart", miniEvery: 950,  every: 950,  duration: 5500 },
+    sigh:      { motion: "sigh",     label: "Suspirando",   particle: "💨",   miniParticle: "💨",    miniEvery: 1400, every: 1400, duration: 4600 },
+    surprise:  { motion: "surprise", label: "Sorpresa",     particle: "❗",   miniParticle: "❗",    miniEvery: 1050, every: 1000, duration: 4200 },
+    excited:   { motion: "excited",  label: "Emocionada 🤩", particle: "🌟",  miniParticle: "🌟",    miniEvery: 850,  every: 850,  duration: 4800 },
+    shy:       { motion: "shy",      label: "Tímida 🌸",    particle: "🌸",   miniParticle: "🌸",    miniEvery: 1100, every: 1100, duration: 4800 },
+    chill:     { motion: "chill",    label: "Relajada ☕",  particle: "☕",   miniParticle: "☕",    miniEvery: 1350, every: 1350, duration: 5200 },
+    curious:   { motion: "curious",  label: "Curiosa 🔍",   particle: "❔",   miniParticle: "❔",    miniEvery: 1150, every: 1150, duration: 4600 },
+    proud:     { motion: "proud",    label: "Orgullosa 🏆", particle: "🏆",   miniParticle: "✨",    miniEvery: 950,  every: 950,  duration: 4800 },
+    dance:     { motion: "dance",    label: "Bailando",     particle: "🎶",   miniParticle: "🎶",    miniEvery: 1000, every: 1100, duration: 5000 },
+    working:   { motion: "sway",     label: "Trabajando",   particle: "⚡",   miniParticle: "⚡",    miniEvery: 1300, every: 1500 },
+    thinking:  { motion: "tilt",     label: "Pensando",     particle: "💭",   miniParticle: "💭",    miniEvery: 1500, every: 1800, duration: 6500 },
+    sleeping:  { motion: "sleep",    label: "En reposo",    particle: "z",    miniParticle: "z",     miniEvery: 1050, every: 1150, dim: true },
+    yawn:      { motion: "yawn",     label: "Bostezando 🥱", particle: "💤",  miniParticle: "z",     miniEvery: 1300, every: 1500, duration: 3800 },
+    charging:  { motion: "charging", label: "Cargando ⚡",  particle: "⚡",   miniParticle: "⚡",    miniEvery: 950,  every: 900,  duration: 4200 },
+    gaming:    { motion: "gaming",   label: "Modo Gaming 🎮", particle: "🎮", miniParticle: "🎮",    miniEvery: 1300, every: 1400, duration: 6000 },
+    focus:     { motion: "focus",    label: "Concentrada 🎯", particle: "🎯", miniParticle: "🎯",    miniEvery: 1400, every: 1500, duration: 6000 },
+    dizzy:     { motion: "dizzy",    label: "Mareada 💫",   particle: "💫",   miniParticle: "💫",    miniEvery: 1100, every: 1100, duration: 4500 },
+    eating:    { motion: "munch",    label: "Recargando",   particle: "food", miniParticle: "✨",    miniEvery: 1100, every: 900,  duration: 3800 },
+    error:     { motion: "shake",    label: "Alerta",       particle: "💦",   miniParticle: "💦",    miniEvery: 1000, every: 950,  duration: 3800 },
+    celebrate: { motion: "jump",     label: "Completado",   particle: "✨",   miniParticle: "✨",    miniEvery: 950,  every: 850,  duration: 4200 },
+    sad:       { motion: "droop",    label: "Triste",       particle: "💧",   miniParticle: "💧",    miniEvery: 1300, every: 1300, duration: 4500 },
   };
 
   const SAMPLE_EVENTS = [
@@ -131,6 +143,7 @@
     drawerClose: $("drawer-close"),
     skinBadge: $("skinBadge"),
     miniThumb: $("miniThumb"),
+    miniParticles: $("miniParticles"),
     expandHint: $("expandHint"),
     // Samsung Brief & One UI 9
     briefDots: $("briefDots"),
@@ -140,6 +153,7 @@
     briefMedia: $("briefMedia"),
     briefNotif: $("briefNotif"),
     briefNotifIcon: $("briefNotifIcon"),
+    briefNotifBrand: $("briefNotifBrand"),
     briefNotifEmoji: $("briefNotifEmoji"),
     briefNotifSvg: $("briefNotifSvg"),
     briefMediaTitle: $("briefMediaTitle"),
@@ -153,6 +167,7 @@
     stageNotifEmpty: $("stageNotifEmpty"),
     notifCountBadge: $("notifCountBadge"),
     notifClearAllBtn: $("notifClearAllBtn"),
+    heroMoodBar: $("heroMoodBar"),
     pet: $("pet"),
     body: $("petBody"),
     img: $("petImg") || $("sprite"),
@@ -228,7 +243,11 @@
     settingsCenterBtn: $("settingsCenterBtn"),
     settingsDodgeBtn: $("settingsDodgeBtn"),
     settingsScreenshotBtn: $("settingsScreenshotBtn"),
+    closeAppBtn: $("closeAppBtn"),
+    topCloseAppBtn: $("topCloseAppBtn"),
     autoExpandToggleBtn: $("autoExpandToggleBtn"),
+    winEventsToggleBtn: $("winEventsToggleBtn"),
+    autoStartToggleBtn: $("autoStartToggleBtn"),
     coreRunsSummary: $("coreRunsSummary"),
     coreResetSessionBtn: $("coreResetSessionBtn"),
     taskQuickForm: $("taskQuickForm"),
@@ -260,6 +279,7 @@
       sleeping: false,
       privateMode: false,
       autoExpandEvents: false,
+      winEventsEnabled: true,
     };
   }
 
@@ -268,8 +288,14 @@
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (saved && typeof saved === "object") {
         const glass = saved.glass === "normal" ? "normal" : "liquid";
-        const autoExpandEvents = Boolean(saved.autoExpandEvents);
-        return { ...defaults(), ...saved, glass, autoExpandEvents, style: "anime" };
+        // Ignora autoExpandEvents de sesiones antiguas salvo toggle manual explícito
+        const autoExpandEvents = saved.autoExpandManual === true
+          ? Boolean(saved.autoExpandEvents)
+          : false;
+        const winEventsEnabled = typeof saved.winEventsEnabled === "boolean"
+          ? saved.winEventsEnabled
+          : true;
+        return { ...defaults(), ...saved, glass, autoExpandEvents, winEventsEnabled, style: "anime" };
       }
     } catch {
       /* Almacenamiento no disponible */
@@ -301,8 +327,13 @@
   let current = base;
   let agentWorking = false;
   let pendingConfirmId = null;
+  let pendingDockQueue = [];
+  let dockUpdateSeq = 0;
   let transientTimer = null;
   let particleTimer = null;
+  let particleSeq = 0;
+  let miniParticleTimer = null;
+  let miniParticleSeq = 0;
   let bubbleTimer = null;
   let typeTimer = null;
   let lastPet = 0;
@@ -312,6 +343,11 @@
   let musicActiveLabel = null;
   let transientEventTimer = null;
   let transientEventAction = null;
+  let islandPulseTimer = null;
+  let mediaGlowTimer = null;
+  let islandPulsePreviewText = null;
+  let petClickMoodIndex = 0;
+  let hasDockMessage = false;
   let focusActive = false;
   let focusUntil = null;
   let focusInterval = null;
@@ -324,7 +360,22 @@
   let momentaryExpandTimer = null;
   let momentaryCollapseAt = 0;
   let wasCollapsedBeforeMomentary = false;
-  const INACTIVITY_DELAY_MS = 35_000;
+  const INACTIVITY_DELAY_MS = 60_000;
+  const NATIVE_IDLE_FRESH_MS = 75_000;
+  const YAWN_DURATION_MS = 3500;
+  let lastNativeIdleAt = 0;
+  let localYawnTimer = null;
+  let isLocalYawning = false;
+  let tempBodyMotionTimer = null;
+  let activeTempBodyMotion = null;
+  let lastPowerPlugged = null;
+  let lastPowerLowOrSaver = false;
+  let activeWindowsContext = "normal";
+  let lastNetworkOnline = null;
+  let lastVolumePercent = null;
+  let lastVolumeMuted = null;
+  let petDoubleClickToggle = false;
+  let heightUpdateRafId = null;
 
   const core = {
     ws: null,
@@ -387,7 +438,20 @@
     const raw = sk?.name || "";
     return raw.split(" · ")[0].trim() || raw;
   };
-  const line = (kind) => pick(skin().lines[kind] || skin().lines.idle);
+  const LINE_FALLBACKS = {
+    love: "happy",
+    yawn: "sleeping",
+    charging: "happy",
+    gaming: "working",
+    focus: "thinking",
+    dizzy: "error",
+  };
+  const line = (kind) =>
+    pick(
+      skin().lines[kind] ||
+      (LINE_FALLBACKS[kind] ? skin().lines[LINE_FALLBACKS[kind]] : null) ||
+      skin().lines.idle
+    );
 
   const EMOTION_ALIASES = {
     idle: "idle",
@@ -406,7 +470,14 @@
     welcome: "greet",
     happy: "happy",
     joy: "happy",
-    love: "happy",
+    love: "love",
+    amor: "love",
+    corazon: "love",
+    corazón: "love",
+    affection: "love",
+    heart: "love",
+    adore: "love",
+    cariño: "love",
     surprise: "surprise",
     surprised: "surprise",
     shock: "surprise",
@@ -423,10 +494,39 @@
     busy: "working",
     thinking: "thinking",
     think: "thinking",
-    curious: "thinking",
+    curious: "curious",
+    curiosa: "curious",
+    duda: "curious",
+    wonder: "curious",
     sleeping: "sleeping",
     sleep: "sleeping",
     nap: "sleeping",
+    afk: "sleeping",
+    yawn: "yawn",
+    yawning: "yawn",
+    bostezo: "yawn",
+    bostezando: "yawn",
+    sleepy: "yawn",
+    soñolienta: "yawn",
+    charging: "charging",
+    charge: "charging",
+    cargando: "charging",
+    plugged: "charging",
+    gaming: "gaming",
+    game: "gaming",
+    gamer: "gaming",
+    jugando: "gaming",
+    focus: "focus",
+    focused: "focus",
+    concentracion: "focus",
+    concentración: "focus",
+    concentrada: "focus",
+    coding: "focus",
+    dizzy: "dizzy",
+    mareo: "dizzy",
+    mareada: "dizzy",
+    confused: "dizzy",
+    offline: "dizzy",
     eating: "eating",
     eat: "eating",
     snack: "eating",
@@ -437,16 +537,71 @@
     celebrate: "celebrate",
     celebration: "celebrate",
     victory: "celebrate",
+    proud: "proud",
+    orgullosa: "proud",
+    orgullo: "proud",
+    excited: "excited",
+    emocionada: "excited",
+    hype: "excited",
+    shy: "shy",
+    timida: "shy",
+    tímida: "shy",
+    blush: "shy",
+    sonrojada: "shy",
+    chill: "chill",
+    relajada: "chill",
+    relax: "chill",
+    serena: "chill",
     sad: "sad",
     unhappy: "sad",
-    sigh: "sad",
+    sigh: "sigh",
+    suspiro: "sigh",
+    cansada: "sigh",
+    exhausted: "sigh",
+    tired: "sigh",
     sorry: "sad",
   };
 
   function inferEmotionFromText(text = "") {
     const t = String(text || "").trim();
     if (!t) return null;
-    if (/¡¿|¿!|¡\?|!\?|\bsorpres(?:a|ivo|iva)\b|\binesperad[oa]s?\b|\bwow\b/i.test(t)) {
+    if (/\b(?:te quiero|te amo|amor|cariñ[oa]|adoro)\b|❤️|💖|💕|💗/i.test(t)) {
+      return "love";
+    }
+    if (/\b(?:qué emoción|increíble|genial|hype|épico|wow)\b|🤩|🌟/i.test(t)) {
+      return "excited";
+    }
+    if (/\b(?:orgullos[oa]|logrado|impecable|medalla)\b|🏆/i.test(t)) {
+      return "proud";
+    }
+    if (/\b(?:me da pena|da pena|penita|t[ií]mid[oa]|avergonzad[oa]|sonrojad[oa])\b|😳|🌸/i.test(t)) {
+      return "shy";
+    }
+    if (/\b(?:curios[oa]|hmm+|qué ser[aá]|interesante)\b|🔍/i.test(t)) {
+      return "curious";
+    }
+    if (/\b(?:relajad[oa]|chill|tranquil[oa]|caf[eé]|t[eé] verde|taza de t[eé]|infusi[oó]n)\b|☕/i.test(t)) {
+      return "chill";
+    }
+    if (/\b(?:bostez[oa]|bostezando|sueñ[oa]|soñolient[oa])\b|🥱/i.test(t)) {
+      return "yawn";
+    }
+    if (/\b(?:cargando|cargador|enchufad[oa]|recargando bater[ií]a)\b|🔌|🔋⚡/i.test(t)) {
+      return "charging";
+    }
+    if (/\b(?:modo gaming|gaming|gamer|jugando|videojuego)\b|🎮|🕹️/i.test(t)) {
+      return "gaming";
+    }
+    if (/\b(?:concentrad[oa]|concentraci[oó]n|enfoque|modo focus|programando|estudiando)\b|🎯/i.test(t)) {
+      return "focus";
+    }
+    if (/\b(?:maread[oa]|mareo|aturdid[oa]|sin conexi[oó]n|desconectad[oa])\b|💫|😵‍💫/i.test(t)) {
+      return "dizzy";
+    }
+    if (/\b(?:suspir[oa]|cansad[oa]|fiu+|exhaust[oa])\b|😮‍💨/i.test(t)) {
+      return "sigh";
+    }
+    if (/¡¿|¿!|¡\?|!\?|\bsorpres(?:a|ivo|iva)\b|\binesperad[oa]s?\b/i.test(t)) {
       return "surprise";
     }
     if (/\btriste(?:za)?\b|\blamento\b|\blo siento\b/i.test(t)) {
@@ -609,14 +764,28 @@
 
   // ------------------------------------------------------------------ sprites y animación Chibi HD
 
+  const SPRITE_FALLBACKS = {
+    love: "happy",
+    yawn: "sleeping",
+    charging: "happy",
+    gaming: "working",
+    focus: "thinking",
+    dizzy: "error",
+  };
+
   function spriteFor(state) {
     const sk = skin();
-    const key = pick(sk.states[state] || sk.states.idle);
+    const keys =
+      sk.states[state] ||
+      (SPRITE_FALLBACKS[state] ? sk.states[SPRITE_FALLBACKS[state]] : null) ||
+      sk.states.idle;
+    const key = pick(keys);
     return sk.sprites[key] || sk.sprites.idle;
   }
 
   function setSprite(src) {
-    if (els.miniThumb) els.miniThumb.src = src;
+    const miniEl = els.miniThumb || $("miniThumb");
+    if (miniEl && miniEl.getAttribute("src") !== src) miniEl.src = src;
     const imgEl = els.img || $("petImg") || $("sprite");
     if (imgEl && imgEl.getAttribute("src") !== src) imgEl.src = src;
     else renderPixel();
@@ -643,6 +812,21 @@
 
   // ------------------------------------------------------------------ máquina de estados del avatar
 
+  function computeMoodLabel() {
+    if (!notchExpanded && activeBrief === "avatar" && islandPulsePreviewText) {
+      return islandPulsePreviewText;
+    }
+    const fx = FX[current] || FX.idle;
+    const isOffline = !core.connected && core.offline;
+    if (isOffline) return "Core desconectado";
+    if (transientEventAction) return "Activo ✨";
+    if (pet.sleeping || isAutoSleeping || current === "sleeping") {
+      return pet.skin === "hana" ? "AFK · Zzz 😴" : "En reposo · Zzz 😴";
+    }
+    if (focusActive) return "Concentración 🎯";
+    return fx.label;
+  }
+
   function updateStageBadges() {
     const sk = skin();
     const fx = FX[current] || FX.idle;
@@ -660,13 +844,7 @@
     if (els.bubbleSpeaker) els.bubbleSpeaker.textContent = cleanName;
     if (els.agentDockSpeaker) els.agentDockSpeaker.textContent = cleanName;
 
-    const isOffline = !core.connected && core.offline;
-    const baselineState = isOffline
-      ? "Core desconectado"
-      : ((pet.sleeping || isAutoSleeping)
-        ? "En reposo"
-        : (focusActive ? "Concentración 🎯" : fx.label));
-    const moodLabel = transientEventAction ? "Activo ✨" : baselineState;
+    const moodLabel = computeMoodLabel();
 
     const sleepSwitch = els.sleepToggleBtn || $("sleepToggleBtn");
     if (sleepSwitch) {
@@ -685,10 +863,17 @@
     if (els.hudActionSleepLabel) els.hudActionSleepLabel.textContent = pet.sleeping ? "Despertar" : "Reposo";
     if (els.hudActionSleepIcon) els.hudActionSleepIcon.textContent = pet.sleeping ? "☀️" : "😴";
     if (els.hudActionStyleLabel) els.hudActionStyleLabel.textContent = "Chibi HD";
+    const moodBar = els.heroMoodBar || $("heroMoodBar");
+    if (moodBar) {
+      moodBar.querySelectorAll("button[data-mood]").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.mood === current);
+      });
+    }
     requestAnimationFrame(() => {
       if (els.skinNameLabel) checkAndApplyMarquee(els.skinNameLabel, { text: displayName });
       if (els.stateLabel) checkAndApplyMarquee(els.stateLabel, { text: moodLabel });
     });
+    syncIslandIllumination({ animate: activeBrief === "avatar" });
   }
 
   function triggerTransientAvatarReaction({ actionText, mood = "happy", durationMs = 4500 }) {
@@ -718,25 +903,84 @@
     }, durationMs);
   }
 
+  function clearTempBodyMotion({ restore = true } = {}) {
+    clearTimeout(tempBodyMotionTimer);
+    tempBodyMotionTimer = null;
+    activeTempBodyMotion = null;
+    if (restore && els.body) {
+      const fx = FX[current] || FX.idle;
+      els.body.dataset.motion = fx.motion;
+    }
+  }
+
+  function triggerTempBodyMotion(motion, ms = 1800) {
+    if (!els.body || !motion) return;
+    clearTimeout(tempBodyMotionTimer);
+    activeTempBodyMotion = motion;
+    els.body.dataset.motion = motion;
+    tempBodyMotionTimer = setTimeout(() => {
+      tempBodyMotionTimer = null;
+      activeTempBodyMotion = null;
+      if (els.body) {
+        const fx = FX[current] || FX.idle;
+        els.body.dataset.motion = fx.motion;
+      }
+    }, Math.max(300, Number(ms) || 1800));
+  }
+
   function show(state) {
     current = state;
+    clearIslandSubtlePulse({ sync: false });
+    clearTempBodyMotion({ restore: false });
+    if (state === "sleeping") {
+      clearTimeout(transientEventTimer);
+      transientEventTimer = null;
+      transientEventAction = null;
+    }
     const fx = FX[state] || FX.idle;
     els.body.dataset.motion = fx.motion;
     els.pet.classList.toggle("is-dim", Boolean(fx.dim));
+    const miniEl = els.miniThumb || $("miniThumb");
+    if (miniEl) {
+      miniEl.dataset.miniState = state;
+    }
     setSprite(spriteFor(state));
     startParticles(fx.particle, fx.every);
+    startMiniParticles(fx.miniParticle, fx.miniEvery);
     updateStageBadges();
   }
 
-  function play(
-    state,
-    text,
-    { particle, duration, confirmId, directToDock, dockTone, dockBadge, forceExpand } = {}
-  ) {
+  function play(state, text, opts = {}) {
+    const {
+      particle,
+      duration,
+      confirmId,
+      directToDock,
+      dockTone,
+      dockBadge,
+      forceExpand,
+      pulseState,
+      pulseText,
+      brandColor,
+      brandColor2,
+      skipPulse,
+      suppressAutoExpand,
+      keepCurrentBrief = false,
+    } = opts || {};
     if (pet.sleeping && state !== "sleeping") wake({ quiet: true });
     clearTimeout(transientTimer);
     transientTimer = null;
     show(state);
+    if (
+      !notchExpanded &&
+      activeBrief !== "avatar" &&
+      !keepCurrentBrief &&
+      userPinnedBrief !== "media" &&
+      userPinnedBrief !== "notif"
+    ) {
+      clearTimeout(briefPreviewTimer);
+      setActiveBrief("avatar", { syncView: false });
+    }
     if (particle) startParticles(particle, (FX[state] || FX.idle).every || 900);
     const ms = duration ?? (FX[state] || FX.idle).duration;
     if (ms) {
@@ -747,12 +991,18 @@
     }
     if (text) {
       say(text, {
-        duration: confirmId ? 25_000 : undefined,
+        duration: confirmId ? (duration ?? 120_000) : undefined,
         confirmId,
         directToDock,
         dockTone,
         dockBadge,
         forceExpand,
+        pulseState: pulseState || state,
+        pulseText,
+        brandColor,
+        brandColor2,
+        skipPulse,
+        suppressAutoExpand,
       });
     }
   }
@@ -771,69 +1021,119 @@
   }
 
   function sleep() {
+    clearTimeout(localYawnTimer);
+    localYawnTimer = null;
+    isLocalYawning = false;
     isAutoSleeping = false;
     pet.sleeping = true;
     clearTimeout(transientTimer);
     transientTimer = null;
     setBase("sleeping");
-    say(line("sleeping"));
+    say(line("sleeping"), { suppressAutoExpand: true, pulseState: "sleeping", pulseText: "" });
     save();
   }
 
   function wake({ quiet = false } = {}) {
+    clearTimeout(localYawnTimer);
+    localYawnTimer = null;
+    isLocalYawning = false;
     isAutoSleeping = false;
     pet.sleeping = false;
     setBase(agentWorking ? "working" : "idle");
-    if (!quiet) say(line("wake"));
+    if (!quiet) say(line("wake"), { suppressAutoExpand: true, pulseState: "idle", pulseText: "" });
     save();
   }
 
   // ------------------------------------------------------------------ Living avatar: auto-sleep, interactividad y squash & stretch
 
-  function resetInactivityTimer() {
+  function scheduleInactivityTimer() {
     clearTimeout(inactivityTimer);
-
-    // Any mouse/touch/key interaction wakes up to 'idle' and resets the timer
-    if (isAutoSleeping || pet.sleeping) {
-      isAutoSleeping = false;
-      pet.sleeping = false;
-      setBase(agentWorking ? "working" : "idle", { interrupt: true });
-      show("idle");
-      say(line("wake"));
-      save();
-    }
-
     inactivityTimer = setTimeout(() => {
       handleInactivityTimeout();
     }, INACTIVITY_DELAY_MS);
   }
 
+  function enterAutoSleep() {
+    clearTimeout(localYawnTimer);
+    localYawnTimer = null;
+    isLocalYawning = false;
+    if (pet.sleeping) return;
+    isAutoSleeping = true;
+    pet.sleeping = true;
+    clearTimeout(transientTimer);
+    transientTimer = null;
+    setBase("sleeping", { interrupt: true });
+    show("sleeping");
+    say(line("sleeping"), { suppressAutoExpand: true, pulseState: "sleeping", pulseText: "" });
+    updateStageBadges();
+    save();
+  }
+
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    clearTimeout(localYawnTimer);
+    localYawnTimer = null;
+
+    // Any mouse/touch/key interaction wakes up to 'idle' and resets the timer
+    if (isAutoSleeping || pet.sleeping) {
+      isAutoSleeping = false;
+      pet.sleeping = false;
+      isLocalYawning = false;
+      setBase(agentWorking ? "working" : "idle", { interrupt: true });
+      show("idle");
+      say(line("wake"), { suppressAutoExpand: true, pulseState: "idle", pulseText: "" });
+      save();
+    } else if (isLocalYawning || current === "yawn") {
+      isLocalYawning = false;
+      setBase(agentWorking ? "working" : "idle", { interrupt: true });
+      show(base);
+    }
+
+    scheduleInactivityTimer();
+  }
+
   function handleInactivityTimeout() {
-    // Inactivity auto-sleep: after 35 seconds of no interaction (mouse/keyboard), if music is not playing, transition avatar to 'sleeping' ('En reposo')
+    // Si hay telemetría nativa reciente de Windows, suspender fallback local para evitar falsos AFK
+    if (pet.winEventsEnabled && lastNativeIdleAt > 0 && (Date.now() - lastNativeIdleAt) < NATIVE_IDLE_FRESH_MS) {
+      scheduleInactivityTimer();
+      return;
+    }
     if (activeMedia && activeMedia.playing) {
-      resetInactivityTimer();
+      scheduleInactivityTimer();
       return;
     }
     if (agentWorking || pendingConfirmId) {
-      resetInactivityTimer();
+      scheduleInactivityTimer();
       return;
     }
 
-    if (!pet.sleeping) {
-      isAutoSleeping = true;
-      pet.sleeping = true;
+    if (!pet.sleeping && !isLocalYawning) {
+      isLocalYawning = true;
       clearTimeout(transientTimer);
       transientTimer = null;
-      setBase("sleeping", { interrupt: true });
-      show("sleeping");
-      say(line("sleeping"));
-      updateStageBadges();
-      save();
+      show("yawn");
+      say(line("yawn"), { suppressAutoExpand: true, pulseState: "yawn", pulseText: "Bostezando… 🥱" });
+      localYawnTimer = setTimeout(() => {
+        localYawnTimer = null;
+        isLocalYawning = false;
+        if (pet.winEventsEnabled && lastNativeIdleAt > 0 && (Date.now() - lastNativeIdleAt) < NATIVE_IDLE_FRESH_MS) {
+          show(base);
+          scheduleInactivityTimer();
+          return;
+        }
+        if ((activeMedia && activeMedia.playing) || agentWorking || pendingConfirmId) {
+          show(base);
+          scheduleInactivityTimer();
+          return;
+        }
+        enterAutoSleep();
+      }, YAWN_DURATION_MS);
     }
   }
 
   let lastUserActivityTime = 0;
   let ambientStandbyTimer = null;
+  let ambientProactiveStep = 0;
   function registerUserActivity() {
     const now = performance.now();
     if (now - lastUserActivityTime < 150) return;
@@ -854,14 +1154,34 @@
 
     clearInterval(ambientStandbyTimer);
     ambientStandbyTimer = setInterval(() => {
+      const inputFocused =
+        document.activeElement === els.chatInput ||
+        document.activeElement === els.promptInput ||
+        Boolean(els.chatInput && els.chatInput.value.trim());
       if (
-        !pet.sleeping &&
-        !agentWorking &&
-        !transientTimer &&
-        !transientEventAction &&
-        (current === "idle" || current === "standby")
+        pet.sleeping ||
+        isAutoSleeping ||
+        agentWorking ||
+        pendingConfirmId ||
+        transientTimer ||
+        transientEventAction ||
+        inputFocused ||
+        (current !== "idle" && current !== "standby")
       ) {
+        return;
+      }
+
+      ambientProactiveStep = (ambientProactiveStep + 1) % 8;
+      if (ambientProactiveStep % 2 === 1) {
         show(current === "idle" ? "standby" : "idle");
+      } else {
+        const gestures = ["chill", "love", "curious", "shy"];
+        const gesture = gestures[Math.floor(ambientProactiveStep / 2) % gestures.length];
+        const gestureDuration = gesture === "love" || gesture === "chill" ? 4400 : 3800;
+        play(gesture, null, { duration: gestureDuration, keepCurrentBrief: true });
+        if (!notchExpanded && activeBrief === "avatar") {
+          triggerIslandSubtlePulse(gesture);
+        }
       }
     }, 18_000);
 
@@ -892,20 +1212,24 @@
   function spawnParticles(kind = "✨", count = 4) {
     if (!els.particles || !kind) return;
     const total = Math.max(1, Math.min(12, Number(count) || 1));
+    const zGlyphs = ["z", "z", "Z"];
     for (let i = 0; i < total; i++) {
       const el = document.createElement("span");
+      const seq = particleSeq++;
       el.className = kind === "z" ? "particle particle--z" : "particle";
-      el.textContent =
-        kind === "food"
-          ? pick(skin().food)
-          : kind === "z"
-            ? pick(["z", "Z", "z"])
-            : kind;
-      el.style.insetInlineStart = `${20 + Math.random() * 60}%`;
-      el.style.setProperty("--dx", `${Math.round((Math.random() - 0.5) * 56)}px`);
+      if (kind === "z") {
+        el.textContent = zGlyphs[seq % zGlyphs.length];
+        el.dataset.zTier = String((seq % 3) + 1);
+      } else {
+        el.textContent = kind === "food" ? pick(skin().food) : kind;
+      }
+      el.style.insetInlineStart = kind === "z" ? `${48 + Math.random() * 24}%` : `${20 + Math.random() * 60}%`;
+      const dx = kind === "z" ? Math.round(12 + Math.random() * 22) : Math.round((Math.random() - 0.5) * 56);
+      el.style.setProperty("--dx", `${dx}px`);
+      const ttlMs = kind === "z" ? 3400 : 1950;
       const cleanup = () => el.remove();
       el.addEventListener("animationend", cleanup, { once: true });
-      setTimeout(cleanup, 1800);
+      setTimeout(cleanup, ttlMs);
       els.particles.append(el);
     }
   }
@@ -916,6 +1240,174 @@
     if (!kind) return;
     spawnParticles(kind, 1);
     particleTimer = setInterval(() => spawnParticles(kind, 1), every);
+  }
+
+  function spawnMiniParticles(kind, count = 1) {
+    const container = els.miniParticles || $("miniParticles");
+    if (!container || !kind) return;
+    const total = Math.max(1, Math.min(6, Number(count) || 1));
+    const zGlyphs = ["z", "z", "Z"];
+    const heartGlyphs = ["💖", "💕", "💗"];
+
+    for (let i = 0; i < total; i++) {
+      while (container.childElementCount >= 8) {
+        container.firstElementChild?.remove();
+      }
+      const el = document.createElement("span");
+      const idx = miniParticleSeq++;
+      if (kind === "z") {
+        el.className = "mini-particle mini-particle--z";
+        el.textContent = zGlyphs[idx % zGlyphs.length];
+        el.dataset.zTier = String((idx % 3) + 1);
+      } else if (kind === "heart") {
+        el.className = "mini-particle mini-particle--heart";
+        el.textContent = heartGlyphs[idx % heartGlyphs.length];
+      } else {
+        el.className = "mini-particle mini-particle--fx";
+        el.textContent = kind === "food" ? pick(skin().food) : kind;
+      }
+      const offsetX = Math.round(Math.random() * 14);
+      const driftX = kind === "z"
+        ? 8 + Math.round(Math.random() * 10)
+        : -3 + Math.round(Math.random() * 13);
+      el.style.setProperty("--mini-x", `${50 + offsetX}%`);
+      el.style.setProperty("--mini-dx", `${driftX}px`);
+      el.style.setProperty("--dx", `${driftX}px`);
+      el.style.animationDelay = `${i * (kind === "z" ? 160 : 110)}ms`;
+      const ttlMs = kind === "z" ? 3300 + i * 160 : 1950 + i * 110;
+      const cleanup = () => el.remove();
+      el.addEventListener("animationend", cleanup, { once: true });
+      setTimeout(cleanup, ttlMs);
+      container.append(el);
+    }
+  }
+
+  function startMiniParticles(kind, every = 1100) {
+    clearInterval(miniParticleTimer);
+    miniParticleTimer = null;
+    if (!kind) {
+      return;
+    }
+    spawnMiniParticles(kind, 1);
+    miniParticleTimer = setInterval(() => {
+      spawnMiniParticles(kind, 1);
+    }, every || 1100);
+  }
+
+  function syncNotifBrandColorOnStage() {
+    if (!els.stage) return;
+    if (notificationInbox.length > 0) {
+      const topSpec = getNotificationBrandSpec(notificationInbox[0].app, notificationInbox[0].title);
+      els.stage.style.setProperty("--notif-brand-color", topSpec.color);
+    } else {
+      els.stage.style.removeProperty("--notif-brand-color");
+    }
+  }
+
+  function clearIslandSubtlePulse({ sync = true } = {}) {
+    clearTimeout(islandPulseTimer);
+    islandPulseTimer = null;
+    islandPulsePreviewText = null;
+    if (els.stage) {
+      els.stage.classList.remove("is-island-pulsing");
+      delete els.stage.dataset.islandPulse;
+      syncNotifBrandColorOnStage();
+    }
+    if (sync) {
+      syncIslandIllumination({ animate: false });
+    }
+  }
+
+  function clearIslandMediaGlow() {
+    clearTimeout(mediaGlowTimer);
+    mediaGlowTimer = null;
+    if (els.stage) {
+      els.stage.classList.remove("is-media-glow");
+      if (els.stage.dataset.islandPulse === "media") {
+        delete els.stage.dataset.islandPulse;
+      }
+    }
+  }
+
+  function triggerIslandMediaGlow(previewText = "") {
+    if (!els.stage) return;
+    clearTimeout(mediaGlowTimer);
+    if (!notchExpanded) {
+      els.stage.classList.remove("is-media-glow");
+      void els.stage.offsetWidth;
+      els.stage.classList.add("is-media-glow");
+      els.stage.dataset.islandPulse = "media";
+    }
+    if (previewText && activeBrief === "media" && els.briefMediaTitle) {
+      checkAndApplyMarquee(els.briefMediaTitle, { marquee360: true, text: previewText });
+    }
+    mediaGlowTimer = setTimeout(() => {
+      mediaGlowTimer = null;
+      if (els.stage) {
+        els.stage.classList.remove("is-media-glow");
+        if (els.stage.dataset.islandPulse === "media") {
+          delete els.stage.dataset.islandPulse;
+        }
+      }
+    }, 3600);
+  }
+
+  function triggerIslandSubtlePulse(state = current, previewText = "", { pulseKey = null, brandColor = null, brandColor2 = null } = {}) {
+    if (notchExpanded || !els.stage) return;
+    clearTimeout(islandPulseTimer);
+    const resolvedState = validState(state) || current || "idle";
+    const pulseDataset = pulseKey || resolvedState;
+    const fx = FX[resolvedState] || FX.idle;
+
+    els.stage.classList.remove("is-island-pulsing");
+    void els.stage.offsetWidth;
+    if (brandColor) {
+      els.stage.style.setProperty("--notif-brand-color", brandColor);
+      if (pulseKey !== "notif") {
+        els.stage.style.setProperty("--island-illum-1", brandColor);
+        els.stage.style.setProperty("--island-illum-2", brandColor2 || brandColor);
+      }
+    } else {
+      syncNotifBrandColorOnStage();
+    }
+    els.stage.dataset.islandPulse = pulseDataset;
+    els.stage.classList.add("is-island-pulsing");
+
+    const miniKind =
+      fx.miniParticle ||
+      (fx.particle && fx.particle !== "food" ? fx.particle : (previewText ? "✨" : null));
+    if (miniKind) {
+      spawnMiniParticles(miniKind, resolvedState === "love" || resolvedState === "celebrate" ? 3 : 2);
+    }
+
+    const cleanPreview = String(previewText || "").replace(/\s+/g, " ").trim();
+    if (cleanPreview && activeBrief === "avatar" && els.stateLabel) {
+      const clipped = cleanPreview.length > 48 ? `${cleanPreview.slice(0, 47)}…` : cleanPreview;
+      islandPulsePreviewText = clipped;
+      els.stateLabel.textContent = clipped;
+      els.stateLabel.setAttribute("data-raw-text", clipped);
+      requestAnimationFrame(() => {
+        if (els.stateLabel && !notchExpanded && islandPulsePreviewText === clipped) {
+          checkAndApplyMarquee(els.stateLabel, { text: clipped });
+        }
+      });
+    } else {
+      islandPulsePreviewText = null;
+    }
+
+    islandPulseTimer = setTimeout(() => {
+      islandPulseTimer = null;
+      islandPulsePreviewText = null;
+      if (els.stage) {
+        els.stage.classList.remove("is-island-pulsing");
+        if (!(els.stage.classList.contains("is-media-glow") && els.stage.dataset.islandPulse === "media")) {
+          delete els.stage.dataset.islandPulse;
+        }
+        syncNotifBrandColorOnStage();
+      }
+      updateStageBadges();
+      syncIslandIllumination({ animate: false });
+    }, 2600);
   }
 
   let pendingBubbleDock = null;
@@ -930,6 +1422,8 @@
     const cleanText = String(text ?? "").trim();
     if (!cleanText) return;
 
+    dockUpdateSeq += 1;
+    hasDockMessage = true;
     const sk = skin();
     const speakerName = speakLabel || getCleanAvatarName(sk);
     if (els.agentDockSpeaker) els.agentDockSpeaker.textContent = speakerName;
@@ -958,27 +1452,54 @@
     }
   }
 
+  function ensureBubbleAlwaysHidden() {
+    if (els.bubble) {
+      els.bubble.classList.remove("is-docking");
+      if (!els.bubble.hidden) {
+        hideElement(els.bubble);
+      }
+      els.bubble.hidden = true;
+    }
+  }
+
   async function flushBubbleToDock() {
     const queued = pendingBubbleDock;
     pendingBubbleDock = null;
     clearTimeout(bubbleDockAnimTimer);
-    if (!queued || !els.bubble) return;
+    if (els.bubble) {
+      els.bubble.classList.remove("is-docking");
+      if (!els.bubble.hidden) {
+        await hideElement(els.bubble);
+      }
+      els.bubble.hidden = true;
+    }
+    if (!pendingConfirmId) {
+      if (els.confirmBar) els.confirmBar.hidden = true;
+      if (els.bubbleTag) els.bubbleTag.hidden = true;
+      if (els.agentReplyDock) delete els.agentReplyDock.dataset.confirmPending;
+    }
+    if (queued?.text) {
+      updateAgentDock(queued.text, {
+        tone: queued.tone || "idle",
+        badge: queued.badge || "✨ Anclado",
+        animate: "catch",
+      });
+    }
+    requestExpandedHeightUpdate();
+  }
 
-    els.bubble.classList.add("is-docking");
-    await new Promise((resolve) => {
-      bubbleDockAnimTimer = setTimeout(resolve, 340);
-    });
-    els.bubble.classList.remove("is-docking");
-    pendingConfirmId = null;
-    if (els.confirmBar) els.confirmBar.hidden = true;
-    if (els.bubbleTag) els.bubbleTag.hidden = true;
-    await hideElement(els.bubble);
-    updateAgentDock(queued.text, {
-      tone: queued.tone || "idle",
-      badge: queued.badge || "✨ Anclado",
-      animate: "catch",
+  function flushPendingDockQueue() {
+    if (!pendingDockQueue.length) return false;
+    const next = pendingDockQueue[pendingDockQueue.length - 1];
+    pendingDockQueue = [];
+    if (!next?.text) return false;
+    updateAgentDock(next.text, {
+      tone: next.tone || "idle",
+      badge: next.badge || "✨ Pendiente",
+      animate: "update",
     });
     requestExpandedHeightUpdate();
+    return true;
   }
 
   function say(text, options = {}) {
@@ -987,102 +1508,111 @@
     const ms = typeof options === "number" ? options : opts.duration;
     const confirmId = opts.confirmId || null;
     const forceExpand = Boolean(opts.forceExpand);
-    const directToDock = Boolean(opts.directToDock || opts.fromChat);
-    const dockTone = opts.dockTone || (directToDock ? "reply" : "idle");
-    const dockBadge = opts.dockBadge || (directToDock ? "💬 Respuesta" : "✨ Anclado");
+    const suppressAutoExpand = Boolean(opts.suppressAutoExpand);
+    const skipPulse = Boolean(opts.skipPulse);
+    const dockTone =
+      opts.dockTone || (confirmId ? "reminder" : (opts.directToDock || opts.fromChat ? "reply" : "idle"));
+    const dockBadge =
+      opts.dockBadge || (confirmId ? "🔐 Autorización" : (opts.directToDock || opts.fromChat ? "💬 Respuesta" : "✨ Anclado"));
+
+    if (!confirmId && pendingConfirmId) {
+      if (pendingDockQueue.length >= 10) {
+        pendingDockQueue.shift();
+      }
+      pendingDockQueue.push({ text: String(text), tone: dockTone, badge: dockBadge });
+      if (!notchExpanded && !skipPulse) {
+        const pulsePreview = opts.pulseText !== undefined ? opts.pulseText : String(text);
+        triggerIslandSubtlePulse(opts.pulseState || current || "idle", pulsePreview, {
+          brandColor: opts.brandColor || null,
+          brandColor2: opts.brandColor2 || null,
+        });
+      }
+      return;
+    }
 
     clearTimeout(bubbleTimer);
     clearInterval(typeTimer);
     clearTimeout(bubbleDockAnimTimer);
+    pendingBubbleDock = null;
+    ensureBubbleAlwaysHidden();
 
-    if (pendingBubbleDock) {
-      updateAgentDock(pendingBubbleDock.text, {
-        tone: pendingBubbleDock.tone || "idle",
-        badge: pendingBubbleDock.badge || "✨ Anclado",
-        animate: "none",
-      });
-      pendingBubbleDock = null;
-    }
+    const charsLen = Array.from(String(text)).length;
 
-    els.bubble?.classList.remove("is-docking");
+    if (confirmId) {
+      pendingConfirmId = confirmId;
+      if (els.bubbleTag) els.bubbleTag.hidden = false;
+      if (els.confirmBar) els.confirmBar.hidden = false;
+      if (els.agentReplyDock) els.agentReplyDock.dataset.confirmPending = "true";
+      updateAgentDock(text, { tone: dockTone, badge: dockBadge, animate: "catch" });
 
-    // En conversación directa / respuestas del agente, enviar directo al área inferior sin nube
-    if (directToDock && !confirmId) {
-      if (!pendingConfirmId && els.bubble && !els.bubble.hidden) {
-        if (els.confirmBar) els.confirmBar.hidden = true;
-        if (els.bubbleTag) els.bubbleTag.hidden = true;
-        hideElement(els.bubble);
-      }
-      updateAgentDock(text, { tone: dockTone, badge: dockBadge, animate: "update" });
-      const charsLen = Array.from(String(text)).length;
-      const ttl = ms || Math.min(8500, 2600 + charsLen * 45);
-      if (!focusActive || forceExpand) {
-        if (!wasCollapsedBeforeMomentary) {
-          expandNotchTemporarily(ttl + 900);
-        } else if (notchExpanded) {
-          requestExpandedHeightUpdate();
+      const ttl = ms || 120_000;
+      bubbleTimer = setTimeout(() => {
+        if (pendingConfirmId === confirmId) {
+          pendingConfirmId = null;
+          if (els.confirmBar) els.confirmBar.hidden = true;
+          if (els.bubbleTag) els.bubbleTag.hidden = true;
+          if (els.agentReplyDock) delete els.agentReplyDock.dataset.confirmPending;
+          if (!flushPendingDockQueue()) {
+            updateAgentDock("Tiempo de espera de autorización agotado.", {
+              tone: "idle",
+              badge: "⏱️ Expirado",
+              animate: "update",
+            });
+            requestExpandedHeightUpdate();
+          }
         }
-      } else if (notchExpanded) {
+      }, ttl);
+
+      if (!notchExpanded) {
+        if (pet.autoExpandEvents && !suppressAutoExpand) {
+          if (!wasCollapsedBeforeMomentary) {
+            expandNotchTemporarily(ttl + 1000);
+          }
+        } else if (!skipPulse) {
+          if (activeBrief !== "avatar" && userPinnedBrief !== "media" && userPinnedBrief !== "notif") {
+            setActiveBrief("avatar", { syncView: false });
+          }
+          triggerIslandSubtlePulse(opts.pulseState || "surprise", opts.pulseText ?? `🔐 ${text}`);
+        }
+      } else {
         requestExpandedHeightUpdate();
       }
       return;
     }
 
-    pendingConfirmId = confirmId || null;
-    if (els.bubbleTag) els.bubbleTag.hidden = !pendingConfirmId;
-    if (els.confirmBar) els.confirmBar.hidden = !pendingConfirmId;
+    if (els.confirmBar) els.confirmBar.hidden = true;
+    if (els.bubbleTag) els.bubbleTag.hidden = true;
+    if (els.agentReplyDock) delete els.agentReplyDock.dataset.confirmPending;
+    updateAgentDock(text, { tone: dockTone, badge: dockBadge, animate: "update" });
 
-    const target = els.bubbleText || els.bubble;
-    const chars = Array.from(String(text));
-    let i = 0;
-    target.textContent = "";
-    showElement(els.bubble);
-    requestExpandedHeightUpdate();
-
-    typeTimer = setInterval(() => {
-      target.textContent += chars[i++] ?? "";
-      if (i >= chars.length) {
-        clearInterval(typeTimer);
-        requestExpandedHeightUpdate();
+    const ttl = ms || Math.min(8500, 2600 + charsLen * 45);
+    if (!notchExpanded) {
+      if (pet.autoExpandEvents && !suppressAutoExpand && (!focusActive || forceExpand)) {
+        if (!wasCollapsedBeforeMomentary) {
+          expandNotchTemporarily(ttl + 900);
+        }
+      } else if (!skipPulse) {
+        const pulsePreview = opts.pulseText !== undefined ? opts.pulseText : String(text);
+        triggerIslandSubtlePulse(opts.pulseState || current || "idle", pulsePreview, {
+          brandColor: opts.brandColor || null,
+          brandColor2: opts.brandColor2 || null,
+        });
       }
-    }, 16);
-
-    const ttl = ms || Math.min(5200, 2000 + chars.length * 40);
-    if (!confirmId) {
-      pendingBubbleDock = { text: String(text), tone: dockTone, badge: dockBadge };
-    }
-
-    // Al recibir un mensaje, confirmación o notificación del agente, expandir orgánicamente
-    // la Dynamic Island (salvo durante Modo Concentración, donde solo agent.confirm o errores expanden)
-    if (!focusActive || Boolean(confirmId) || forceExpand) {
-      if (!wasCollapsedBeforeMomentary) {
-        expandNotchTemporarily(ttl + 1000);
-      } else if (notchExpanded) {
-        requestExpandedHeightUpdate();
-      }
-    } else if (notchExpanded) {
+    } else {
       requestExpandedHeightUpdate();
     }
-
-    bubbleTimer = setTimeout(async () => {
-      if (pendingConfirmId) {
-        pendingConfirmId = null;
-        if (els.confirmBar) els.confirmBar.hidden = true;
-        if (els.bubbleTag) els.bubbleTag.hidden = true;
-        await hideElement(els.bubble);
-        requestExpandedHeightUpdate();
-        return;
-      }
-      await flushBubbleToDock();
-    }, ttl);
   }
 
   function resolveConfirmation(approved) {
     const id = pendingConfirmId || "manual";
+    const hadQueued = pendingDockQueue.length > 0;
+    clearTimeout(bubbleTimer);
     pendingConfirmId = null;
     pendingBubbleDock = null;
     if (els.confirmBar) els.confirmBar.hidden = true;
     if (els.bubbleTag) els.bubbleTag.hidden = true;
+    if (els.agentReplyDock) delete els.agentReplyDock.dataset.confirmPending;
+    ensureBubbleAlwaysHidden();
 
     core.send({ type: "user.confirm", data: { id, approved } });
     logActivity("user.confirm", `${id} → ${approved ? "permitido" : "cancelado"}`);
@@ -1100,21 +1630,28 @@
         dockBadge: "✕ Cancelado",
       });
     }
+
+    if (hadQueued) {
+      const seqAfterResolve = dockUpdateSeq;
+      setTimeout(() => {
+        if (!pendingConfirmId && dockUpdateSeq === seqAfterResolve) {
+          flushPendingDockQueue();
+        }
+      }, 1600);
+    }
   }
 
-  els.confirmApprove?.addEventListener("click", () => resolveConfirmation(true));
-  els.confirmReject?.addEventListener("click", () => resolveConfirmation(false));
+  els.confirmApprove?.addEventListener("click", (event) => {
+    event?.stopPropagation?.();
+    resolveConfirmation(true);
+  });
+  els.confirmReject?.addEventListener("click", (event) => {
+    event?.stopPropagation?.();
+    resolveConfirmation(false);
+  });
 
-  els.bubble?.addEventListener("click", async (event) => {
-    if (event.target.closest(".bubble__confirm")) return;
-    if (pendingConfirmId) return;
-    clearTimeout(bubbleTimer);
-    clearInterval(typeTimer);
-    if (pendingBubbleDock) {
-      await flushBubbleToDock();
-      return;
-    }
-    await hideElement(els.bubble);
+  els.bubble?.addEventListener("click", async () => {
+    ensureBubbleAlwaysHidden();
     requestExpandedHeightUpdate();
   });
 
@@ -1130,7 +1667,10 @@
     lastPet = now;
     els.pet.classList.add("is-clicked");
     setTimeout(() => els.pet.classList.remove("is-clicked"), 200);
-    play("happy", line("happy"));
+    const clickMoods = ["happy", "love", "excited", "shy", "proud", "curious", "chill"];
+    const nextMood = clickMoods[petClickMoodIndex % clickMoods.length];
+    petClickMoodIndex += 1;
+    play(nextMood, line(nextMood));
   }
 
   function setSkin(id) {
@@ -1186,6 +1726,9 @@
 
   function setAutoExpandMode(enabled, { persist = true } = {}) {
     pet.autoExpandEvents = Boolean(enabled);
+    if (persist) {
+      pet.autoExpandManual = true;
+    }
     const autoBtn = els.autoExpandToggleBtn || $("autoExpandToggleBtn");
     if (autoBtn) {
       autoBtn.classList.toggle("is-active", pet.autoExpandEvents);
@@ -1193,6 +1736,49 @@
     }
     if (persist) {
       save(pet);
+    }
+  }
+
+  function setWinEventsEnabled(enabled, { persist = true } = {}) {
+    pet.winEventsEnabled = Boolean(enabled);
+    const winBtn = els.winEventsToggleBtn || $("winEventsToggleBtn");
+    if (winBtn) {
+      winBtn.classList.toggle("is-active", pet.winEventsEnabled);
+      winBtn.setAttribute("aria-checked", String(pet.winEventsEnabled));
+    }
+    if (persist) {
+      save(pet);
+    }
+  }
+
+  async function syncAutoStartUI(explicitState) {
+    const btn = els.autoStartToggleBtn || $("autoStartToggleBtn");
+    if (!btn) return;
+    if (!hasNativeHost() || typeof window.mekaGetAutoStart !== "function") {
+      btn.hidden = true;
+      return;
+    }
+    btn.hidden = false;
+    try {
+      const enabled = typeof explicitState === "boolean"
+        ? explicitState
+        : Boolean(await Promise.resolve(window.mekaGetAutoStart()));
+      btn.classList.toggle("is-active", enabled);
+      btn.setAttribute("aria-checked", String(enabled));
+    } catch (_) {
+      // Silencioso si el host aún inicializa
+    }
+  }
+
+  async function toggleAutoStart() {
+    if (typeof window.mekaSetAutoStart !== "function") return;
+    const btn = els.autoStartToggleBtn || $("autoStartToggleBtn");
+    const next = !(btn && btn.getAttribute("aria-checked") === "true");
+    try {
+      const resulting = Boolean(await Promise.resolve(window.mekaSetAutoStart(next)));
+      await syncAutoStartUI(resulting);
+    } catch (_) {
+      await syncAutoStartUI();
     }
   }
 
@@ -1301,6 +1887,15 @@
     if (typeof window.mekaToggleDodge === "function") {
       window.mekaToggleDodge();
     }
+  }
+
+  function closeMekaApplication(event) {
+    event?.stopPropagation();
+    if (typeof window.mekaCloseWindow === "function") {
+      window.mekaCloseWindow();
+      return;
+    }
+    window.close();
   }
 
   function menuItems() {
@@ -1500,6 +2095,19 @@
       openMenu(rect.left + rect.width / 2, rect.top + 20);
     }
   });
+  els.pet.addEventListener("dblclick", (event) => {
+    event.stopPropagation();
+    if (pet.sleeping || isAutoSleeping) {
+      wake({ quiet: true });
+    }
+    petDoubleClickToggle = !petDoubleClickToggle;
+    const specialMood = petDoubleClickToggle ? "love" : "excited";
+    const burstParticle = specialMood === "love" ? "💖" : "🌟";
+    triggerSquashAndStretch();
+    play(specialMood, line(specialMood), { suppressAutoExpand: true });
+    spawnParticles(burstParticle, 8);
+    spawnMiniParticles(specialMood === "love" ? "heart" : "🌟", 4);
+  });
 
   // ------------------------------------------------------------------ Samsung Brief & One UI 9 Logic
 
@@ -1512,6 +2120,37 @@
   const seenNotificationIds = new Set();
   let initialNotificationsLoaded = false;
   let systemSyncTimer = null;
+
+  const STATE_ILLUM_PALETTES = {
+    idle: ["#38bdf8", "#0284c7"],
+    standby: ["#38bdf8", "#0284c7"],
+    working: ["#0a84ff", "#38bdf8"],
+    thinking: ["#38bdf8", "#64d2ff"],
+    curious: ["#38bdf8", "#0ea5e9"],
+    sleeping: ["#8b5cf6", "#6366f1"],
+    yawn: ["#a78bfa", "#8b5cf6"],
+    love: ["#fb7185", "#f43f5e"],
+    happy: ["#ff375f", "#fb7185"],
+    greet: ["#f472b6", "#ec4899"],
+    shy: ["#f9a8d4", "#f472b6"],
+    chill: ["#2dd4bf", "#06b6d4"],
+    surprise: ["#fbbf24", "#f59e0b"],
+    excited: ["#f59e0b", "#fbbf24"],
+    celebrate: ["#ffd60a", "#f59e0b"],
+    proud: ["#eab308", "#facc15"],
+    dance: ["#38bdf8", "#ec4899"],
+    eating: ["#ff9f0a", "#f97316"],
+    charging: ["#4ade80", "#facc15"],
+    gaming: ["#818cf8", "#c084fc"],
+    focus: ["#38bdf8", "#0ea5e9"],
+    sad: ["#64748b", "#475569"],
+    sigh: ["#94a3b8", "#64748b"],
+    dizzy: ["#f59e0b", "#94a3b8"],
+    error: ["#ff453a", "#ef4444"],
+  };
+  let activeMediaAccents = ["#38bdf8", "#0ea5e9"];
+  let lastIllumSignature = "";
+  let illumTransitionTimer = null;
 
   function pinUserBrief(name) {
     clearTimeout(userPinnedBriefTimer);
@@ -1616,8 +2255,7 @@
       if (els.skinNameLabel) {
         checkAndApplyMarquee(els.skinNameLabel, { text: displayName });
       }
-      const baselineState = (pet.sleeping || isAutoSleeping) ? "En reposo" : fx.label;
-      const moodLabel = transientEventAction ? "Activo ✨" : baselineState;
+      const moodLabel = computeMoodLabel();
       if (els.stateLabel) {
         checkAndApplyMarquee(els.stateLabel, { text: moodLabel });
       }
@@ -1637,6 +2275,104 @@
       if (els.mediaTitle) checkAndApplyMarquee(els.mediaTitle);
       if (els.mediaArtist) checkAndApplyMarquee(els.mediaArtist);
     });
+  }
+
+  const BRAND_ICONS = {
+    whatsapp: {
+      brand: "whatsapp",
+      color: "#25d366",
+      emoji: "💬",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 11.5a8.5 8.5 0 0 1-12.56 7.46L4 20l1.08-3.82A8.5 8.5 0 1 1 20.5 11.5z"/><path d="M9.4 9.1c.25-.45.55-.46.82-.45.22.01.44.02.63.48.24.58.78 1.98.85 2.12.07.14.12.31.02.5-.1.19-.15.3-.3.47-.14.17-.3.37-.43.5-.14.14-.3.3-.13.59.17.29.74 1.22 1.6 1.98 1.1.98 2.02 1.29 2.31 1.43.29.14.46.12.63-.07.17-.19.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.66.78 1.94.92.28.14.47.21.54.33.07.12.07.69-.17 1.36-.24.67-1.39 1.28-1.92 1.35-.49.07-1.12.1-1.8-.12-.42-.14-.96-.32-1.66-.62-2.92-1.26-4.82-4.21-4.97-4.4-.14-.2-1.18-1.57-1.18-3 0-1.43.75-2.13 1.02-2.42z" fill="currentColor" stroke="none"/></svg>',
+    },
+    telegram: {
+      brand: "telegram",
+      color: "#38bdf8",
+      emoji: "💬",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.2 4.4 2.8 11.7l6.1 2.2 2.4 6 3.1-3.6 4.7 3.5z"/><path d="M8.9 13.9 21.2 4.4"/></svg>',
+    },
+    discord: {
+      brand: "discord",
+      color: "#818cf8",
+      emoji: "🎮",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 6.5a13 13 0 0 1 9 0l2 2.8a11 11 0 0 1 1 6.7l-3 1.5-1.3-1.7a9 9 0 0 1-6.4 0L7.5 17.5l-3-1.5a11 11 0 0 1 1-6.7z"/><circle cx="9.6" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.4" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>',
+    },
+    slack: {
+      brand: "slack",
+      color: "#c084fc",
+      emoji: "💼",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="10" width="7" height="3" rx="1.5"/><rect x="14" y="11" width="7" height="3" rx="1.5"/><rect x="10" y="3" width="3" height="7" rx="1.5"/><rect x="11" y="14" width="3" height="7" rx="1.5"/></svg>',
+    },
+    spotify: {
+      brand: "spotify",
+      color: "#1ed760",
+      emoji: "🎵",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7.8 9.6c2.9-.8 6.1-.5 8.7.7"/><path d="M8.5 12.6c2.3-.6 4.8-.4 6.9.6"/><path d="M9.3 15.5c1.7-.4 3.5-.3 5.1.4"/></svg>',
+    },
+    mail: {
+      brand: "mail",
+      color: "#fb7185",
+      emoji: "📧",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg>',
+    },
+    security: {
+      brand: "security",
+      color: "#fbbf24",
+      emoji: "🛡️",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.5 2.9 8.2 7 9.5 4.1-1.3 7-5 7-9.5V6z"/><path d="m9.5 12 1.8 1.8 3.4-3.6"/></svg>',
+    },
+    terminal: {
+      brand: "terminal",
+      color: "#e2e8f0",
+      emoji: "⚙️",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="m7.5 9.5 3 2.5-3 2.5"/><path d="M12.5 14.5h4"/></svg>',
+    },
+    calendar: {
+      brand: "calendar",
+      color: "#f472b6",
+      emoji: "⏰",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.4 1.6"/><path d="M9.5 3.5h5"/></svg>',
+    },
+    browser: {
+      brand: "browser",
+      color: "#60a5fa",
+      emoji: "🌐",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M12 3a13 13 0 0 1 0 18 13 13 0 0 1 0-18z"/></svg>',
+    },
+    files: {
+      brand: "files",
+      color: "#a78bfa",
+      emoji: "📁",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4.2l2 2.4H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+    },
+    system: {
+      brand: "system",
+      color: "#38bdf8",
+      emoji: "🔔",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+    },
+  };
+
+  function getNotificationBrandSpec(app, title) {
+    const raw = `${app || ""} ${title || ""}`.toLowerCase();
+    if (!raw.trim()) return BRAND_ICONS.system;
+    if (/whatsapp/.test(raw)) return BRAND_ICONS.whatsapp;
+    if (/(?:telegram|signal|mensajer[ií]a|chat|sms|message)/.test(raw)) return BRAND_ICONS.telegram;
+    if (/discord/.test(raw)) return BRAND_ICONS.discord;
+    if (/(?:slack|teams)/.test(raw)) return BRAND_ICONS.slack;
+    if (/(?:alerta|seguridad|firewall|defender|antivirus|security|threat|danger|warning)/.test(raw)) {
+      return BRAND_ICONS.security;
+    }
+    if (/(?:powershell|terminal|cmd|git|code|vscode|sistema|windows update|windows|configuraci[oó]n|settings|system)/.test(raw)) {
+      return BRAND_ICONS.terminal;
+    }
+    if (/(?:spotify|m[uú]sica|youtube music|sonido|audio|music)/.test(raw)) return BRAND_ICONS.spotify;
+    if (/(?:outlook|gmail|correo|mail)/.test(raw)) return BRAND_ICONS.mail;
+    if (/(?:calendario|calendar|reloj|alarma|alarm|clock|timer|temporizador)/.test(raw)) {
+      return BRAND_ICONS.calendar;
+    }
+    if (/(?:edge|chrome|firefox|navegador|browser|safari|opera|brave)/.test(raw)) return BRAND_ICONS.browser;
+    if (/(?:descargas?|download|archivos?|explorador|file)/.test(raw)) return BRAND_ICONS.files;
+    return BRAND_ICONS.system;
   }
 
   // Dynamic notification emojis mapping
@@ -1715,10 +2451,58 @@
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  function setActiveBrief(name, { syncView = true } = {}) {
+  function syncIslandIllumination({ animate = true } = {}) {
+    if (!els.stage) return;
+
+    let c1;
+    let c2;
+    if (activeBrief === "media") {
+      if (activeMedia && (activeMedia.title || activeMedia.playing)) {
+        [c1, c2] = activeMediaAccents;
+      } else {
+        [c1, c2] = ["#38bdf8", "#0284c7"];
+      }
+    } else if (activeBrief === "notif") {
+      if (notificationInbox.length > 0) {
+        const spec = getNotificationBrandSpec(notificationInbox[0].app, notificationInbox[0].title);
+        c1 = spec.color;
+        c2 = spec.color;
+        els.stage.style.setProperty("--notif-brand-color", spec.color);
+      } else {
+        [c1, c2] = ["#38bdf8", "#0284c7"];
+        els.stage.style.setProperty("--notif-brand-color", "#38bdf8");
+      }
+    } else {
+      [c1, c2] = STATE_ILLUM_PALETTES[current] || STATE_ILLUM_PALETTES.idle;
+    }
+
+    els.stage.setAttribute("data-active-brief", activeBrief);
+    els.stage.style.setProperty("--island-illum-1", c1);
+    els.stage.style.setProperty("--island-illum-2", c2);
+
+    const signature = `${activeBrief}:${c1}:${c2}`;
+    if (signature !== lastIllumSignature) {
+      lastIllumSignature = signature;
+      if (animate) {
+        clearTimeout(illumTransitionTimer);
+        els.stage.classList.remove("is-illum-transitioning");
+        void els.stage.offsetWidth;
+        els.stage.classList.add("is-illum-transitioning");
+        illumTransitionTimer = setTimeout(() => {
+          illumTransitionTimer = null;
+          els.stage?.classList.remove("is-illum-transitioning");
+        }, 840);
+      }
+    }
+  }
+
+  function setActiveBrief(name, { syncView = true, animate = true } = {}) {
     if (!BRIEFS.includes(name)) return;
     activeBrief = name;
 
+    if (els.stage) {
+      els.stage.setAttribute("data-active-brief", activeBrief);
+    }
     if (els.skinBadge) {
       els.skinBadge.setAttribute("data-active-brief", activeBrief);
     }
@@ -1750,6 +2534,7 @@
       setStageView(briefToStageView(activeBrief));
     }
 
+    syncIslandIllumination({ animate });
     updateAllMarquees();
   }
 
@@ -1798,16 +2583,24 @@
       }
       els.briefNotif.removeAttribute("data-unread");
       els.briefNotif.removeAttribute("data-count");
+      if (els.briefNotifBrand) {
+        els.briefNotifBrand.innerHTML = "";
+        els.briefNotifBrand.hidden = true;
+        els.briefNotifBrand.removeAttribute("data-brand");
+      }
       if (els.briefNotifEmoji) {
         els.briefNotifEmoji.textContent = "🔔";
         els.briefNotifEmoji.hidden = true;
       }
       if (els.briefNotifIcon) {
-        els.briefNotifIcon.classList.remove("has-emoji");
+        els.briefNotifIcon.classList.remove("has-emoji", "has-brand");
+        els.briefNotifIcon.removeAttribute("data-brand");
       }
+      if (els.stage) els.stage.style.removeProperty("--notif-brand-color");
+      els.briefNotif.style.removeProperty("--notif-brand-color");
     } else {
       const latest = notificationInbox[0];
-      const emoji = getNotificationEmoji(latest.app, latest.title);
+      const spec = getNotificationBrandSpec(latest.app, latest.title);
       const app = latest.app || "Notificación";
       const title = latest.title || "";
       const body = latest.body || "";
@@ -1826,17 +2619,29 @@
       }
       els.briefNotif.setAttribute("data-unread", "true");
       els.briefNotif.setAttribute("data-count", String(count));
+      if (els.briefNotifBrand) {
+        els.briefNotifBrand.innerHTML = spec.svg;
+        els.briefNotifBrand.dataset.brand = spec.brand;
+        els.briefNotifBrand.hidden = false;
+      }
       if (els.briefNotifEmoji) {
-        els.briefNotifEmoji.textContent = emoji;
-        els.briefNotifEmoji.hidden = false;
+        els.briefNotifEmoji.textContent = spec.emoji;
+        els.briefNotifEmoji.hidden = true;
       }
       if (els.briefNotifIcon) {
-        els.briefNotifIcon.classList.add("has-emoji");
+        els.briefNotifIcon.dataset.brand = spec.brand;
+        els.briefNotifIcon.classList.remove("has-emoji");
+        els.briefNotifIcon.classList.add("has-brand");
       }
+      if (els.stage) els.stage.style.setProperty("--notif-brand-color", spec.color);
+      els.briefNotif.style.setProperty("--notif-brand-color", spec.color);
     }
     if (els.notifCountBadge) {
       els.notifCountBadge.textContent = String(count);
       els.notifCountBadge.hidden = count === 0;
+    }
+    if (activeBrief === "notif") {
+      syncIslandIllumination({ animate: true });
     }
     requestAnimationFrame(() => {
       if (els.briefNotifTitle) {
@@ -1875,7 +2680,7 @@
     const htmlParts = [];
     for (const notif of notificationInbox) {
       if (dismissingIds.has(notif.id)) continue;
-      const emoji = getNotificationEmoji(notif.app, notif.title);
+      const spec = getNotificationBrandSpec(notif.app, notif.title);
       const appName = escapeHtml(notif.app || "Sistema");
       const title = escapeHtml(notif.title || "");
       const body = notif.body ? `<p class="notif-item__body">${escapeHtml(notif.body)}</p>` : "";
@@ -1885,7 +2690,7 @@
         <div class="notif-item" data-notif-id="${notif.id}">
           <div class="notif-item__head">
             <div class="notif-item__app-meta">
-              <span class="notif-item__emoji" aria-hidden="true">${emoji}</span>
+              <span class="notif-item__brand notif-brand-icon" data-brand="${spec.brand}" aria-hidden="true">${spec.svg}</span>
               <span class="notif-item__app">${appName}</span>
             </div>
             <span class="notif-item__time">${timeStr}</span>
@@ -1983,9 +2788,9 @@
     renderNotifBrief();
     renderNotifInbox();
 
-    // Living avatar alert reaction with squash & stretch
+    // Living avatar alert reaction with squash & stretch + iluminación de marca en Dynamic Island
     triggerSquashAndStretch();
-    const emoji = getNotificationEmoji(notif.app, notif.title);
+    const spec = getNotificationBrandSpec(notif.app, notif.title);
     const notifApp = notif.app ? `${notif.app} 🔔` : "Notificación 🔔";
     triggerTransientAvatarReaction({ actionText: notifApp, mood: "surprise", durationMs: 4800 });
 
@@ -1993,7 +2798,7 @@
       const notifSummary = [notif.title, notif.body].filter(Boolean).join(" — ") || "Nueva notificación";
       updateAgentDock(notifSummary, {
         tone: "reminder",
-        badge: `${emoji} ${notif.app || "Notificación"}`,
+        badge: `${spec.emoji} ${notif.app || "Notificación"}`,
         animate: "update",
       });
     }
@@ -2009,7 +2814,10 @@
 
     if (pet.autoExpandEvents && !focusActive && !notchExpanded && !isUserInteracting) {
       triggerMomentaryExpansion("hero", 5000);
+    } else if (!notchExpanded) {
+      triggerIslandSubtlePulse("surprise", notifApp, { pulseKey: "notif", brandColor: spec.color });
     }
+    syncIslandIllumination({ animate: true });
   }
 
   function onNotificationRemoved(data) {
@@ -2031,7 +2839,7 @@
   let mediaTicker = null;
 
   const ONE_UI_MEDIA_PALETTES = [
-    ["#38bdf8", "#a855f7"],
+    ["#38bdf8", "#0ea5e9"],
     ["#f43f5e", "#fb923c"],
     ["#34d399", "#06b6d4"],
     ["#818cf8", "#ec4899"],
@@ -2100,9 +2908,9 @@
       let b1 = 0;
       let count = 0;
       let bestSat = -1;
-      let r2 = 168;
-      let g2 = 85;
-      let b2 = 247;
+      let r2 = 56;
+      let g2 = 189;
+      let b2 = 248;
       for (let i = 0; i < data.length; i += 4) {
         if (data[i + 3] < 40) continue;
         const r = data[i];
@@ -2128,11 +2936,13 @@
       const avgB = Math.min(255, Math.round((b1 / count) * 1.12 + 28));
       const c1 = `rgb(${r2}, ${g2}, ${b2})`;
       const c2 = `rgb(${avgR}, ${avgG}, ${avgB})`;
-      for (const target of [els.mediaWidget, els.briefMedia]) {
+      activeMediaAccents = [c1, c2];
+      for (const target of [els.stage, els.mediaWidget, els.briefMedia]) {
         if (!target) continue;
         target.style.setProperty("--media-accent", c1);
         target.style.setProperty("--media-accent-2", c2);
       }
+      syncIslandIllumination({ animate: activeBrief === "media" });
     } catch {
       applyMediaPalette(fallbackTitle, fallbackArtist);
     }
@@ -2296,25 +3106,6 @@
     return null;
   }
 
-  async function fetchItunesArtwork(title, artist) {
-    const cleanTitle = String(title || "").trim();
-    const cleanArtist = String(artist || "").trim();
-    if (!cleanTitle || cleanTitle === "Sin título") return null;
-    const term = [cleanTitle, cleanArtist].filter(Boolean).join(" ");
-    try {
-      const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`;
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      const data = await res.json();
-      const first = Array.isArray(data?.results) ? data.results[0] : null;
-      const art100 = first?.artworkUrl100 || first?.artworkUrl60;
-      if (typeof art100 !== "string" || !art100.trim()) return null;
-      return art100.replace("100x100bb", "300x300bb").replace("60x60bb", "300x300bb");
-    } catch {
-      return null;
-    }
-  }
-
   async function syncMediaCover(d, { title = "", artist = "", playing = false } = {}, attempt = 0) {
     if (!d || (!title && !playing && !d.artwork && !d.cover)) {
       clearMediaCoverRetry();
@@ -2403,21 +3194,7 @@
       }
 
       if (!activeCoverDisplayUrl && (attempt >= RETRY_DELAYS_MS.length || (networkFailure && !core.connected))) {
-        const itunesUrl = await fetchItunesArtwork(title, artist);
-        if (!isSameActiveTrack()) return;
-        if (activeCoverDisplayUrl && activeCoverDisplayUrl.startsWith("blob:")) return;
-        if (itunesUrl) {
-          activeCoverSourceKey = sourceKey;
-          activeCoverDisplayUrl = itunesUrl;
-          applyMediaCoverVisuals(itunesUrl, {
-            title,
-            artist,
-            playing: Boolean(activeMedia?.playing ?? playing),
-          });
-          revokeActiveCoverObjectUrl();
-        } else if (attempt >= RETRY_DELAYS_MS.length) {
-          applyMediaCoverVisuals(null, { title, artist, playing });
-        }
+        applyMediaCoverVisuals(null, { title, artist, playing });
       }
     };
 
@@ -2464,14 +3241,19 @@
   }
 
   function applyMediaPalette(title = "", artist = "") {
+    const hasTrack = Boolean(title || artist);
     const key = `${title || ""}|${artist || ""}`;
-    const palette = ONE_UI_MEDIA_PALETTES[hashTrackKey(key) % ONE_UI_MEDIA_PALETTES.length];
+    const palette = hasTrack
+      ? ONE_UI_MEDIA_PALETTES[hashTrackKey(key) % ONE_UI_MEDIA_PALETTES.length]
+      : ONE_UI_MEDIA_PALETTES[0];
     const [accent1, accent2] = palette;
-    for (const target of [els.mediaWidget, els.briefMedia]) {
+    activeMediaAccents = [accent1, accent2];
+    for (const target of [els.stage, els.mediaWidget, els.briefMedia]) {
       if (!target) continue;
       target.style.setProperty("--media-accent", accent1);
       target.style.setProperty("--media-accent-2", accent2);
     }
+    syncIslandIllumination({ animate: activeBrief === "media" });
   }
 
   function formatTime(sec) {
@@ -2556,6 +3338,7 @@
       if (els.stage) {
         els.stage.setAttribute("data-media-playing", "false");
         els.stage.classList.remove("is-playing-media");
+        clearIslandMediaGlow();
       }
       applyMediaPalette("", "");
       syncMediaCover(null);
@@ -2595,6 +3378,7 @@
       if (els.briefMedia) {
         els.briefMedia.removeAttribute("data-media-playing");
       }
+      syncIslandIllumination({ animate: true });
       return;
     }
 
@@ -2640,6 +3424,7 @@
       const danceState = (skin().states && skin().states.dance) ? "dance" : "happy";
       triggerTransientAvatarReaction({ actionText: musicLabel, mood: danceState, durationMs: 4500 });
     } else if (!nowPlaying && wasPlaying) {
+      clearIslandMediaGlow();
       if (transientEventAction) {
         clearTimeout(transientEventTimer);
         transientEventAction = null;
@@ -2704,6 +3489,10 @@
         skinsCardOpen;
       if (pet.autoExpandEvents && shouldMomentaryExpand && !focusActive && !notchExpanded && !isUserInteracting) {
         triggerMomentaryExpansion("hero", 5000);
+      } else if (!notchExpanded && shouldMomentaryExpand) {
+        const danceMood = (skin().states && skin().states.dance) ? "dance" : "happy";
+        triggerIslandSubtlePulse(danceMood, activeBrief === "avatar" ? singleLine : "", { pulseKey: "media" });
+        triggerIslandMediaGlow(singleLine);
       }
     }
 
@@ -2748,6 +3537,7 @@
     } else {
       stopMediaTicker();
     }
+    syncIslandIllumination({ animate: true });
   }
   const updateMedia = applySystemMedia;
 
@@ -2922,7 +3712,14 @@
       summaryEl.textContent = summaryMsg;
       summaryEl.hidden = false;
     }
-    say(summaryMsg, { forceExpand: true });
+    say(summaryMsg, {
+      directToDock: true,
+      dockTone: "idle",
+      dockBadge: "🎯 Concentración",
+      forceExpand: Boolean(pet.autoExpandEvents),
+      pulseState: "celebrate",
+      pulseText: summaryMsg,
+    });
     refreshNotificationsFromCore();
     requestExpandedHeightUpdate();
   }
@@ -3067,6 +3864,7 @@
     icon = "✨",
     showTaskActions = false,
     mood = null,
+    skipPulse = false,
   } = {}) {
     activeProactiveAlert = {
       kind,
@@ -3087,7 +3885,11 @@
     const targetMood = mood || (kind === "reminder" ? "surprise" : (kind === "welcome" ? "greet" : "happy"));
     setState(targetMood);
     spawnParticles(targetMood === "surprise" ? "❗" : (targetMood === "greet" ? "👋" : "✨"), 4);
-    triggerMomentaryExpansion("hero", 9000);
+    if (pet.autoExpandEvents && !focusActive && !notchExpanded) {
+      triggerMomentaryExpansion("hero", 9000);
+    } else if (!notchExpanded && !skipPulse) {
+      triggerIslandSubtlePulse(targetMood, title);
+    }
     requestExpandedHeightUpdate();
   }
 
@@ -3280,7 +4082,13 @@
   async function triggerProactiveCheck() {
     const cfg = coreHttpConfig();
     if (!cfg) {
-      say("Conéctate a MEKA Core para revisar tus pendientes ✨", { forceExpand: true });
+      say("Conéctate a MEKA Core para revisar tus pendientes ✨", {
+        directToDock: true,
+        dockTone: "idle",
+        dockBadge: "✨ Pendientes",
+        forceExpand: Boolean(pet.autoExpandEvents),
+        pulseState: "thinking",
+      });
       return null;
     }
     try {
@@ -3299,14 +4107,19 @@
             kicker: "💡 Hanna Proactiva",
             icon: "✨",
             showTaskActions: false,
+            skipPulse: true,
           });
-          say(data.nudge.text, { duration: 7500, forceExpand: true });
+          say(data.nudge.text, {
+            duration: 7500,
+            directToDock: true,
+            dockTone: "nudge",
+            dockBadge: "💡 Hanna",
+            forceExpand: Boolean(pet.autoExpandEvents),
+          });
         }
         return data;
       }
-      if (!notchExpanded) {
-        setNotchExpanded(true, { view: "hero", silent: true });
-      } else if (stageView !== "hero") {
+      if (notchExpanded && stageView !== "hero") {
         setStageView("hero");
       }
       if (pendingTasks.length > 0) {
@@ -3314,7 +4127,7 @@
         const extra = pendingTasks.length > 3 ? ` y ${pendingTasks.length - 3} más` : "";
         say(`Tienes ${pendingTasks.length} pendiente(s): ${preview}${extra}.`, {
           duration: 7000,
-          forceExpand: true,
+          forceExpand: Boolean(pet.autoExpandEvents),
           directToDock: true,
           dockTone: "reminder",
           dockBadge: "📌 Pendientes",
@@ -3322,7 +4135,7 @@
       } else {
         say("No tienes pendientes ni recordatorios próximos ✅", {
           duration: 5000,
-          forceExpand: true,
+          forceExpand: Boolean(pet.autoExpandEvents),
           directToDock: true,
           dockTone: "idle",
           dockBadge: "✅ Al día",
@@ -3332,10 +4145,11 @@
     } catch (err) {
       reportCoreFetchError("POST /v1/proactive/check", err);
       say("No pude consultar tus pendientes ahora mismo.", {
-        forceExpand: true,
+        forceExpand: Boolean(pet.autoExpandEvents),
         directToDock: true,
         dockTone: "error",
         dockBadge: "⚠️ Sin conexión",
+        pulseState: "error",
       });
       return null;
     }
@@ -3374,16 +4188,17 @@
       if (!pet.sleeping) base = "idle";
       play("error");
       say(d.message || line("error"), {
-        forceExpand: true,
+        forceExpand: Boolean(pet.autoExpandEvents),
         directToDock: true,
         dockTone: "error",
         dockBadge: "⚠️ Error",
+        pulseState: "error",
       });
     },
     "agent.confirm": (d) => {
       const confirmId = d.id || `confirm-${Date.now()}`;
       // Calcular duración precisa a partir de expires_at o timeout del Core
-      let durationMs = 30_000;
+      let durationMs = 120_000;
       if (d.expires_at) {
         const remainingSeconds = d.expires_at - (Date.now() / 1000);
         durationMs = Math.max(2000, Math.round(remainingSeconds * 1000));
@@ -3393,16 +4208,24 @@
       play(
         "thinking",
         `¿Autorizas ${d.action || "ejecutar esta acción"}?`,
-        { confirmId, duration: durationMs }
+        {
+          confirmId,
+          duration: durationMs,
+          pulseState: "surprise",
+          pulseText: `🔐 Autorizar: ${d.action || "acción"}`,
+        }
       );
     },
     "agent.confirmed": (d) => {
       // Cierra el diálogo de confirmación si se resolvió en otro cliente (ej. Telegram), API o timeout
       if (pendingConfirmId && (!d.id || pendingConfirmId === d.id)) {
+        const hadQueued = pendingDockQueue.length > 0;
+        clearTimeout(bubbleTimer);
         pendingConfirmId = null;
         if (els.confirmBar) els.confirmBar.hidden = true;
         if (els.bubbleTag) els.bubbleTag.hidden = true;
-        hideElement(els.bubble);
+        if (els.agentReplyDock) delete els.agentReplyDock.dataset.confirmPending;
+        ensureBubbleAlwaysHidden();
         if (d.approved) {
           play("celebrate", `Autorizado por ${d.by || "usuario"} ✨`, {
             directToDock: true,
@@ -3410,11 +4233,19 @@
             dockBadge: "✅ Autorizado",
           });
         } else {
-          play("idle", d.by === "timeout" ? "Tiempo de espera agotado." : "Acción cancelada.", {
+          play("idle", d.by === "timeout" ? "Tiempo de espera de autorización agotado." : "Acción cancelada.", {
             directToDock: true,
             dockTone: "idle",
             dockBadge: "✕ Cancelado",
           });
+        }
+        if (hadQueued) {
+          const seqAfterResolve = dockUpdateSeq;
+          setTimeout(() => {
+            if (!pendingConfirmId && dockUpdateSeq === seqAfterResolve) {
+              flushPendingDockQueue();
+            }
+          }, 1600);
         }
       }
     },
@@ -3423,16 +4254,18 @@
       if (st === "error") {
         play("error");
         say(d.text || line("error"), {
-          forceExpand: true,
+          forceExpand: Boolean(pet.autoExpandEvents),
           directToDock: true,
           dockTone: "error",
           dockBadge: "⚠️ Error",
+          pulseState: "error",
         });
       } else {
         play(st, d.text, {
           directToDock: true,
           dockTone: "reply",
           dockBadge: d.private ? "🔒 Respuesta" : "💬 Respuesta",
+          pulseState: st,
         });
       }
     },
@@ -3452,6 +4285,7 @@
     "focus.started": (d) => handleFocusStarted(d),
     "focus.ended": (d) => handleFocusEnded(d),
     "reminder.due": (d) => {
+      const reminderText = d.text || d.title || "Recordatorio pendiente";
       showProactiveAlert({
         kind: "reminder",
         taskId: d.id,
@@ -3460,19 +4294,23 @@
         icon: "⏰",
         showTaskActions: Boolean(d.id),
         mood: "surprise",
+        skipPulse: true,
       });
-      say(d.text || d.title || "Recordatorio pendiente", {
+      say(reminderText, {
         duration: 7000,
-        forceExpand: true,
+        forceExpand: Boolean(pet.autoExpandEvents),
         directToDock: true,
         dockTone: "reminder",
         dockBadge: d.private ? "🔒 Recordatorio" : "⏰ Recordatorio",
+        pulseState: "surprise",
+        pulseText: d.title || reminderText,
       });
       fetchPendingTasks();
     },
     nudge: (d) => {
       if (!focusActive) {
         const isWelcome = d.kind === "welcome";
+        const nudgeMood = isWelcome ? "greet" : "happy";
         showProactiveAlert({
           kind: d.kind || "nudge",
           taskId: null,
@@ -3480,15 +4318,17 @@
           kicker: isWelcome ? "👋 Mientras no estabas" : "💡 Hanna Proactiva",
           icon: isWelcome ? "👋" : "✨",
           showTaskActions: false,
-          mood: isWelcome ? "greet" : "happy",
+          mood: nudgeMood,
+          skipPulse: Boolean(d.text),
         });
         if (d.text) {
           say(d.text, {
             duration: 7500,
-            forceExpand: true,
+            forceExpand: Boolean(pet.autoExpandEvents),
             directToDock: true,
             dockTone: "nudge",
             dockBadge: isWelcome ? "👋 Mientras no estabas" : "💡 Hanna",
+            pulseState: nudgeMood,
           });
         }
       }
@@ -3530,6 +4370,313 @@
       "";
     logActivity(event.type, detail);
     handler(event.data || {});
+  }
+
+  // ------------------------------------------------------------------ Eventos nativos locales de Windows (pet/desktop -> window.MEKA.emitNativeEvent)
+
+  const NATIVE_WINDOWS_EVENTS = {
+    "win.idle": (d = {}) => {
+      lastNativeIdleAt = Date.now();
+      clearTimeout(localYawnTimer);
+      localYawnTimer = null;
+      isLocalYawning = false;
+
+      const phase = String(d.phase || "").toLowerCase();
+      if (phase === "yawn") {
+        if (!pet.sleeping && !agentWorking && !pendingConfirmId && !activeMedia?.playing) {
+          clearTimeout(transientTimer);
+          transientTimer = null;
+          show("yawn");
+          say(line("yawn"), {
+            suppressAutoExpand: true,
+            pulseState: "yawn",
+            pulseText: "Bostezando… 🥱",
+          });
+        }
+        return;
+      }
+
+      if (phase === "sleeping" || (d.idle === true && phase !== "active")) {
+        if (!agentWorking && !pendingConfirmId && !activeMedia?.playing) {
+          enterAutoSleep();
+        }
+        return;
+      }
+
+      if (phase === "active" || d.idle === false) {
+        scheduleInactivityTimer();
+        if (isAutoSleeping || current === "yawn") {
+          if (pet.sleeping) {
+            wake();
+          } else {
+            const restoredBase = agentWorking
+              ? "working"
+              : (activeWindowsContext === "gaming"
+                ? "gaming"
+                : (activeWindowsContext === "coding" || activeWindowsContext === "meeting" ? "focus" : "idle"));
+            setBase(restoredBase, { interrupt: true });
+            show(base);
+          }
+        }
+      }
+    },
+
+    "win.power": (d = {}) => {
+      const hasPlugged = typeof d.plugged === "boolean" || typeof d.charging === "boolean";
+      const plugged = hasPlugged ? Boolean(d.plugged ?? d.charging) : lastPowerPlugged;
+      // Si lastPowerPlugged === null (primer estado recibido), guardar sin disparar animación engañosa
+      const becamePlugged = hasPlugged && lastPowerPlugged === false && plugged === true;
+      const isLowOrSaver = Boolean(d.low || d.saver);
+      const becameLowOrSaver = lastPowerPlugged !== null && !plugged && isLowOrSaver && !lastPowerLowOrSaver;
+
+      if (typeof d.percent === "number" && Number.isFinite(d.percent)) {
+        updateBattery({ percent: d.percent, charging: Boolean(plugged) });
+      }
+
+      lastPowerPlugged = plugged;
+      lastPowerLowOrSaver = isLowOrSaver;
+
+      if (becamePlugged) {
+        play("charging", "⚡ Cargador conectado", {
+          suppressAutoExpand: true,
+          pulseState: "charging",
+          pulseText: "⚡ Cargador conectado",
+          duration: 4200,
+        });
+        return;
+      }
+
+      if (becameLowOrSaver) {
+        const msg = d.saver ? "🔋 Ahorro de batería activo" : "🪫 Batería baja";
+        if (!pet.sleeping) {
+          play("dizzy", msg, {
+            suppressAutoExpand: true,
+            pulseState: "dizzy",
+            pulseText: msg,
+            brandColor: "#f59e0b",
+            brandColor2: "#fbbf24",
+            duration: 4200,
+          });
+        } else {
+          triggerIslandSubtlePulse("dizzy", msg, {
+            brandColor: "#f59e0b",
+            brandColor2: "#fbbf24",
+          });
+        }
+      }
+    },
+
+    "win.session": (d = {}) => {
+      const st = String(d.state || d.action || "").toLowerCase();
+      if (st === "locked" || st === "suspend") {
+        lastNativeIdleAt = Date.now();
+        enterAutoSleep();
+        return;
+      }
+      if (st === "unlocked" || st === "resume") {
+        lastNativeIdleAt = Date.now();
+        scheduleInactivityTimer();
+        // Respetar el reposo manual si el usuario lo activó explícitamente antes del bloqueo
+        if (pet.sleeping && !isAutoSleeping) {
+          return;
+        }
+        isAutoSleeping = false;
+        pet.sleeping = false;
+        setBase(agentWorking ? "working" : "idle", { interrupt: true });
+        play("greet", "¡Hola de nuevo! ✨", {
+          suppressAutoExpand: true,
+          pulseState: "greet",
+          pulseText: "¡Hola de nuevo! ✨",
+          duration: 4200,
+        });
+        triggerTempBodyMotion("peek", 1800);
+        save();
+      }
+    },
+
+    "win.context": (d = {}) => {
+      const mode = String(d.mode || "normal").toLowerCase();
+      activeWindowsContext = mode;
+      if (pet.sleeping || isAutoSleeping || agentWorking || pendingConfirmId || activeMedia?.playing) {
+        return;
+      }
+
+      if (mode === "gaming") {
+        clearTimeout(transientTimer);
+        transientTimer = null;
+        setBase("gaming", { interrupt: true });
+        show("gaming");
+        if (!notchExpanded) {
+          triggerIslandSubtlePulse("gaming", d.app ? `🎮 ${d.app}` : "Modo Gaming 🎮");
+        }
+        return;
+      }
+
+      if (mode === "coding") {
+        clearTimeout(transientTimer);
+        transientTimer = null;
+        setBase("focus", { interrupt: true });
+        show("focus");
+        if (!notchExpanded) {
+          triggerIslandSubtlePulse("focus", d.app ? `🎯 ${d.app}` : "Enfoque activo 🎯");
+        }
+        return;
+      }
+
+      if (mode === "meeting") {
+        clearTimeout(transientTimer);
+        transientTimer = null;
+        setBase("focus", { interrupt: true });
+        show("focus");
+        triggerTempBodyMotion("shush", 2400);
+        if (!notchExpanded) {
+          triggerIslandSubtlePulse("focus", d.app ? `🤫 ${d.app}` : "🤫 En reunión");
+        }
+        return;
+      }
+
+      if (base === "gaming" || base === "focus" || current === "gaming" || current === "focus") {
+        setBase(agentWorking ? "working" : "idle", { interrupt: true });
+        show(base);
+      }
+    },
+
+    "win.device": (d = {}) => {
+      const st = String(d.state || d.action || "").toLowerCase();
+      const kind = String(d.kind || d.type || "usb").toLowerCase();
+      if (st === "connected") {
+        const label = kind === "audio" ? "🎧 Dispositivo conectado" : "🔌 USB conectado";
+        play("curious", label, {
+          suppressAutoExpand: true,
+          pulseState: "curious",
+          pulseText: label,
+          duration: 4200,
+        });
+        return;
+      }
+      if (st === "disconnected") {
+        const label = kind === "audio" ? "🎧 Dispositivo desconectado" : "🔌 USB desconectado";
+        play("sigh", label, {
+          suppressAutoExpand: true,
+          pulseState: "sigh",
+          pulseText: label,
+          duration: 3600,
+        });
+      }
+    },
+
+    "win.screenshot": () => {
+      triggerTempBodyMotion("camera", 1800);
+      spawnParticles("📸", 3);
+      spawnMiniParticles("📸", 2);
+      try {
+        els.stage?.animate(
+          [{ filter: "brightness(1)" }, { filter: "brightness(1.25)" }, { filter: "brightness(1)" }],
+          { duration: 460, easing: "ease-out" }
+        );
+      } catch (_) {}
+      say("📸 Captura detectada", {
+        suppressAutoExpand: true,
+        pulseState: "surprise",
+        pulseText: "📸 Captura detectada",
+        brandColor: "#e2e8f0",
+      });
+    },
+
+    "win.network": (d = {}) => {
+      if (typeof d.online !== "boolean") return;
+      const isOnline = d.online;
+      const prevOnline = lastNetworkOnline;
+      lastNetworkOnline = isOnline;
+
+      if (!isOnline) {
+        play("dizzy", "📡 Sin conexión", {
+          suppressAutoExpand: true,
+          pulseState: "dizzy",
+          pulseText: "📡 Sin conexión",
+          brandColor: "#f59e0b",
+          duration: 4500,
+        });
+        return;
+      }
+
+      if (prevOnline !== true) {
+        play("happy", "🌐 Conexión restaurada", {
+          suppressAutoExpand: true,
+          pulseState: "happy",
+          pulseText: "🌐 Conexión restaurada",
+          brandColor: "#30d158",
+          brandColor2: "#4ade80",
+          duration: 4200,
+        });
+      }
+    },
+
+    "win.volume": (d = {}) => {
+      const hasPercent = typeof d.percent === "number" && Number.isFinite(d.percent);
+      const pct = hasPercent ? Math.max(0, Math.min(100, Math.round(d.percent))) : lastVolumePercent;
+      const hasMuted = typeof d.muted === "boolean";
+      const muted = hasMuted ? d.muted : Boolean(lastVolumeMuted);
+
+      const prevPercent = lastVolumePercent;
+      const prevMuted = lastVolumeMuted;
+      lastVolumePercent = pct;
+      lastVolumeMuted = muted;
+
+      if (muted === true) {
+        triggerTempBodyMotion("shush", 1800);
+        if (!notchExpanded) {
+          triggerIslandSubtlePulse(current || "idle", "🔇 Silenciado", {
+            brandColor: "#94a3b8",
+            brandColor2: "#64748b",
+          });
+        } else if (!activeMedia?.playing && !agentWorking && !pendingConfirmId) {
+          updateAgentDock("🔇 Silenciado", {
+            tone: "idle",
+            badge: "🔊 Audio",
+            animate: "update",
+          });
+        }
+        return;
+      }
+
+      if (hasPercent && (pct !== prevPercent || prevMuted === true)) {
+        const volText = `🔊 Volumen ${pct}%`;
+        if (!notchExpanded) {
+          triggerIslandSubtlePulse(current || "idle", volText);
+        } else if (!activeMedia?.playing && !agentWorking && !pendingConfirmId) {
+          updateAgentDock(volText, {
+            tone: "idle",
+            badge: "🔊 Audio",
+            animate: "update",
+          });
+        }
+      }
+    },
+  };
+
+  function emitNativeEvent(event) {
+    if (!event || typeof event !== "object") return false;
+    if (!pet.winEventsEnabled) return false;
+    const type = String(event.type || "").trim();
+    const handler = type && Object.hasOwn(NATIVE_WINDOWS_EVENTS, type)
+      ? NATIVE_WINDOWS_EVENTS[type]
+      : null;
+    if (!handler) {
+      console.warn("[MEKA] Evento nativo de Windows desconocido:", event);
+      return false;
+    }
+    const data = event.data && typeof event.data === "object" ? event.data : event;
+    const detail =
+      data.phase ||
+      data.mode ||
+      data.state ||
+      data.source ||
+      (typeof data.online === "boolean" ? (data.online ? "online" : "offline") : "") ||
+      (typeof data.percent === "number" ? `${Math.round(data.percent)}%` : "");
+    logActivity(type, String(detail || ""));
+    handler(data);
+    return true;
   }
 
   // ------------------------------------------------------------------ conexión WebSocket + REST
@@ -3780,10 +4927,11 @@
     } catch (err) {
       reportCoreFetchError(`POST /v1/users/${proactiveUser}/tasks`, err);
       say("No pude guardar la tarea en MEKA Core.", {
-        forceExpand: true,
+        forceExpand: Boolean(pet.autoExpandEvents),
         directToDock: true,
         dockTone: "error",
         dockBadge: "⚠️ Tarea",
+        pulseState: "error",
       });
       return false;
     }
@@ -3973,6 +5121,8 @@
     setGlassMode(pet.glass, { persist: false });
     setPrivateMode(pet.privateMode, { persist: false });
     setAutoExpandMode(pet.autoExpandEvents, { persist: false });
+    setWinEventsEnabled(pet.winEventsEnabled, { persist: false });
+    syncAutoStartUI();
     updateStageBadges();
 
     els.themeToggle?.addEventListener("click", () => {
@@ -3991,6 +5141,14 @@
     els.autoExpandToggleBtn?.addEventListener("click", (event) => {
       event.stopPropagation();
       setAutoExpandMode(!pet.autoExpandEvents);
+    });
+    els.winEventsToggleBtn?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setWinEventsEnabled(!pet.winEventsEnabled);
+    });
+    (els.autoStartToggleBtn || $("autoStartToggleBtn"))?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleAutoStart();
     });
     els.sleepToggleBtn?.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -4014,6 +5172,23 @@
       event.stopPropagation();
       setStageView("hero");
       hideTemporarilyForScreenshot(10);
+    });
+    els.closeAppBtn?.addEventListener("click", closeMekaApplication);
+    els.topCloseAppBtn?.addEventListener("click", closeMekaApplication);
+    (els.heroMoodBar || $("heroMoodBar"))?.addEventListener("click", (event) => {
+      const btn = event.target.closest("button[data-mood]");
+      if (!btn) return;
+      event.stopPropagation();
+      const mood = btn.dataset.mood;
+      if (!mood) return;
+      if (mood === "sleeping") {
+        if (pet.sleeping || isAutoSleeping) wake();
+        else sleep();
+        return;
+      }
+      if (pet.sleeping || isAutoSleeping) wake({ quiet: true });
+      const safeMood = validState(mood) || "happy";
+      play(safeMood, line(safeMood), { suppressAutoExpand: true });
     });
     els.coreResetSessionBtn?.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -4152,6 +5327,9 @@
       if (typeof updated.autoExpandEvents === "boolean" && updated.autoExpandEvents !== pet.autoExpandEvents) {
         setAutoExpandMode(updated.autoExpandEvents, { persist: false });
       }
+      if (typeof updated.winEventsEnabled === "boolean" && updated.winEventsEnabled !== pet.winEventsEnabled) {
+        setWinEventsEnabled(updated.winEventsEnabled, { persist: false });
+      }
     } catch {
       /* Ignorar lecturas parciales */
     }
@@ -4205,27 +5383,74 @@
   let lastSpringTime = 0;
 
   function computeExpandedHeight() {
-    const maxViewportH = Math.max(200, (window.innerHeight || 480) - 16);
-    const bannerExtra = els.proactiveBanner && !els.proactiveBanner.hidden ? 74 : 0;
-    const heights = {
-      hero: 330 + bannerExtra,
-      notifs: 338,
-      media: 288,
-      skins: 334,
-      focus: 236,
-      settings: 344,
-    };
-    const target = heights[stageView] ?? heights.hero;
-    return Math.round(Math.min(maxViewportH, Math.max(170, target)));
+    const maxViewportH = Math.max(176, Math.min((window.innerHeight || 600) - 16, 560));
+    const stageStyle = els.stage && typeof getComputedStyle === "function" ? getComputedStyle(els.stage) : null;
+    const borderY = stageStyle
+      ? ((parseFloat(stageStyle.borderTopWidth) || 0) + (parseFloat(stageStyle.borderBottomWidth) || 0))
+      : 0;
+    const bottomPad = Math.max(12, parseFloat(stageStyle?.paddingBottom) || 0);
+    const topH = els.stageTop?.offsetHeight || 46;
+
+    let shelfTotal = 0;
+    if (els.stageShelf) {
+      const shelfStyle = typeof getComputedStyle === "function" ? getComputedStyle(els.stageShelf) : null;
+      if (!els.stageShelf.hidden && (!shelfStyle || shelfStyle.display !== "none")) {
+        const gap = parseFloat(shelfStyle?.rowGap || shelfStyle?.gap) || 8;
+        const shelfPadY = shelfStyle
+          ? ((parseFloat(shelfStyle.paddingTop) || 0) + (parseFloat(shelfStyle.paddingBottom) || 0))
+          : 0;
+        let visibleChildren = 0;
+        let childrenH = 0;
+        for (const child of Array.from(els.stageShelf.children || [])) {
+          if (child.hidden || child.hasAttribute?.("hidden")) continue;
+          const cs = typeof getComputedStyle === "function" ? getComputedStyle(child) : null;
+          if (cs && cs.display === "none") continue;
+          const scrollsSelf = cs && (cs.overflowY === "auto" || cs.overflowY === "scroll");
+          const childH = scrollsSelf && (child.offsetHeight || 0) > 0
+            ? child.offsetHeight
+            : Math.max(child.offsetHeight || 0, child.scrollHeight || 0);
+          if (childH <= 0) continue;
+          const mt = parseFloat(cs?.marginTop) || 0;
+          const mb = parseFloat(cs?.marginBottom) || 0;
+          childrenH += childH + mt + mb;
+          visibleChildren += 1;
+        }
+        if (visibleChildren > 0) {
+          shelfTotal = shelfPadY + childrenH + Math.max(0, visibleChildren - 1) * gap;
+        }
+      }
+    }
+
+    let chatH = 0;
+    if (els.chatForm && !els.chatForm.hidden && !els.chatForm.hasAttribute?.("hidden")) {
+      const chatStyle = typeof getComputedStyle === "function" ? getComputedStyle(els.chatForm) : null;
+      if (!chatStyle || chatStyle.display !== "none") {
+        const rawChatH = Math.max(els.chatForm.offsetHeight || 0, els.chatForm.scrollHeight || 0);
+        if (rawChatH > 0) {
+          const mt = parseFloat(chatStyle?.marginTop) || 0;
+          const mb = parseFloat(chatStyle?.marginBottom) || 0;
+          chatH = rawChatH + mt + mb;
+        }
+      }
+    }
+
+    const total = borderY + topH + shelfTotal + chatH + bottomPad;
+    return Math.round(Math.max(176, Math.min(maxViewportH, total)));
   }
 
   function requestExpandedHeightUpdate() {
-    if (!notchExpanded) return;
-    requestAnimationFrame(() => {
+    if (!notchExpanded || heightUpdateRafId !== null) return;
+    heightUpdateRafId = requestAnimationFrame(() => {
+      heightUpdateRafId = null;
       if (!notchExpanded) return;
       const newTargetH = computeExpandedHeight();
-      if (Math.abs((heightSpring.target || 0) - newTargetH) >= 1 || !springAnimId) {
+      if (Math.abs((heightSpring.target || 0) - newTargetH) >= 1) {
         heightSpring.setParams(1.1, 0.92, 1.0);
+        heightSpring.target = newTargetH;
+        if (!springAnimId) {
+          startSpring();
+        }
+      } else if (!springAnimId && els.stage && Math.abs((els.stage.offsetHeight || 0) - newTargetH) >= 1) {
         heightSpring.target = newTargetH;
         startSpring();
       }
@@ -4242,7 +5467,7 @@
 
   function reportIslandRectFast(w, h) {
     if (typeof window.mekaIslandRect !== "function") return;
-    const winW = window.innerWidth || 380;
+    const winW = window.innerWidth || 400;
     const left = Math.round((winW - w) / 2);
     const top = 8;
     const right = left + Math.round(w);
@@ -4320,6 +5545,7 @@
 
     if (expanded) {
       notchExpanded = true;
+      clearIslandSubtlePulse();
       widthSpring.setParams(1.1, 0.92, 1.0);
       heightSpring.setParams(1.1, 0.92, 1.0);
       radiusSpring.setParams(1.1, 0.92, 1.0);
@@ -4330,9 +5556,11 @@
       els.stage?.classList.add("is-expanded");
       document.body?.classList.add("notch-is-expanded");
 
-      // Expand into the card of the requested view or current active brief
+      // Expand into the card of the requested view, pending confirm, or current active brief
       if (view) {
         setStageView(view);
+      } else if (pendingConfirmId) {
+        setStageView("hero");
       } else if (!skinsCardOpen) {
         setStageView(briefToStageView(activeBrief));
       }
@@ -4341,9 +5569,10 @@
         els.chatForm.hidden = !notchExpanded || (stageView !== "hero");
       }
 
+      updateStageBadges();
       startSpring();
 
-      if (!silent && stageView === "hero" && !els.bubbleText?.textContent) {
+      if (!silent && stageView === "hero" && !hasDockMessage && !pendingConfirmId) {
         say(pet.sleeping ? line("sleeping") : line("greet"));
       }
     } else {
@@ -4362,6 +5591,10 @@
       }
 
       notchExpanded = false;
+      if (heightUpdateRafId !== null) {
+        cancelAnimationFrame(heightUpdateRafId);
+        heightUpdateRafId = null;
+      }
       widthSpring.setParams(1.2, 0.96, 0.0);
       heightSpring.setParams(1.2, 0.96, 0.0);
       radiusSpring.setParams(1.2, 0.96, 0.0);
@@ -4399,23 +5632,20 @@
 
   function setupNotch() {
     if (!els.stage) return;
-    let notchHoverTimer = null;
 
     // Reportar el rectángulo inicial de la Dynamic Island a Go para click-through exacto
     setTimeout(reportIslandRect, 80);
     window.addEventListener("resize", reportIslandRect);
 
-    // Alternar entre píldora y modo desplegado al hacer clic en el notch
+    // Alternar entre píldora y modo desplegado al hacer clic explícito en el notch
     els.stage.addEventListener("click", (event) => {
-      clearTimeout(notchHoverTimer);
-      notchHoverTimer = null;
       if (stageWasDragged) {
         stageWasDragged = false;
         return;
       }
       // Ignorar clics en botones de acción (drawer, menú, chips), inputs, formularios o dots de paginación
       if (event.target.closest("button") || event.target.closest("input") || event.target.closest("form") || event.target.closest(".brief-dots")) return;
-      // Si está expandido y el clic es en el cuerpo inferior (mascota, burbuja), mantener desplegado para interactuar
+      // Si está expandido y el clic es en el cuerpo inferior (mascota, dock), mantener desplegado para interactuar
       if (notchExpanded && !event.target.closest("#stageTop")) return;
       // En modo colapsado: cualquier clic despliega.
       // En modo desplegado: un clic en la cabecera (#stageTop) repliega a píldora.
@@ -4424,8 +5654,6 @@
 
     // Auto-colapso suave al salir el cursor o trackpad del área extendida
     els.stage.addEventListener("mouseleave", () => {
-      clearTimeout(notchHoverTimer);
-      notchHoverTimer = null;
       if (wasCollapsedBeforeMomentary) {
         const remaining = Math.max(450, momentaryCollapseAt - Date.now());
         scheduleMomentaryCollapse(remaining);
@@ -4434,18 +5662,9 @@
       }
     });
 
-    // Despliegue suave al pasar el cursor sobre la píldora
+    // Al pasar el cursor solo mantiene la isla abierta si ya estaba desplegada; nunca auto-despliega
     els.stage.addEventListener("mouseenter", () => {
       clearTimeout(notchCollapseTimer);
-      clearTimeout(notchHoverTimer);
-      if (!notchExpanded && !stageWasDragged) {
-        notchHoverTimer = setTimeout(() => {
-          notchHoverTimer = null;
-          if (!notchExpanded && els.stage?.matches(":hover")) {
-            setNotchExpanded(true);
-          }
-        }, 180);
-      }
     });
 
     // Si la ventana pierde foco (ej. clic en otra app), replegar automáticamente a píldora
@@ -4555,18 +5774,43 @@
       }
     });
 
-    // ResizeObserver en #stageShelf y #bubble para auto-ajustar la altura dinámica
+    // ResizeObserver sobre los hijos de contenido (nunca els.stage directo para evitar bucles durante el resorte)
     if (typeof ResizeObserver === "function") {
       const ro = new ResizeObserver(() => {
         if (notchExpanded) {
           requestExpandedHeightUpdate();
         }
       });
-      if (els.stageShelf) ro.observe(els.stageShelf);
-      if (els.bubble) ro.observe(els.bubble);
-      if (els.proactiveBanner) ro.observe(els.proactiveBanner);
-      if (els.stageNotifList) ro.observe(els.stageNotifList);
-      if (els.stageSkinsCard) ro.observe(els.stageSkinsCard);
+      const observedTargets = [
+        els.stageShelf,
+        els.stageHero,
+        els.stageNotifCard,
+        els.stageSkinsCard,
+        els.stageFocusCard,
+        els.stageSettingsCard,
+        els.mediaWidget,
+        els.agentReplyDock,
+        els.proactiveBanner,
+        els.chatForm,
+      ];
+      for (const target of observedTargets) {
+        if (target) ro.observe(target);
+      }
+    }
+
+    // MutationObserver en #stageShelf para cambios de hidden, open o hijos dinámicos
+    if (typeof MutationObserver === "function" && els.stageShelf) {
+      const mo = new MutationObserver(() => {
+        if (notchExpanded) {
+          requestExpandedHeightUpdate();
+        }
+      });
+      mo.observe(els.stageShelf, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["hidden", "open", "data-stage-view"],
+      });
     }
   }
 
@@ -4645,7 +5889,7 @@
           directToDock: true,
           dockTone: st === "error" ? "error" : "reply",
           dockBadge: pet.privateMode ? "🔒🎙️ Voz" : "🎙️ Voz",
-          forceExpand: true,
+          forceExpand: Boolean(pet.autoExpandEvents),
         });
       } else {
         show("idle");
@@ -4664,10 +5908,11 @@
       reportCoreFetchError("/v1/voice", err);
       play("error");
       say("No pude enviar la nota de voz a MEKA Core.", {
-        forceExpand: true,
+        forceExpand: Boolean(pet.autoExpandEvents),
         directToDock: true,
         dockTone: "error",
         dockBadge: "⚠️ Voz",
+        pulseState: "error",
       });
     }
   }
@@ -4793,7 +6038,8 @@
         directToDock: true,
         dockTone: "error",
         dockBadge: "🎙️ Micrófono",
-        forceExpand: true,
+        forceExpand: Boolean(pet.autoExpandEvents),
+        pulseState: "error",
       });
       return;
     }
@@ -4939,7 +6185,7 @@
     renderNotifInbox();
 
     // Estado inicial en brief avatar
-    setActiveBrief("avatar");
+    setActiveBrief("avatar", { animate: false });
   }
 
   // ------------------------------------------------------------------ arranque
@@ -4954,10 +6200,14 @@
     setupControls();
     setupNotch();
     setupBriefInteractions();
+    syncIslandIllumination({ animate: false });
     setupMicrophone();
     setupLivingAvatarInteractions();
 
     // Estado inicial sincronizado de vistas contextuales
+    ensureBubbleAlwaysHidden();
+    if (els.confirmBar && !pendingConfirmId) els.confirmBar.hidden = true;
+    if (els.bubbleTag && !pendingConfirmId) els.bubbleTag.hidden = true;
     setStageView(briefToStageView(activeBrief));
     if (els.miniMusicBar) els.miniMusicBar.hidden = true;
     if (els.hudBatteryChip) els.hudBatteryChip.hidden = true;
@@ -4976,10 +6226,16 @@
     if (els.coreToken && token) els.coreToken.value = token;
     updateFocusUI();
     connectCore(coreUrl, token);
+    if (typeof window.mekaNotifyReady === "function") {
+      try {
+        window.mekaNotifyReady();
+      } catch (_) {}
+    }
   }
 
   window.MEKA = {
     emit: handleEvent,
+    emitNativeEvent,
     state: () => ({
       ...pet,
       current,
@@ -4994,19 +6250,29 @@
     }),
     setBrief: setActiveBrief,
     cycleBrief: stepBrief,
+    toggleNotch: () => setNotchExpanded(!notchExpanded),
+    syncAutoStartUI,
     openNotification,
     dismissNotification,
     clearAllNotifications,
     getNotificationEmoji,
+    getNotificationBrandSpec,
     checkAndApplyMarquee,
     updateAllMarquees,
     setStageView,
     setSkinsCardOpen,
     setGlassMode,
     setAutoExpandMode,
+    setWinEventsEnabled,
     setState,
     normalizeEmotion,
+    triggerTempBodyMotion,
     spawnParticles,
+    spawnMiniParticles,
+    startMiniParticles,
+    triggerIslandSubtlePulse,
+    triggerIslandMediaGlow,
+    syncIslandIllumination,
     applySystemMedia,
     showProactiveAlert,
     hideProactiveAlert,

@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -16,6 +17,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
+	"time"
 )
 
 const (
@@ -23,18 +26,30 @@ const (
 	NotchHeight       = 46
 	ExpandedWidth     = 330
 	ExpandedHeight    = 434
-	FixedWindowWidth  = 380
-	FixedWindowHeight = 480
+	FixedWindowWidth  = 400
+	FixedWindowHeight = 600
 )
 
 type Config struct {
-	CoreURL   string
-	Token     string
-	Skin      string
-	WebDir    string
-	Debug     bool
-	SelfTest  bool
-	ServeOnly string
+	CoreURL        string
+	Token          string
+	Skin           string
+	WebDir         string
+	CoreMode       string
+	Debug          bool
+	SelfTest       bool
+	Install        bool
+	Uninstall      bool
+	Silent         bool
+	Startup        bool
+	EnableStartup  bool
+	DisableStartup bool
+	ServeOnly      string
+}
+
+func isInstallerExecutableName(exePath string) bool {
+	base := strings.ToLower(filepath.Base(exePath))
+	return strings.Contains(base, "setup") || strings.Contains(base, "instalador")
 }
 
 func parseFlags() Config {
@@ -49,15 +64,37 @@ func parseFlags() Config {
 	flag.StringVar(&cfg.Token, "token", defaultToken, "Token opcional MEKA_API_TOKEN")
 	flag.StringVar(&cfg.Skin, "skin", "", "ID del personaje inicial (ej. hana, 2b, kiriko, marin, yotsuba)")
 	flag.StringVar(&cfg.WebDir, "web-dir", "", "Ruta a la carpeta pet/web (autodetectada si se omite)")
+	flag.StringVar(&cfg.CoreMode, "core-mode", "core", "Modo de arranque unificado en segundo plano (core o all)")
 	flag.BoolVar(&cfg.Debug, "debug", false, "Habilitar herramientas de desarrollo (DevTools)")
 	flag.BoolVar(&cfg.SelfTest, "self-test", false, "Verificar servidor de assets Chibi y salir")
+	flag.BoolVar(&cfg.Install, "install", false, "Instalar MEKA Companion, accesos directos e icono")
+	flag.BoolVar(&cfg.Uninstall, "uninstall", false, "Desinstalar accesos directos e instalación local de MEKA")
+	flag.BoolVar(&cfg.Silent, "silent", false, "Ejecutar instalador o desinstalador sin cuadros de diálogo")
+	flag.BoolVar(&cfg.Startup, "startup", false, "Arranque automático al iniciar sesión en Windows")
+	flag.BoolVar(&cfg.EnableStartup, "enable-startup", false, "Activar inicio automático con Windows y salir")
+	flag.BoolVar(&cfg.DisableStartup, "disable-startup", false, "Desactivar inicio automático con Windows y salir")
 	flag.StringVar(&cfg.ServeOnly, "serve", "", "Solo servir en la dirección indicada (ej. 127.0.0.1:8080)")
 	flag.Parse()
+
+	if !cfg.Install && !cfg.Uninstall && !cfg.SelfTest && !cfg.EnableStartup && !cfg.DisableStartup && cfg.ServeOnly == "" {
+		if exe, err := os.Executable(); err == nil && isInstallerExecutableName(exe) {
+			cfg.Install = true
+		}
+	}
 	return cfg
 }
 
-// resolveWebDir localiza `pet/web` buscando primero respecto al binario, luego el directorio
-// de trabajo actual y finalmente la ruta del código fuente.
+func readRootMarker(dir string) string {
+	marker := filepath.Join(dir, "meka-root.txt")
+	data, err := os.ReadFile(marker)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
+}
+
+// resolveWebDir localiza `pet/web` buscando primero respecto al binario, marcadores `meka-root.txt`,
+// el directorio de trabajo actual y finalmente la ruta del código fuente.
 func resolveWebDir(explicit string) (string, error) {
 	var candidates []string
 	if explicit != "" {
@@ -66,6 +103,9 @@ func resolveWebDir(explicit string) (string, error) {
 
 	if exe, err := os.Executable(); err == nil {
 		exeDir := filepath.Dir(exe)
+		if markedRoot := readRootMarker(exeDir); markedRoot != "" {
+			candidates = append(candidates, filepath.Join(markedRoot, "pet", "web"))
+		}
 		candidates = append(candidates,
 			filepath.Join(exeDir, "web"),
 			filepath.Join(exeDir, "..", "web"),
@@ -76,11 +116,24 @@ func resolveWebDir(explicit string) (string, error) {
 		)
 	}
 
+	if localApp := os.Getenv("LOCALAPPDATA"); localApp != "" {
+		if markedRoot := readRootMarker(filepath.Join(localApp, "Programs", "MEKA")); markedRoot != "" {
+			candidates = append(candidates, filepath.Join(markedRoot, "pet", "web"))
+		}
+	}
+
+	if userProfile := os.Getenv("USERPROFILE"); userProfile != "" {
+		candidates = append(candidates,
+			filepath.Join(userProfile, "Desktop", "Project MEKA", "PROJECT-MEKA", "pet", "web"),
+		)
+	}
+
 	if cwd, err := os.Getwd(); err == nil {
 		candidates = append(candidates,
 			filepath.Join(cwd, "web"),
 			filepath.Join(cwd, "..", "web"),
 			filepath.Join(cwd, "pet", "web"),
+			filepath.Join(cwd, "PROJECT-MEKA", "pet", "web"),
 		)
 	}
 
@@ -175,6 +228,7 @@ func buildCompanionURL(baseAddr string, cfg Config) string {
 func runSelfTest(webDir string) error {
 	required := []string{
 		"index.html",
+		"favicon.ico",
 		"pet.css",
 		"pet.js",
 		filepath.Join("skins", "manifest.js"),
@@ -193,14 +247,56 @@ func runSelfTest(webDir string) error {
 }
 
 func main() {
+	defer recoverAndLog("main")
+
 	cfg := parseFlags()
+	attachConsoleIfNeeded(cfg)
+
+	if cfg.EnableStartup || cfg.DisableStartup {
+		enable := cfg.EnableStartup
+		if err := setAutoStartEnabled("", enable); err != nil {
+			fmt.Fprintf(os.Stderr, "Error configurando arranque automático: %v\n", err)
+			os.Exit(1)
+		}
+		if enable {
+			if wDir, err := resolveWebDir(cfg.WebDir); err == nil {
+				_ = registerBackgroundNotificationApp("", resolveAppIconPathIfAny(wDir))
+			} else {
+				_ = registerBackgroundNotificationApp("", "")
+			}
+			fmt.Printf("OK Arranque con Windows activado\n")
+		} else {
+			fmt.Printf("OK Arranque con Windows desactivado\n")
+		}
+		return
+	}
 
 	webDir, err := resolveWebDir(cfg.WebDir)
 	if err != nil {
+		logDesktopEvent("ERROR", "startup", fmt.Sprintf("resolveWebDir falló: %v", err))
+		if !cfg.Silent {
+			showStartupErrorDialog("MEKA · Error de arranque", fmt.Sprintf("No se encontraron los archivos web de MEKA:\n%v", err))
+		}
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 	cfg.WebDir = webDir
+
+	if cfg.Uninstall {
+		if err := runUninstaller(cfg, webDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Error al desinstalar MEKA: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	if cfg.Install {
+		if err := runInstaller(cfg, webDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Error al instalar MEKA: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	if cfg.SelfTest {
 		if err := runSelfTest(webDir); err != nil {
@@ -218,6 +314,10 @@ func main() {
 
 	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
+		logDesktopEvent("ERROR", "startup", fmt.Sprintf("net.Listen(%s) falló: %v", listenAddr, err))
+		if !cfg.Silent {
+			showStartupErrorDialog("MEKA · Error de red local", fmt.Sprintf("No se pudo abrir puerto local (%s):\n%v", listenAddr, err))
+		}
 		fmt.Fprintf(os.Stderr, "No se pudo abrir puerto local (%s): %v\n", listenAddr, err)
 		os.Exit(1)
 	}
@@ -236,12 +336,31 @@ func main() {
 	}
 
 	go func() {
+		defer recoverAndLog("local-http")
 		_ = srv.Serve(ln)
 	}()
 
-	if err := runNativeWindow(cfg, targetURL); err != nil {
+	if err := verifyLocalWebServer(ln.Addr().String()); err != nil {
+		logDesktopEvent("ERROR", "startup", err.Error())
+		if !cfg.Silent {
+			showStartupErrorDialog("MEKA · Verificador de arranque", fmt.Sprintf("El servidor local de interfaz no respondió a tiempo:\n%v", err))
+		}
+		fmt.Fprintf(os.Stderr, "Error en verificador de arranque: %v\n", err)
+		os.Exit(1)
+	}
+
+	stopHTTP := func() {
+		shCtx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+		_ = srv.Shutdown(shCtx)
+	}
+
+	if err := runNativeWindowWithShutdown(cfg, targetURL, stopHTTP); err != nil {
+		logDesktopEvent("ERROR", "startup", fmt.Sprintf("runNativeWindow falló: %v", err))
+		if !cfg.Silent {
+			showStartupErrorDialog("MEKA · Error de ventana", fmt.Sprintf("No se pudo iniciar la ventana nativa:\n%v", err))
+		}
 		fmt.Fprintf(os.Stderr, "Error en ventana nativa: %v\n", err)
 		os.Exit(1)
 	}
 }
-
