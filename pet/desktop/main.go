@@ -44,6 +44,7 @@ type Config struct {
 	Startup        bool
 	EnableStartup  bool
 	DisableStartup bool
+	ShowWindow     bool
 	ServeOnly      string
 }
 
@@ -73,6 +74,7 @@ func parseFlags() Config {
 	flag.BoolVar(&cfg.Startup, "startup", false, "Arranque automático al iniciar sesión en Windows")
 	flag.BoolVar(&cfg.EnableStartup, "enable-startup", false, "Activar inicio automático con Windows y salir")
 	flag.BoolVar(&cfg.DisableStartup, "disable-startup", false, "Desactivar inicio automático con Windows y salir")
+	flag.BoolVar(&cfg.ShowWindow, "show", false, "Mostrar la Dynamic Island al iniciar en lugar de iniciar oculta en la bandeja")
 	flag.StringVar(&cfg.ServeOnly, "serve", "", "Solo servir en la dirección indicada (ej. 127.0.0.1:8080)")
 	flag.Parse()
 

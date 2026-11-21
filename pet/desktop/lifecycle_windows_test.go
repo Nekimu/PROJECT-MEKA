@@ -153,3 +153,29 @@ func TestLogRotation(t *testing.T) {
 		t.Fatalf("log tras rotación inesperado: err=%v content=%q", err, string(content))
 	}
 }
+
+func TestNoTaskbarStyleAndVisibilityHelpers(t *testing.T) {
+	t.Parallel()
+
+	raw := uintptr(wsExAppWindow | wsExLayered)
+	got := sanitizeNoTaskbarExStyle(raw)
+	if got&wsExAppWindow != 0 {
+		t.Fatalf("wsExAppWindow debía haberse limpiado: 0x%x", got)
+	}
+	if got&wsExLayered != 0 {
+		t.Fatalf("wsExLayered debía haberse limpiado: 0x%x", got)
+	}
+	if got&wsExToolWindow == 0 || got&wsExTopmost == 0 || got&wsExNoActivate == 0 {
+		t.Fatalf("faltan flags toolwindow/topmost/noactivate: 0x%x", got)
+	}
+
+	hiddenStyle := computeWindowStyleForVisibility(false)
+	if hiddenStyle&wsVisible != 0 || hiddenStyle&wsPopup == 0 {
+		t.Fatalf("estilo oculto inesperado: 0x%x", hiddenStyle)
+	}
+
+	visibleStyle := computeWindowStyleForVisibility(true)
+	if visibleStyle&wsVisible == 0 || visibleStyle&wsPopup == 0 {
+		t.Fatalf("estilo visible inesperado: 0x%x", visibleStyle)
+	}
+}

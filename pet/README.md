@@ -20,8 +20,11 @@ El envoltorio nativo en Go utiliza **Microsoft Edge WebView2** (`github.com/jchv
 ```powershell
 cd pet/desktop
 
-# Ejecutar directamente:
+# Ejecutar directamente en segundo plano (directo a la bandeja, sin barra de tareas):
 go run .
+
+# Abrir mostrando inmediatamente la Dynamic Island sobre el escritorio:
+go run . --show
 
 # Elegir personaje inicial o URL de MEKA Core:
 go run . --skin dva_pixel
@@ -43,7 +46,7 @@ go build -ldflags="-H=windowsgui -s -w" -o MEKA.exe .
 |---|---|
 | **Iniciar con Windows** | Switch *🚀 Iniciar con Windows* en el cajón de configuración de la píldora, botón en la bandeja del sistema o vía CLI (`MEKA.exe --enable-startup` / `MEKA.exe --disable-startup`). Registra `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MEKA` con `--startup`. |
 | **App de notificaciones en 2.º plano** | Registrada automáticamente como `MEKA.Desktop.Companion` (`AppUserModelID` + `HKCU\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\MEKA.Desktop.Companion` con `Enabled=1`). |
-| **Bandeja del sistema (System Tray)** | Ícono permanente junto al reloj con recuperación ante reinicio de Explorer (`TaskbarCreated`) y menú: *Mostrar / Centrar MEKA*, *Expandir / Colapsar Dynamic Island*, *Iniciar con Windows*, *Reiniciar MEKA Core*, *Abrir carpeta de logs* y *Salir de MEKA*. |
+| **Bandeja del sistema (System Tray)** | La aplicación arranca directamente en segundo plano en la bandeja (sin icono en la barra de tareas; usa `--show` para abrir la isla al instante). Un clic izquierdo muestra u oculta la Dynamic Island; clic derecho abre: *Mostrar MEKA / Ocultar en la bandeja*, *Centrar MEKA*, *Expandir / Colapsar Dynamic Island*, *Iniciar con Windows*, *Reiniciar MEKA Core*, *Abrir carpeta de logs* y *Salir de MEKA*. |
 | **Watchdogs y logs de diagnóstico** | Registro rotado en `%LOCALAPPDATA%\MEKA\desktop.log` (y `%LOCALAPPDATA%\MEKA\core-desktop.log`). Vigila salud del servidor local (`/healthz`), arranque WebView2 (`15 s`), `/v1/health` de Core (reinicio con backoff y circuit breaker), **Job Object** (`KILL_ON_JOB_CLOSE`) y cierre limpio (`shutdownCoordinator` en `< 4 s`). |
 
 ### Controles y Estados de la Dynamic Island (`pet/desktop/`)

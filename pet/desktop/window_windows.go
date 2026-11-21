@@ -73,14 +73,17 @@ const (
 	wsExTopmost             = 0x00000008
 	wsExToolWindow          = 0x00000080
 	wsExLayered             = 0x00080000
+	wsExAppWindow           = 0x00040000
 	wsExNoRedirectionBitmap = 0x00200000
 	wsExTransparent         = 0x00000020
 	wsExNoActivate          = 0x08000000
 	hwndTopmost             = ^uintptr(0) // -1 (HWND_TOPMOST)
 	swpNoSize               = 0x0001
 	swpNoMove               = 0x0002
+	swpNoActivate           = 0x0010
 	swpFrameChanged         = 0x0020
 	swpShowWindow           = 0x0040
+	swpHideWindow           = 0x0080
 	wmNCLButtonDown         = 0x00A1
 	wmSetIcon               = 0x0080
 	iconSmall               = 0
@@ -100,6 +103,7 @@ const (
 	dwmsbtNone              = 1
 	swHide                  = 0
 	swShow                  = 5
+	swShowNA                = 8
 	whCBT                   = 5
 	hcbtCreateWnd           = 3
 	stdOutputHandle         = ^uintptr(10) // -11
@@ -126,6 +130,7 @@ type rectF struct {
 var (
 	currentIslandRect  atomic.Value // almacena rectF en píxeles CSS
 	interactiveOverlay atomic.Bool  // true si el Drawer o menú contextual están abiertos
+	islandVisible      atomic.Bool  // true solo cuando la ventana flotante es visible en pantalla
 )
 
 type cbtCreateWnd struct {
@@ -272,6 +277,15 @@ func startClickThroughMonitor(ctx context.Context, hwnd uintptr) {
 			case <-timer.C:
 			}
 
+			if !islandVisible.Load() {
+				if isInteractive {
+					isInteractive = false
+					setWindowClickThrough(hwnd, true)
+				}
+				timer.Reset(250 * time.Millisecond)
+				continue
+			}
+
 			nextInterval := 48 * time.Millisecond
 			if interactiveOverlay.Load() {
 				if !isInteractive {
@@ -342,27 +356,45 @@ func setWindowClickThrough(hwnd uintptr, clickThrough bool) {
 	}
 }
 
+// sanitizeNoTaskbarExStyle asegura WS_EX_TOOLWINDOW y excluye WS_EX_APPWINDOW y WS_EX_LAYERED.
+// Nota: no incluye WS_EX_NOREDIRECTIONBITMAP porque SetWindowLongPtrW rechaza ese bit
+// tras crear la ventana (ERROR_INVALID_PARAMETER = 87) e impediría aplicar WS_EX_TOOLWINDOW.
+func sanitizeNoTaskbarExStyle(exStyle uintptr) uintptr {
+	exStyle &^= (wsExLayered | wsExAppWindow)
+	exStyle |= wsExTopmost | wsExToolWindow | wsExNoActivate
+	return exStyle
+}
+
+func computeWindowStyleForVisibility(visible bool) uintptr {
+	if visible {
+		return uintptr(wsPopup | wsVisible)
+	}
+	return uintptr(wsPopup)
+}
+
 // applyFramelessTransparentWindow configura la ventana de Win32 para ser:
 // 1. Tamaño fijo no redimensionable (sin WS_THICKFRAME ni WS_MAXIMIZEBOX).
 // 2. Flotante siempre visible sobre otras aplicaciones (WS_EX_TOPMOST).
-// 3. 100% transparente sin fondo blanco ni caja sólida/tinte opaco:
+// 3. Oculta de la barra de tareas y Alt+Tab (WS_EX_TOOLWINDOW sin WS_EX_APPWINDOW).
+// 4. 100% transparente sin fondo blanco ni caja sólida/tinte opaco:
 //   - WS_EX_NOREDIRECTIONBITMAP (DirectComposition puro sin asignar superficie de redirección GDI).
 //   - Sin WS_EX_LAYERED en el estilo base (evita fallback de DWM por conflicto con WS_EX_NOREDIRECTIONBITMAP).
-//   - Sin SetWindowCompositionAttribute (en Windows 11 ACCENT_ENABLE_TRANSPARENTGRADIENT aplica tinte de acento opaco RGB 178, 200, 216).
 //   - DwmExtendFrameIntoClientArea con márgenes -1 (composición nativa de cristal DWM en toda el área cliente).
 //   - DWMWA_SYSTEMBACKDROP_TYPE = DWMSBT_NONE, DWMWA_NCRENDERING_POLICY = DISABLED, brocha nula/negra.
-//     (Enfoque estándar idéntico al de Wails v3 y Tauri para ventanas transparentes en Windows 11).
 //
-// 4. Con WS_EX_NOACTIVATE para no robar foco del editor al interactuar con la mascota.
-func applyFramelessTransparentWindow(hwnd uintptr) {
-	// Quitar borde, barra de título y decoraciones redimensionables
-	_, _, _ = procSetWindowLongPtrW.Call(hwnd, gwlStyle, uintptr(wsPopup|wsVisible))
+// 5. Con WS_EX_NOACTIVATE para no robar foco del editor al interactuar con la mascota.
+func applyFramelessTransparentWindow(hwnd uintptr, visible bool) {
+	if !visible {
+		_, _, _ = procShowWindow.Call(hwnd, swHide)
+	}
 
-	// Estilos extendidos: flotante, toolwindow (sin Alt+Tab), DirectComposition sin superficie de redirección GDI,
-	// sin robar foco inicial. Se asegura explícitamente de NO incluir WS_EX_LAYERED en los estilos base.
+	// Quitar borde, barra de título y decoraciones redimensionables
+	_, _, _ = procSetWindowLongPtrW.Call(hwnd, gwlStyle, computeWindowStyleForVisibility(visible))
+
+	// Estilos extendidos: flotante, toolwindow (sin barra de tareas ni Alt+Tab), DirectComposition sin redirección GDI,
+	// sin robar foco inicial y excluyendo explícitamente WS_EX_APPWINDOW y WS_EX_LAYERED.
 	exStyle, _, _ := procGetWindowLongPtrW.Call(hwnd, gwlExStyle)
-	exStyle &^= wsExLayered
-	exStyle |= wsExTopmost | wsExToolWindow | wsExNoRedirectionBitmap | wsExNoActivate
+	exStyle = sanitizeNoTaskbarExStyle(exStyle)
 	_, _, _ = procSetWindowLongPtrW.Call(hwnd, gwlExStyle, exStyle)
 
 	// Brocha de fondo negra/nula para que GDI/DWM interprete el área no pintada como 100% transparente
@@ -392,6 +424,10 @@ func applyFramelessTransparentWindow(hwnd uintptr) {
 	// Posicionar centrado en la parte superior del monitor con tamaño fijo (400x600 escalado por DPI)
 	scale := getDpiScaleForWindow(hwnd)
 	x, y, w, h := computeFixedWindowPosition(getDesktopWorkArea(), false, scale)
+	flags := uintptr(swpFrameChanged | swpNoActivate | swpHideWindow)
+	if visible {
+		flags = uintptr(swpFrameChanged | swpNoActivate | swpShowWindow)
+	}
 
 	_, _, _ = procSetWindowPos.Call(
 		hwnd,
@@ -400,7 +436,7 @@ func applyFramelessTransparentWindow(hwnd uintptr) {
 		uintptr(y),
 		uintptr(w),
 		uintptr(h),
-		swpFrameChanged|swpShowWindow,
+		flags,
 	)
 }
 
@@ -508,7 +544,7 @@ func startSnippingToolMonitor(ctx context.Context, w webview2.WebView, hwnd uint
 			if shouldDodge != isDodgedState {
 				isDodgedState = shouldDodge
 				w.Dispatch(func() {
-					if ctx.Err() != nil {
+					if ctx.Err() != nil || !islandVisible.Load() {
 						return
 					}
 					scale := getDpiScaleForWindow(hwnd)
@@ -520,7 +556,7 @@ func startSnippingToolMonitor(ctx context.Context, w webview2.WebView, hwnd uint
 						uintptr(y),
 						uintptr(targetW),
 						uintptr(targetH),
-						swpFrameChanged|swpShowWindow,
+						swpFrameChanged|swpNoActivate,
 					)
 					_, _, _ = procSendMessageW.Call(hwnd, 0x0005, 0, 0) // WM_SIZE
 				})
@@ -529,28 +565,50 @@ func startSnippingToolMonitor(ctx context.Context, w webview2.WebView, hwnd uint
 	}()
 }
 
-// configureTransparentWebView accede al controlador COM nativo de WebView2 para:
-//  1. Asignar el color de fondo por defecto a 100% transparente (Alpha=0, R=0, G=0, B=0),
-//     eliminando cualquier fondo blanco o sólido que WebView2 renderiza por defecto.
-//  2. Desactivar controles de zoom para que el usuario no pueda alterar la escala visual ni el pixel art.
-func configureTransparentWebView(w webview2.WebView) error {
+func getWebViewChromium(w webview2.WebView) (*edge.Chromium, error) {
 	val := reflect.ValueOf(w)
 	if val.Kind() != reflect.Ptr || val.IsNil() {
-		return errors.New("puntero webview inválido")
+		return nil, errors.New("puntero webview inválido")
 	}
 	elem := val.Elem()
 	browserField := elem.FieldByName("browser")
 	if !browserField.IsValid() {
-		return errors.New("campo browser no encontrado")
+		return nil, errors.New("campo browser no encontrado")
 	}
 
 	fieldAddr := browserField.UnsafeAddr()
 	dataPtr := *(*unsafe.Pointer)(unsafe.Pointer(fieldAddr + unsafe.Sizeof(uintptr(0))))
 	if dataPtr == nil {
-		return errors.New("puntero chromium nulo")
+		return nil, errors.New("puntero chromium nulo")
 	}
 
-	chromium := (*edge.Chromium)(dataPtr)
+	return (*edge.Chromium)(dataPtr), nil
+}
+
+func setWebViewControllerVisible(w webview2.WebView, visible bool) {
+	if w == nil {
+		return
+	}
+	chromium, err := getWebViewChromium(w)
+	if err != nil || chromium == nil || chromium.GetController() == nil {
+		return
+	}
+	if visible {
+		_ = chromium.Show()
+	} else {
+		_ = chromium.Hide()
+	}
+}
+
+// configureTransparentWebView accede al controlador COM nativo de WebView2 para:
+//  1. Asignar el color de fondo por defecto a 100% transparente (Alpha=0, R=0, G=0, B=0),
+//     eliminando cualquier fondo blanco o sólido que WebView2 renderiza por defecto.
+//  2. Desactivar controles de zoom para que el usuario no pueda alterar la escala visual ni el pixel art.
+func configureTransparentWebView(w webview2.WebView) error {
+	chromium, err := getWebViewChromium(w)
+	if err != nil {
+		return err
+	}
 	ctrl := chromium.GetController()
 	if ctrl == nil {
 		return errors.New("controlador webview2 nulo")
@@ -574,32 +632,46 @@ func configureTransparentWebView(w webview2.WebView) error {
 }
 
 var (
-	initialTargetX int
-	initialTargetY int
-	initialTargetW int
-	initialTargetH int
+	initialTargetX       int
+	initialTargetY       int
+	initialTargetW       int
+	initialTargetH       int
+	initialStartVisible  bool
 )
 
 // installPreCreationHook intercepta la creación nativa de la ventana en WebView2 mediante un hook CBT.
-// Esto garantiza que CreateWindowExW reciba las coordenadas centradas superiores exactas y el estilo WS_POPUP
-// antes de que Windows pinte el primer píxel, erradicando por completo cualquier salto visual o descentrado al arrancar.
-func installPreCreationHook(x, y, w, h int) uintptr {
+// Garantiza que CreateWindowExW reciba el estilo WS_POPUP, las coordenadas exactas (o fuera de pantalla
+// cuando arranca oculta en bandeja) y WS_EX_TOOLWINDOW aplicado directamente sobre HWND antes del ShowWindow inicial,
+// evitando destellos y asegurando que nunca aparezca en la barra de tareas de Windows.
+func installPreCreationHook(x, y, w, h int, startVisible bool) uintptr {
 	initialTargetX = x
 	initialTargetY = y
 	initialTargetW = w
 	initialTargetH = h
+	initialStartVisible = startVisible
 
 	threadID, _, _ := procGetCurrentThreadId.Call()
 	cb := syscall.NewCallback(func(nCode int32, wParam uintptr, lParam uintptr) uintptr {
 		if nCode == hcbtCreateWnd {
 			cbt := (*cbtCreateWnd)(unsafe.Pointer(lParam))
 			if cbt != nil && cbt.lpcs != nil && cbt.lpcs.hwndParent == 0 {
-				cbt.lpcs.x = int32(initialTargetX)
-				cbt.lpcs.y = int32(initialTargetY)
+				if initialStartVisible {
+					cbt.lpcs.x = int32(initialTargetX)
+					cbt.lpcs.y = int32(initialTargetY)
+					cbt.lpcs.style = uint32(wsPopup | wsVisible)
+				} else {
+					// Posicionar fuera de pantalla hasta que applyFramelessTransparentWindow ejecute SW_HIDE
+					cbt.lpcs.x = -32000
+					cbt.lpcs.y = -32000
+					cbt.lpcs.style = uint32(wsPopup)
+				}
 				cbt.lpcs.cx = int32(initialTargetW)
 				cbt.lpcs.cy = int32(initialTargetH)
-				cbt.lpcs.style = uint32(wsPopup | wsVisible)
-				cbt.lpcs.dwExStyle |= uint32(wsExTopmost | wsExToolWindow | wsExNoRedirectionBitmap)
+				cleanEx := sanitizeNoTaskbarExStyle(uintptr(cbt.lpcs.dwExStyle))
+				cbt.lpcs.dwExStyle = uint32(cleanEx)
+				if wParam != 0 {
+					_, _, _ = procSetWindowLongPtrW.Call(wParam, gwlExStyle, cleanEx)
+				}
 			}
 		}
 		ret, _, _ := procCallNextHookEx.Call(0, uintptr(nCode), wParam, lParam)
@@ -668,8 +740,33 @@ func attachConsoleIfNeeded(cfg Config) {
 	}
 }
 
+func postShowExistingIslandMessage() {
+	if !procAvailable(procFindWindowW) || !procAvailable(procRegisterWindowMsgW) || !procAvailable(procPostMessageW) {
+		return
+	}
+	msgPtr, err := syscall.UTF16PtrFromString("MEKA_SHOW_ISLAND")
+	if err != nil {
+		return
+	}
+	msgID, _, _ := procRegisterWindowMsgW.Call(uintptr(unsafe.Pointer(msgPtr)))
+	if msgID == 0 {
+		return
+	}
+	if trayTitle, tErr := syscall.UTF16PtrFromString("MEKA Tray Host"); tErr == nil {
+		if trayHwnd, _, _ := procFindWindowW.Call(0, uintptr(unsafe.Pointer(trayTitle))); trayHwnd != 0 {
+			_, _, _ = procPostMessageW.Call(trayHwnd, msgID, 0, 0)
+			return
+		}
+	}
+	if titlePtr, tErr := syscall.UTF16PtrFromString("MEKA Dynamic Island"); tErr == nil {
+		if existing, _, _ := procFindWindowW.Call(0, uintptr(unsafe.Pointer(titlePtr))); existing != 0 {
+			_, _, _ = procShowWindow.Call(existing, swShowNA)
+		}
+	}
+}
+
 // acquireSingleInstanceMutex evita abrir múltiples instancias de MEKA Dynamic Island a la vez.
-func acquireSingleInstanceMutex() (uintptr, bool) {
+func acquireSingleInstanceMutex(showExisting bool) (uintptr, bool) {
 	namePtr, err := syscall.UTF16PtrFromString("Local\\MekaDesktopCompanionMutex")
 	if err != nil {
 		return 0, true
@@ -680,10 +777,8 @@ func acquireSingleInstanceMutex() (uintptr, bool) {
 	}
 	if lastErr == errorAlreadyExists {
 		_, _, _ = procCloseHandle.Call(handle)
-		if titlePtr, tErr := syscall.UTF16PtrFromString("MEKA Dynamic Island"); tErr == nil {
-			if existing, _, _ := procFindWindowW.Call(0, uintptr(unsafe.Pointer(titlePtr))); existing != 0 {
-				_, _, _ = procShowWindow.Call(existing, swShow)
-			}
+		if showExisting {
+			postShowExistingIslandMessage()
 		}
 		return 0, false
 	}
@@ -801,15 +896,27 @@ func syncWebViewCache(dataPath, webDir string) {
 	_ = os.WriteFile(stampPath, []byte(currentStamp+"\n"), 0644)
 }
 
+func ensureNoTaskbarWindowStyle(hwnd uintptr) {
+	if hwnd == 0 {
+		return
+	}
+	exStyle, _, _ := procGetWindowLongPtrW.Call(hwnd, gwlExStyle)
+	cleanEx := sanitizeNoTaskbarExStyle(exStyle)
+	if cleanEx != exStyle {
+		_, _, _ = procSetWindowLongPtrW.Call(hwnd, gwlExStyle, cleanEx)
+	}
+}
+
 func recenterIslandWindow(hwnd uintptr, showWin bool) {
 	manualDodge = false
 	isDodgedState = isSnippingToolActive()
+	ensureNoTaskbarWindowStyle(hwnd)
 	scale := getDpiScaleForWindow(hwnd)
 	x, y, targetW, targetH := computeFixedWindowPosition(getDesktopWorkArea(), isDodgedState, scale)
-	flags := uintptr(swpFrameChanged)
+	flags := uintptr(swpFrameChanged | swpNoActivate)
 	if showWin {
 		flags |= swpShowWindow
-		_, _, _ = procShowWindow.Call(hwnd, swShow)
+		_, _, _ = procShowWindow.Call(hwnd, swShowNA)
 	}
 	_, _, _ = procSetWindowPos.Call(
 		hwnd,
@@ -819,6 +926,35 @@ func recenterIslandWindow(hwnd uintptr, showWin bool) {
 		uintptr(targetW),
 		uintptr(targetH),
 		flags,
+	)
+	_, _, _ = procSendMessageW.Call(hwnd, 0x0005, 0, 0)
+}
+
+func setIslandWindowVisible(w webview2.WebView, hwnd uintptr, visible bool, recenter bool) {
+	if hwnd == 0 {
+		return
+	}
+	if !visible {
+		islandVisible.Store(false)
+		interactiveOverlay.Store(false)
+		_, _, _ = procShowWindow.Call(hwnd, swHide)
+		setWebViewControllerVisible(w, false)
+		return
+	}
+
+	ensureNoTaskbarWindowStyle(hwnd)
+	setWebViewControllerVisible(w, true)
+	islandVisible.Store(true)
+	if recenter {
+		recenterIslandWindow(hwnd, true)
+		return
+	}
+	_, _, _ = procShowWindow.Call(hwnd, swShowNA)
+	_, _, _ = procSetWindowPos.Call(
+		hwnd,
+		hwndTopmost,
+		0, 0, 0, 0,
+		swpNoMove|swpNoSize|swpFrameChanged|swpNoActivate|swpShowWindow,
 	)
 	_, _, _ = procSendMessageW.Call(hwnd, 0x0005, 0, 0)
 }
@@ -1061,14 +1197,14 @@ func runNativeWindow(cfg Config, targetURL string) error {
 func runNativeWindowWithShutdown(cfg Config, targetURL string, stopHTTP func()) error {
 	applyProcessAppUserModelID()
 	_ = registerBackgroundNotificationApp("", resolveAppIconPath(cfg.WebDir))
-	logDesktopEvent("INFO", "startup", fmt.Sprintf("Iniciando MEKA Desktop (startup=%v, coreMode=%s)", cfg.Startup, cfg.CoreMode))
+	logDesktopEvent("INFO", "startup", fmt.Sprintf("Iniciando MEKA Desktop (startup=%v, show=%v, coreMode=%s)", cfg.Startup, cfg.ShowWindow, cfg.CoreMode))
 
 	if cfg.Startup {
 		// Breve pausa de estabilización cuando Windows arranca al iniciar sesión
 		time.Sleep(800 * time.Millisecond)
 	}
 
-	mtx, ok := acquireSingleInstanceMutex()
+	mtx, ok := acquireSingleInstanceMutex(!cfg.Startup)
 	if !ok {
 		logDesktopEvent("INFO", "startup", "Ya existía una instancia activa de MEKA; enfocando ventana previa")
 		return nil
@@ -1100,12 +1236,12 @@ func runNativeWindowWithShutdown(cfg Config, targetURL string, stopHTTP func()) 
 
 	initScale := getDpiScaleForWindow(0)
 	initX, initY, initW, initH := computeFixedWindowPosition(getDesktopWorkArea(), false, initScale)
-	hook := installPreCreationHook(initX, initY, initW, initH)
+	hook := installPreCreationHook(initX, initY, initW, initH, cfg.ShowWindow)
 
 	w := webview2.NewWithOptions(webview2.WebViewOptions{
 		DataPath:  dataPath,
 		Debug:     cfg.Debug,
-		AutoFocus: true,
+		AutoFocus: cfg.ShowWindow,
 		WindowOptions: webview2.WindowOptions{
 			Title:  "MEKA Dynamic Island",
 			Width:  uint(initW),
@@ -1128,14 +1264,9 @@ func runNativeWindowWithShutdown(cfg Config, targetURL string, stopHTTP func()) 
 	defer w.Destroy()
 
 	hwnd := uintptr(w.Window())
-	applyFramelessTransparentWindow(hwnd)
+	islandVisible.Store(cfg.ShowWindow)
+	applyFramelessTransparentWindow(hwnd, cfg.ShowWindow)
 	applyWindowIcon(hwnd, cfg.WebDir)
-
-	// Iniciar monitor adaptativo de click-through para alternar WS_EX_TRANSPARENT según el cursor
-	startClickThroughMonitor(ctx, hwnd)
-
-	// Iniciar en modo notch y notificar tamaño al compositor
-	_, _, _ = procSendMessageW.Call(hwnd, 0x0005, 0, 0) // WM_SIZE
 
 	// Eliminar fondo blanco de WebView2 y desactivar zoom
 	if err := configureTransparentWebView(w); err != nil {
@@ -1144,6 +1275,18 @@ func runNativeWindowWithShutdown(cfg Config, targetURL string, stopHTTP func()) 
 			fmt.Printf("Aviso de transparencia: %v\n", err)
 		}
 	}
+
+	if !cfg.ShowWindow {
+		setWebViewControllerVisible(w, false)
+		_, _, _ = procShowWindow.Call(hwnd, swHide)
+		logDesktopEvent("INFO", "startup", "Iniciado en segundo plano en la bandeja de notificaciones")
+	}
+
+	// Iniciar monitor adaptativo de click-through para alternar WS_EX_TRANSPARENT según el cursor
+	startClickThroughMonitor(ctx, hwnd)
+
+	// Notificar tamaño al compositor
+	_, _, _ = procSendMessageW.Call(hwnd, 0x0005, 0, 0) // WM_SIZE
 
 	// Iniciar monitor de auto-evasión para Snipping Tool
 	startSnippingToolMonitor(ctx, w, hwnd)
@@ -1157,14 +1300,27 @@ func runNativeWindowWithShutdown(cfg Config, targetURL string, stopHTTP func()) 
 	var shutdown *shutdownCoordinator
 	var stopTray func()
 	stopTray = startTrayController(ctx, cfg.WebDir, trayActions{
+		IsVisible: func() bool {
+			return islandVisible.Load()
+		},
+		OnToggleVisibility: func() {
+			w.Dispatch(func() {
+				next := !islandVisible.Load()
+				setIslandWindowVisible(w, hwnd, next, next)
+			})
+		},
 		OnShowCenter: func() {
 			w.Dispatch(func() {
-				recenterIslandWindow(hwnd, true)
+				setIslandWindowVisible(w, hwnd, true, true)
 			})
 		},
 		OnToggleExpand: func() {
 			w.Dispatch(func() {
-				recenterIslandWindow(hwnd, true)
+				if !islandVisible.Load() {
+					setIslandWindowVisible(w, hwnd, true, true)
+				} else {
+					recenterIslandWindow(hwnd, true)
+				}
 				w.Eval("window.MEKA?.toggleNotch?.()")
 			})
 		},
@@ -1248,16 +1404,19 @@ func runNativeWindowWithShutdown(cfg Config, targetURL string, stopHTTP func()) 
 	// Gestión de foco de teclado (WS_EX_NOACTIVATE): activa la ventana solo cuando el chat tiene foco
 	_ = w.Bind("mekaWantsKeyboard", func(wants bool) {
 		w.Dispatch(func() {
+			if !islandVisible.Load() && wants {
+				return
+			}
 			exStyle, _, _ := procGetWindowLongPtrW.Call(hwnd, gwlExStyle)
+			exStyle = sanitizeNoTaskbarExStyle(exStyle)
 			if wants {
 				exStyle &^= wsExNoActivate
 				_, _, _ = procSetWindowLongPtrW.Call(hwnd, gwlExStyle, exStyle)
 				_, _, _ = procSetForegroundWindow.Call(hwnd)
 			} else {
-				exStyle |= wsExNoActivate
 				_, _, _ = procSetWindowLongPtrW.Call(hwnd, gwlExStyle, exStyle)
 			}
-			_, _, _ = procSetWindowPos.Call(hwnd, 0, 0, 0, 0, 0, swpNoMove|swpNoSize|swpFrameChanged)
+			_, _, _ = procSetWindowPos.Call(hwnd, 0, 0, 0, 0, 0, swpNoMove|swpNoSize|swpFrameChanged|swpNoActivate)
 		})
 	})
 
@@ -1270,7 +1429,7 @@ func runNativeWindowWithShutdown(cfg Config, targetURL string, stopHTTP func()) 
 	// Centrar notch en la parte superior central de la pantalla
 	_ = w.Bind("mekaCenterNotch", func() {
 		w.Dispatch(func() {
-			recenterIslandWindow(hwnd, true)
+			setIslandWindowVisible(w, hwnd, true, true)
 		})
 	})
 
@@ -1279,6 +1438,9 @@ func runNativeWindowWithShutdown(cfg Config, targetURL string, stopHTTP func()) 
 		w.Dispatch(func() {
 			manualDodge = !isDodgedState
 			isDodgedState = manualDodge
+			if !islandVisible.Load() {
+				return
+			}
 			scale := getDpiScaleForWindow(hwnd)
 			x, y, targetW, targetH := computeFixedWindowPosition(getDesktopWorkArea(), isDodgedState, scale)
 			_, _, _ = procSetWindowPos.Call(
@@ -1288,20 +1450,16 @@ func runNativeWindowWithShutdown(cfg Config, targetURL string, stopHTTP func()) 
 				uintptr(y),
 				uintptr(targetW),
 				uintptr(targetH),
-				swpFrameChanged|swpShowWindow,
+				swpFrameChanged|swpNoActivate,
 			)
 			_, _, _ = procSendMessageW.Call(hwnd, 0x0005, 0, 0)
 		})
 	})
 
-	// Mostrar u ocultar la ventana nativa (modo captura limpia de pantalla)
+	// Mostrar u ocultar la ventana nativa (bandeja / modo captura limpia de pantalla)
 	_ = w.Bind("mekaSetWindowVisible", func(visible bool) {
 		w.Dispatch(func() {
-			cmd := uintptr(swShow)
-			if !visible {
-				cmd = uintptr(swHide)
-			}
-			_, _, _ = procShowWindow.Call(hwnd, cmd)
+			setIslandWindowVisible(w, hwnd, visible, false)
 		})
 	})
 

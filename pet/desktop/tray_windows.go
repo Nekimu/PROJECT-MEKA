@@ -44,12 +44,13 @@ const (
 	tpmBottomAlign = 0x0020
 	tpmReturnCmd   = 0x0100
 
-	trayMenuShowCenter   = 1001
-	trayMenuToggleExpand = 1002
-	trayMenuAutoStart    = 1003
-	trayMenuRestartCore  = 1004
-	trayMenuOpenLogs     = 1005
-	trayMenuExit         = 1006
+	trayMenuToggleVisibility = 1000
+	trayMenuShowCenter       = 1001
+	trayMenuToggleExpand     = 1002
+	trayMenuAutoStart        = 1003
+	trayMenuRestartCore      = 1004
+	trayMenuOpenLogs         = 1005
+	trayMenuExit             = 1006
 )
 
 var (
@@ -90,12 +91,14 @@ type notifyIconDataW struct {
 }
 
 type trayActions struct {
-	OnShowCenter   func()
-	OnToggleExpand func()
-	OnToggleAuto   func()
-	OnRestartCore  func()
-	OnOpenLogs     func()
-	OnExit         func(reason string)
+	IsVisible          func() bool
+	OnToggleVisibility func()
+	OnShowCenter       func()
+	OnToggleExpand     func()
+	OnToggleAuto       func()
+	OnRestartCore      func()
+	OnOpenLogs         func()
+	OnExit             func(reason string)
 }
 
 type trayController struct {
@@ -105,6 +108,7 @@ type trayController struct {
 	hIcon             uintptr
 	iconLoadedOwned   bool
 	taskbarCreatedMsg uint32
+	showIslandMsg     uint32
 	iconAdded         bool
 	mu                sync.Mutex
 	closed            bool
@@ -169,7 +173,7 @@ func (t *trayController) addOrUpdateIcon(modify bool) {
 		nid.hIcon = t.hIcon
 		nid.uFlags |= nifIcon
 	}
-	copyUTF16Fixed(nid.szTip[:], "MEKA · Compañera de Escritorio (En segundo plano)")
+	copyUTF16Fixed(nid.szTip[:], "MEKA · En segundo plano (clic para mostrar/ocultar)")
 
 	action := uintptr(nimAdd)
 	if modify && t.iconAdded {
@@ -276,12 +280,18 @@ func (t *trayController) showContextMenu() {
 		_, _, _ = procAppendMenuW.Call(hMenu, flags, id, uintptr(unsafe.Pointer(ptr)))
 	}
 
+	toggleLabel := "Mostrar MEKA"
+	if t.actions.IsVisible != nil && t.actions.IsVisible() {
+		toggleLabel = "Ocultar en la bandeja"
+	}
+
 	autoFlags := uintptr(mfString)
 	if isAutoStartEnabled() {
 		autoFlags |= mfChecked
 	}
 
-	addItem(mfString, trayMenuShowCenter, "Mostrar / Centrar MEKA")
+	addItem(mfString, trayMenuToggleVisibility, toggleLabel)
+	addItem(mfString, trayMenuShowCenter, "Centrar MEKA")
 	addItem(mfString, trayMenuToggleExpand, "Expandir / Colapsar Dynamic Island")
 	addItem(mfSep, 0, "")
 	addItem(autoFlags, trayMenuAutoStart, "Iniciar con Windows")
@@ -312,6 +322,10 @@ func (t *trayController) showContextMenu() {
 	}
 
 	switch cmdID {
+	case trayMenuToggleVisibility:
+		if t.actions.OnToggleVisibility != nil {
+			go func() { defer recoverAndLog("tray-toggle-visibility"); t.actions.OnToggleVisibility() }()
+		}
 	case trayMenuShowCenter:
 		if t.actions.OnShowCenter != nil {
 			go func() { defer recoverAndLog("tray-show"); t.actions.OnShowCenter() }()
@@ -363,11 +377,19 @@ func getTrayWindowProc() uintptr {
 					ctrl.addOrUpdateIcon(false)
 					return 0
 				}
+				if ctrl.showIslandMsg != 0 && msg == ctrl.showIslandMsg {
+					if ctrl.actions.OnShowCenter != nil {
+						go func() { defer recoverAndLog("tray-show-island"); ctrl.actions.OnShowCenter() }()
+					}
+					return 0
+				}
 				switch msg {
 				case wmAppTray:
 					switch lParam {
-					case wmLButtonUp, wmLButtonDblClk:
-						if ctrl.actions.OnShowCenter != nil {
+					case wmLButtonUp:
+						if ctrl.actions.OnToggleVisibility != nil {
+							go func() { defer recoverAndLog("tray-click"); ctrl.actions.OnToggleVisibility() }()
+						} else if ctrl.actions.OnShowCenter != nil {
 							go func() { defer recoverAndLog("tray-click"); ctrl.actions.OnShowCenter() }()
 						}
 					case wmRButtonUp, wmContextMenu:
@@ -443,6 +465,10 @@ func startTrayController(ctx context.Context, webDir string, actions trayActions
 			if msgPtr, err := syscall.UTF16PtrFromString("TaskbarCreated"); err == nil {
 				id, _, _ := procRegisterWindowMsgW.Call(uintptr(unsafe.Pointer(msgPtr)))
 				ctrl.taskbarCreatedMsg = uint32(id)
+			}
+			if msgPtr, err := syscall.UTF16PtrFromString("MEKA_SHOW_ISLAND"); err == nil {
+				id, _, _ := procRegisterWindowMsgW.Call(uintptr(unsafe.Pointer(msgPtr)))
+				ctrl.showIslandMsg = uint32(id)
 			}
 		}
 
